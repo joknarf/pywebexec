@@ -20,6 +20,7 @@ $ pywebexec
 ```
 
 * Launch commands with params/view live output/Status using browser `http://<yourserver>:8080`
+![image](https://github.com/user-attachments/assets/921da56f-6d4b-46e3-b16c-e01a2dc9accf)
 
 ## features
 
