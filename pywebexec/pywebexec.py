@@ -99,7 +99,7 @@ def get_status_file_path(script_id):
 def get_output_file_path(script_id):
     return os.path.join(SCRIPT_STATUS_DIR, f'{script_id}_output.txt')
 
-def update_script_status(script_id, status, script_name=None, params=None, start_time=None, end_time=None, exit_code=None):
+def update_script_status(script_id, status, script_name=None, params=None, start_time=None, end_time=None, exit_code=None, pid=None):
     status_file_path = get_status_file_path(script_id)
     status_data = read_script_status(script_id) or {}
     status_data['status'] = status
@@ -113,6 +113,8 @@ def update_script_status(script_id, status, script_name=None, params=None, start
         status_data['end_time'] = end_time
     if exit_code is not None:
         status_data['exit_code'] = exit_code
+    if pid is not None:
+        status_data['pid'] = pid
     with open(status_file_path, 'w') as f:
         json.dump(status_data, f)
 
@@ -134,6 +136,7 @@ def run_script(script_name, params, script_id):
         with open(output_file_path, 'w') as output_file:
             # Run the script with parameters and redirect stdout and stderr to the file
             process = subprocess.Popen([script_name] + params, stdout=output_file, stderr=output_file, text=True)
+            update_script_status(script_id, 'running', pid=process.pid)
             processes[script_id] = process
             process.wait()
             processes.pop(script_id, None)
@@ -193,25 +196,26 @@ def run_script_endpoint():
 @app.route('/stop_script/<script_id>', methods=['POST'])
 @auth_required
 def stop_script(script_id):
-    process = processes.get(script_id)
+    status = read_script_status(script_id)
+    if not status or 'pid' not in status:
+        return jsonify({'error': 'Invalid script_id or script not running'}), 400
+
+    pid = status['pid']
     end_time = datetime.now().isoformat()
-    if process and process.poll() is None:
-        try:
-            process.terminate()
-            process.wait()  # Ensure the process has terminated
-            return jsonify({'message': 'Script aborted'})
-        except Exception as e:
-            status_data = read_script_status(script_id) or {}
-            status_data['status'] = 'failed'
-            status_data['end_time'] = end_time
-            status_data['exit_code'] = 1
-            with open(get_status_file_path(script_id), 'w') as f:
-                json.dump(status_data, f)
-            with open(get_output_file_path(script_id), 'a') as output_file:
-                output_file.write(str(e))
-            return jsonify({'error': 'Failed to terminate script'}), 500
-    update_script_status(script_id, 'failed', end_time=end_time, exit_code=1)
-    return jsonify({'error': 'Invalid script_id or script not running'}), 400
+    try:
+        os.kill(pid, 15)  # Send SIGTERM
+        update_script_status(script_id, 'aborted', end_time=end_time, exit_code=-15)
+        return jsonify({'message': 'Script aborted'})
+    except Exception as e:
+        status_data = read_script_status(script_id) or {}
+        status_data['status'] = 'failed'
+        status_data['end_time'] = end_time
+        status_data['exit_code'] = 1
+        with open(get_status_file_path(script_id), 'w') as f:
+            json.dump(status_data, f)
+        with open(get_output_file_path(script_id), 'a') as output_file:
+            output_file.write(str(e))
+        return jsonify({'error': 'Failed to terminate script'}), 500
 
 @app.route('/script_status/<script_id>', methods=['GET'])
 @auth_required
@@ -275,9 +279,6 @@ def list_executables():
 @auth.verify_password
 def verify_password(username, password):
     return username == app.config['USER'] and password == app.config['PASSWORD']
-
-
-
 
 if __name__ == '__main__':
     start_gunicorn()
