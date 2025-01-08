@@ -79,7 +79,9 @@
         .copy_clip_ok, .copy_clip_ok:hover {
             background-image: url("/static/images/copy_ok.svg");
         }
-
+        input {
+            width: 50%
+        }
     </style>
 </head>
 <body>
@@ -215,8 +217,8 @@
                 })
             });
             const relaunchData = await relaunchResponse.json();
-            alert(relaunchData.message);
             fetchScripts();
+            viewOutput(relaunchData.script_id)
         }
 
         async function stopScript(script_id) {
