@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>pywebexec</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .table-container { max-height: 385px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; position: sticky; top: 0; z-index: 1; }
+        .output {
+            white-space: pre-wrap;
+            background: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            font-family: monospace;
+            border-radius: 15px;
+        }
+        .copy-icon { cursor: pointer; }
+        .monospace { font-family: monospace; }
+        .copied { color: green; margin-left: 5px; }
+        button {
+            -webkit-appearance: none;
+            -webkit-border-radius: none;
+            appearance: none;
+            border-radius: 15px;
+            padding: 3px;
+            padding-right: 13px;
+            border: 1px #555 solid;
+            height: 22px;
+            font-size: 13px;
+            outline: none;
+            text-indent: 10px;
+            background-color: #eee;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        form {
+            padding-bottom: 15px;
+        }
+        .status-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            vertical-align: middle;
+        }
+        .status-running { 
+            background-image: url("/static/images/running.svg")
+        }
+        .status-success { 
+            background-image: url("/static/images/success.svg")
+        }
+        .status-failed { 
+            background-image: url("/static/images/failed.svg")
+        }
+        .status-aborted { 
+            background-image: url("/static/images/aborted.svg")
+        }
+        .copy_clip {
+            padding-right: 25px;
+            background-repeat: no-repeat;
+            background-position: right top;
+            background-size: 25px 16px;
+            white-space: nowrap;
+        }
+        .copy_clip_left {
+            padding-left: 25px;
+            padding-right: 0px;
+            background-position: left top;
+        }
+        .copy_clip:hover {
+            cursor: pointer;
+            background-image: url("/static/images/copy.svg");
+        }
+        .copy_clip_ok, .copy_clip_ok:hover {
+            background-image: url("/static/images/copy_ok.svg");
+        }
+
+    </style>
+</head>
+<body>
+    <h1>pywebexec</h1>
+    <form id="launchForm">
+        <label for="scriptName">Command:</label>
+        <select id="scriptName" name="scriptName"></select>
+        <label for="params">Params:</label>
+        <input type="text" id="params" name="params">
+        <button type="submit">Launch</button>
+    </form>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Script ID</th>
+                    <th>Status</th>
+                    <th>Start Time</th>
+                    <th>Duration</th>
+                    <th>Exit</th>
+                    <th>Command</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="scripts"></tbody>
+        </table>
+    </div>
+    <div id="output" class="output"></div>
+
+    <script>
+        let currentScriptId = null;
+        let outputInterval = null;
+
+        document.getElementById('launchForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const scriptName = document.getElementById('scriptName').value;
+            const params = document.getElementById('params').value.split(' ');
+            const response = await fetch('/run_script', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ script_name: scriptName, params: params })
+            });
+            const data = await response.json();
+            fetchScripts();
+        });
+
+        async function fetchScripts() {
+            const response = await fetch('/scripts');
+            const scripts = await response.json();
+            scripts.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+            const scriptsTbody = document.getElementById('scripts');
+            scriptsTbody.innerHTML = '';
+            scripts.forEach(script => {
+                const scriptRow = document.createElement('tr');
+                scriptRow.innerHTML = `
+                    <td class="monospace">
+                        <span class="copy_clip" onclick="copyToClipboard('${script.script_id}', this)">${script.script_id.slice(0, 8)}</span>
+                    </td>
+                    <td><span class="status-icon status-${script.status}"></span>${script.status}</td>
+                    <td>${formatTime(script.start_time)}</td>
+                    <td>${script.status === 'running' ? formatDuration(script.start_time, new Date().toISOString()) : formatDuration(script.start_time, script.end_time)}</td>
+                    <td>${script.exit_code}</td>
+                    <td>${script.command.replace(/^\.\//, '')}</td>
+                    <td>
+                        <button onclick="viewOutput('${script.script_id}')">Log</button>
+                        <button onclick="relaunchScript('${script.script_id}')">Relaunch</button>
+                        ${script.status === 'running' ? `<button onclick="stopScript('${script.script_id}')">Stop</button>` : ''}
+                    </td>
+                `;
+                scriptsTbody.appendChild(scriptRow);
+            });
+        }
+
+        async function fetchExecutables() {
+            const response = await fetch('/executables');
+            const executables = await response.json();
+            const scriptNameSelect = document.getElementById('scriptName');
+            scriptNameSelect.innerHTML = '';
+            executables.forEach(executable => {
+                const option = document.createElement('option');
+                option.value = executable;
+                option.textContent = executable;
+                scriptNameSelect.appendChild(option);
+            });
+        }
+
+        async function fetchOutput(script_id) {
+            const outputDiv = document.getElementById('output');
+            const response = await fetch(`/script_output/${script_id}`);
+            const data = await response.json();
+            if (data.error) {
+                outputDiv.innerHTML = data.error;
+                clearInterval(outputInterval);
+            } else {
+                outputDiv.innerHTML = data.output;
+                if (data.status != 'running') {
+                    clearInterval(outputInterval)
+                }
+            }
+        }
+
+        async function viewOutput(script_id) {
+            currentScriptId = script_id;
+            clearInterval(outputInterval);
+            const response = await fetch(`/script_status/${script_id}`);
+            const data = await response.json();
+            if (data.status === 'running') {
+                fetchOutput(script_id);
+                outputInterval = setInterval(() => fetchOutput(script_id), 1000);
+            } else {
+                fetchOutput(script_id);
+            }
+        }
+
+        async function relaunchScript(script_id) {
+            const response = await fetch(`/script_status/${script_id}`);
+            const data = await response.json();
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            const relaunchResponse = await fetch('/run_script', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    script_name: data.script_name,
+                    params: data.params
+                })
+            });
+            const relaunchData = await relaunchResponse.json();
+            alert(relaunchData.message);
+            fetchScripts();
+        }
+
+        async function stopScript(script_id) {
+            const response = await fetch(`/stop_script/${script_id}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            if (data.error) {
+                alert(data.error);
+            } else {
+                alert(data.message);
+                fetchScripts();
+            }
+        }
+
+        function formatTime(time) {
+            if (!time || time === 'N/A') return 'N/A';
+            const date = new Date(time);
+            return date.toISOString().slice(0, 16).replace('T', ' ');
+        }
+
+        function formatDuration(startTime, endTime) {
+            if (!startTime || !endTime) return 'N/A';
+            const start = new Date(startTime);
+            const end = new Date(endTime);
+            const duration = (end - start) / 1000;
+            const hours = Math.floor(duration / 3600);
+            const minutes = Math.floor((duration % 3600) / 60);
+            const seconds = Math.floor(duration % 60);
+            return `${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        function copyToClipboard(text, element) {
+            navigator.clipboard.writeText(text).then(() => {
+                element.classList.add('copy_clip_ok')
+                setTimeout(() => {
+                    element.classList.remove('copy_clip_ok');
+                }, 2000);
+            });
+        }
+
+        fetchScripts();
+        fetchExecutables();
+        setInterval(fetchScripts, 5000);
+    </script>
+</body>
+</html>

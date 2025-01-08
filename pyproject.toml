@@ -1,0 +1,56 @@
+[project]
+name = "pywebexec"
+authors = [
+    { name = "Franck Jouvanceau" },
+]
+maintainers = [
+    { name = "Franck Jouvanceau" },
+]
+
+description = "Simple Python HTTP Exec Server"
+dependencies = [
+  "cryptography>=40.0.2",
+  "Flask>=3.0.3",
+  "Flask-HTTPAuth>=4.8.0",
+]
+dynamic=["version"]
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">= 3.6"
+keywords = ["http", "fileserver", "browser", "explorer"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: System Administrators",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX",
+  "Operating System :: Unix",
+  "Operating System :: Microsoft :: Windows ",
+  "Operating System :: MacOS",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: System :: Clustering",
+  "Topic :: System :: Networking",
+  "Topic :: System :: Systems Administration",
+]
+
+[project.urls]
+Homepage = "https://github.com/joknarf/pywebexec"
+Documentation = "https://github.com/joknarf/pywebexec/blob/main/README.md"
+Repository = "https://github.com/joknarf/pywebexec.git"
+
+[build-system]
+requires = ["setuptools >= 61.0", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_file = "pywebexec/version.py"
+
+[project.scripts]
+pywebexec = "pywebexec.pywebexec:start_gunicorn"
