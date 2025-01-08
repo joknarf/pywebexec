@@ -126,6 +126,7 @@
             });
             const data = await response.json();
             fetchScripts();
+            viewOutput(data.script_id)
         });
 
         async function fetchScripts() {
