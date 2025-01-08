@@ -25,7 +25,7 @@ $ pywebexec
 ## features
 
 * Serve executables in current directory
-* Launch commands with params from web browser
+* Launch commands with params from web browser or API call
 * Follow live output
 * Stop command
 * Relaunch command
