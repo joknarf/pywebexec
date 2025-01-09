@@ -48,7 +48,7 @@ class StandaloneApplication(Application):
 def start_gunicorn(daemon=False, baselog=None):
     if daemon:
         errorlog = f"{baselog}.error.log"
-        accesslog = f"{baselog}.access.log"
+        accesslog = None # f"{baselog}.access.log"
         pidfile = f"{baselog}.pid"
     else:
         errorlog = "-"
