@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>pywebexec</title>
+    <title>{{ title }}</title>
     <style>
         body { font-family: Arial, sans-serif; }
         .table-container { height: 380px; overflow-y: auto; position: relative; }
@@ -83,7 +83,7 @@
         input {
             width: 50%
         }
-        .currentscript {
+        .currentcommand {
             background-color: #eef;
         }
         .resizer {
@@ -103,11 +103,11 @@
     </style>
 </head>
 <body>
-    <h1>pywebexec</h1>
+    <h1>{{ title }}</h1>
     <form id="launchForm">
-        <label for="scriptName">Command:</label>
-        <select id="scriptName" name="scriptName"></select>
-        <label for="params">Params:</label>
+        <label for="commandName">Command</label>
+        <select id="commandName" name="commandName"></select>
+        <label for="params">Params</label>
         <input type="text" id="params" name="params">
         <button type="submit">Launch</button>
     </form>
@@ -115,7 +115,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>Script ID</th>
+                    <th>Command ID</th>
                     <th>Status</th>
                     <th>Start Time</th>
                     <th>Duration</th>
@@ -124,7 +124,7 @@
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id="scripts"></tbody>
+            <tbody id="commands"></tbody>
         </table>
     </div>
     <div class="resizer-container">
@@ -133,69 +133,69 @@
     <div id="output" class="output"></div>
 
     <script>
-        let currentScriptId = null;
+        let currentCommandId = null;
         let outputInterval = null;
 
         document.getElementById('launchForm').addEventListener('submit', async (event) => {
             event.preventDefault();
-            const scriptName = document.getElementById('scriptName').value;
+            const commandName = document.getElementById('commandName').value;
             const params = document.getElementById('params').value.split(' ');
-            const response = await fetch('/run_script', {
+            const response = await fetch('/run_command', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ script_name: scriptName, params: params })
+                body: JSON.stringify({ command_name: commandName, params: params })
             });
             const data = await response.json();
-            fetchScripts();
-            viewOutput(data.script_id);
+            fetchCommands();
+            viewOutput(data.command_id);
         });
 
-        async function fetchScripts() {
-            const response = await fetch('/scripts');
-            const scripts = await response.json();
-            scripts.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
-            const scriptsTbody = document.getElementById('scripts');
-            scriptsTbody.innerHTML = '';
-            scripts.forEach(script => {
-                const scriptRow = document.createElement('tr');
-                scriptRow.className = script.script_id === currentScriptId ? 'currentscript' : '';
-                scriptRow.innerHTML = `
+        async function fetchCommands() {
+            const response = await fetch('/commands');
+            const commands = await response.json();
+            commands.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+            const commandsTbody = document.getElementById('commands');
+            commandsTbody.innerHTML = '';
+            commands.forEach(command => {
+                const commandRow = document.createElement('tr');
+                commandRow.className = command.command_id === currentCommandId ? 'currentcommand' : '';
+                commandRow.innerHTML = `
                     <td class="monospace">
-                        <span class="copy_clip" onclick="copyToClipboard('${script.script_id}', this)">${script.script_id.slice(0, 8)}</span>
+                        <span class="copy_clip" onclick="copyToClipboard('${command.command_id}', this)">${command.command_id.slice(0, 8)}</span>
                     </td>
-                    <td><span class="status-icon status-${script.status}"></span>${script.status}</td>
-                    <td>${formatTime(script.start_time)}</td>
-                    <td>${script.status === 'running' ? formatDuration(script.start_time, new Date().toISOString()) : formatDuration(script.start_time, script.end_time)}</td>
-                    <td>${script.exit_code}</td>
-                    <td>${script.command.replace(/^\.\//, '')}</td>
+                    <td><span class="status-icon status-${command.status}"></span>${command.status}</td>
+                    <td>${formatTime(command.start_time)}</td>
+                    <td>${command.status === 'running' ? formatDuration(command.start_time, new Date().toISOString()) : formatDuration(command.start_time, command.end_time)}</td>
+                    <td>${command.exit_code}</td>
+                    <td>${command.command.replace(/^\.\//, '')}</td>
                     <td>
-                        <button onclick="viewOutput('${script.script_id}')">Log</button>
-                        <button onclick="relaunchScript('${script.script_id}')">Relaunch</button>
-                        ${script.status === 'running' ? `<button onclick="stopScript('${script.script_id}')">Stop</button>` : ''}
+                        <button onclick="viewOutput('${command.command_id}')">Log</button>
+                        <button onclick="relaunchCommand('${command.command_id}')">Relaunch</button>
+                        ${command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}')">Stop</button>` : ''}
                     </td>
                 `;
-                scriptsTbody.appendChild(scriptRow);
+                commandsTbody.appendChild(commandRow);
             });
         }
 
         async function fetchExecutables() {
             const response = await fetch('/executables');
             const executables = await response.json();
-            const scriptNameSelect = document.getElementById('scriptName');
-            scriptNameSelect.innerHTML = '';
+            const commandNameSelect = document.getElementById('commandName');
+            commandNameSelect.innerHTML = '';
             executables.forEach(executable => {
                 const option = document.createElement('option');
                 option.value = executable;
                 option.textContent = executable;
-                scriptNameSelect.appendChild(option);
+                commandNameSelect.appendChild(option);
             });
         }
 
-        async function fetchOutput(script_id) {
+        async function fetchOutput(command_id) {
             const outputDiv = document.getElementById('output');
-            const response = await fetch(`/script_output/${script_id}`);
+            const response = await fetch(`/command_output/${command_id}`);
             const data = await response.json();
             if (data.error) {
                 outputDiv.innerHTML = data.error;
@@ -209,45 +209,45 @@
             }
         }
 
-        async function viewOutput(script_id) {
+        async function viewOutput(command_id) {
             adjustOutputHeight();
-            currentScriptId = script_id;
+            currentCommandId = command_id;
             clearInterval(outputInterval);
-            const response = await fetch(`/script_status/${script_id}`);
+            const response = await fetch(`/command_status/${command_id}`);
             const data = await response.json();
             if (data.status === 'running') {
-                fetchOutput(script_id);
-                outputInterval = setInterval(() => fetchOutput(script_id), 1000);
+                fetchOutput(command_id);
+                outputInterval = setInterval(() => fetchOutput(command_id), 1000);
             } else {
-                fetchOutput(script_id);
+                fetchOutput(command_id);
             }
-            fetchScripts(); // Refresh the script list to highlight the current script
+            fetchCommands(); // Refresh the command list to highlight the current command
         }
 
-        async function relaunchScript(script_id) {
-            const response = await fetch(`/script_status/${script_id}`);
+        async function relaunchCommand(command_id) {
+            const response = await fetch(`/command_status/${command_id}`);
             const data = await response.json();
             if (data.error) {
                 alert(data.error);
                 return;
             }
-            const relaunchResponse = await fetch('/run_script', {
+            const relaunchResponse = await fetch('/run_command', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    script_name: data.script_name,
+                    command_name: data.command_name,
                     params: data.params
                 })
             });
             const relaunchData = await relaunchResponse.json();
-            fetchScripts();
-            viewOutput(relaunchData.script_id);
+            fetchCommands();
+            viewOutput(relaunchData.command_id);
         }
 
-        async function stopScript(script_id) {
-            const response = await fetch(`/stop_script/${script_id}`, {
+        async function stopCommand(command_id) {
+            const response = await fetch(`/stop_command/${command_id}`, {
                 method: 'POST'
             });
             const data = await response.json();
@@ -255,7 +255,7 @@
                 alert(data.error);
             } else {
                 alert(data.message);
-                fetchScripts();
+                fetchCommands();
             }
         }
 
@@ -322,9 +322,9 @@
             initResizer();
         });
 
-        fetchScripts();
+        fetchCommands();
         fetchExecutables();
-        setInterval(fetchScripts, 5000);
+        setInterval(fetchCommands, 5000);
     </script>
 </body>
 </html>
