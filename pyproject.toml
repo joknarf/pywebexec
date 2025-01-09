@@ -11,8 +11,9 @@ description = "Simple Python HTTP Exec Server"
 dependencies = [
   "python-daemon>=2.3.2",
   "cryptography>=40.0.2",
-  "Flask>=3.0.3",
+  "Flask>=2.0.3",
   "Flask-HTTPAuth>=4.8.0",
+  "gunicorn>=21.2.0",
 ]
 dynamic=["version"]
 readme = "README.md"

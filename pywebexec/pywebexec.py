@@ -200,7 +200,7 @@ def run_script(script_name, params, script_id):
         output_file_path = get_output_file_path(script_id)
         with open(output_file_path, 'w') as output_file:
             # Run the script with parameters and redirect stdout and stderr to the file
-            process = subprocess.Popen([script_name] + params, stdout=output_file, stderr=output_file, text=True)
+            process = subprocess.Popen([script_name] + params, stdout=output_file, stderr=output_file, bufsize=0) #text=True)
             update_script_status(script_id, 'running', pid=process.pid)
             processes[script_id] = process
             process.wait()
