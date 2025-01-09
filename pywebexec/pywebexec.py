@@ -54,6 +54,40 @@ def start_gunicorn():
     }
     StandaloneApplication(app, options=options).run()
 
+def daemon_d(action, pidfilepath, hostname=None, args=None):
+    """start/stop daemon"""
+    import signal
+    import daemon, daemon.pidfile
+
+    pidfile = daemon.pidfile.TimeoutPIDLockFile(pidfilepath+".pid", acquire_timeout=30)
+    if action == "stop":
+        if pidfile.is_locked():
+            pid = pidfile.read_pid()
+            print(f"Stopping server pid {pid}")
+            try:
+                os.kill(pid, signal.SIGINT)
+            except:
+                return False
+            return True
+    elif action == "status":
+        status = pidfile.is_locked()
+        if status:
+            print(f"pywebexec running pid {pidfile.read_pid()}")
+            return True
+        print("pywebexec not running")
+        return False
+    elif action == "start":
+        print(f"Starting server")
+        log = open(pidfilepath + ".log", "ab+")
+        daemon_context = daemon.DaemonContext(
+            stderr=log,
+            pidfile=pidfile,
+            umask=0o077,
+            working_directory=os.getcwd(),
+        )
+        with daemon_context:
+            start_gunicorn()
+
 def parseargs():
     global app, args
     parser = argparse.ArgumentParser(description='Run the script execution server.')
@@ -77,6 +111,7 @@ def parseargs():
     )
     parser.add_argument("-c", "--cert", type=str, help="Path to https certificate")
     parser.add_argument("-k", "--key", type=str, help="Path to https certificate key")
+    parser.add_argument("action", nargs="?", help="daemon action start/stop/restart/status", choices=["start","stop","restart","status"])
 
     args = parser.parse_args()
 
@@ -281,6 +316,12 @@ def list_executables():
 def verify_password(username, password):
     return username == app.config['USER'] and password == app.config['PASSWORD']
 
+def main():
+    if args.action:
+        daemon_d(args.action, pidfilepath=SCRIPT_STATUS_DIR+'/pywebexec')
+    else:
+        start_gunicorn()
+
 if __name__ == '__main__':
-    start_gunicorn()
-    #app.run(host='0.0.0.0', port=5000)
+    main()
+    # app.run(host='0.0.0.0', port=5000)
