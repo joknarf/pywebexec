@@ -16,7 +16,7 @@ app = Flask(__name__)
 auth = HTTPBasicAuth()
 
 # Directory to store the script status and output
-SCRIPT_STATUS_DIR = 'script_status'
+SCRIPT_STATUS_DIR = '.web_status'
 
 if not os.path.exists(SCRIPT_STATUS_DIR):
     os.makedirs(SCRIPT_STATUS_DIR)
@@ -48,6 +48,7 @@ def start_gunicorn():
     options = {
         'bind': '%s:%s' % (args.listen, args.port),
         'workers': 4,
+        'timeout': 600,
         'certfile': args.cert,
         'keyfile': args.key,
     }

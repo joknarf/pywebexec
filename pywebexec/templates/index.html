@@ -82,6 +82,9 @@
         input {
             width: 50%
         }
+        .currentscript {
+            background-color: #eef;
+        }
     </style>
 </head>
 <body>
@@ -139,6 +142,7 @@
             scriptsTbody.innerHTML = '';
             scripts.forEach(script => {
                 const scriptRow = document.createElement('tr');
+                scriptRow.className = script.script_id === currentScriptId ? 'currentscript' : '';
                 scriptRow.innerHTML = `
                     <td class="monospace">
                         <span class="copy_clip" onclick="copyToClipboard('${script.script_id}', this)">${script.script_id.slice(0, 8)}</span>
@@ -197,6 +201,7 @@
             } else {
                 fetchOutput(script_id);
             }
+            fetchScripts(); // Refresh the script list to highlight the current script
         }
 
         async function relaunchScript(script_id) {
