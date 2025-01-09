@@ -100,6 +100,9 @@
             height: 5px;
             margin-bottom: 10px;
         }
+        tr.clickable-row {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -158,9 +161,14 @@
             commands.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
             const commandsTbody = document.getElementById('commands');
             commandsTbody.innerHTML = '';
+            if (!currentCommandId && commands.length) {
+                currentCommandId = commands[0].command_id;
+                viewOutput(currentCommandId);
+            }
             commands.forEach(command => {
                 const commandRow = document.createElement('tr');
-                commandRow.className = command.command_id === currentCommandId ? 'currentcommand' : '';
+                commandRow.className = `clickable-row ${command.command_id === currentCommandId ? 'currentcommand' : ''}`;
+                commandRow.onclick = () => viewOutput(command.command_id);
                 commandRow.innerHTML = `
                     <td class="monospace">
                         <span class="copy_clip" onclick="copyToClipboard('${command.command_id}', this)">${command.command_id.slice(0, 8)}</span>
@@ -171,7 +179,6 @@
                     <td>${command.exit_code}</td>
                     <td>${command.command.replace(/^\.\//, '')}</td>
                     <td>
-                        <button onclick="viewOutput('${command.command_id}')">Log</button>
                         <button onclick="relaunchCommand('${command.command_id}')">Relaunch</button>
                         ${command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}')">Stop</button>` : ''}
                     </td>
@@ -322,8 +329,8 @@
             initResizer();
         });
 
-        fetchCommands();
         fetchExecutables();
+        fetchCommands();
         setInterval(fetchCommands, 5000);
     </script>
 </body>
