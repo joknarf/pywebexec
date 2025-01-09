@@ -68,5 +68,5 @@ $ pywebexec start
 $ pywebexec status
 $ pywebexec stop
 ```
-* log of server are stored in current directory `.web_status/pwexec_<listen>:<port>.log`
+* log of server are stored in directory `[.config/].pywebexec/pywebexec_<listen>:<port>.log`
 

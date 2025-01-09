@@ -18,6 +18,10 @@ auth = HTTPBasicAuth()
 
 # Directory to store the script status and output
 SCRIPT_STATUS_DIR = '.web_status'
+CONFDIR = os.path.expanduser("~/")
+if os.path.isdir(f"{CONFDIR}/.config"):
+    CONFDIR += '/.config'
+CONFDIR += "/.pywebexec"
 
 if not os.path.exists(SCRIPT_STATUS_DIR):
     os.makedirs(SCRIPT_STATUS_DIR)
@@ -47,7 +51,7 @@ class StandaloneApplication(Application):
 
 def start_gunicorn(daemon=False, baselog=None):
     if daemon:
-        errorlog = f"{baselog}.error.log"
+        errorlog = f"{baselog}.log"
         accesslog = None # f"{baselog}.access.log"
         pidfile = f"{baselog}.pid"
     else:
@@ -342,7 +346,9 @@ def verify_password(username, password):
     return username == app.config['USER'] and password == app.config['PASSWORD']
 
 def main():
-    basef = f"{SCRIPT_STATUS_DIR}/pywebexec"
+    basef = f"{CONFDIR}/pywebexec_{args.listen}:{args.port}"
+    if not os.path.exists(CONFDIR):
+        os.mkdir(CONFDIR, mode=0o700)
     if args.action == "start":
         return start_gunicorn(daemon=True, baselog=basef)
     if args.action:
