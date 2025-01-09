@@ -16,6 +16,7 @@
             border: 1px solid #ccc;
             font-family: monospace;
             border-radius: 15px;
+            overflow-y: auto;
         }
         .copy-icon { cursor: pointer; }
         .monospace { font-family: monospace; }
@@ -131,7 +132,7 @@
             });
             const data = await response.json();
             fetchScripts();
-            viewOutput(data.script_id)
+            viewOutput(data.script_id);
         });
 
         async function fetchScripts() {
@@ -184,13 +185,15 @@
                 clearInterval(outputInterval);
             } else {
                 outputDiv.innerHTML = data.output;
+                outputDiv.scrollTop = outputDiv.scrollHeight;
                 if (data.status != 'running') {
-                    clearInterval(outputInterval)
+                    clearInterval(outputInterval);
                 }
             }
         }
 
         async function viewOutput(script_id) {
+            adjustOutputHeight();
             currentScriptId = script_id;
             clearInterval(outputInterval);
             const response = await fetch(`/script_status/${script_id}`);
@@ -223,7 +226,7 @@
             });
             const relaunchData = await relaunchResponse.json();
             fetchScripts();
-            viewOutput(relaunchData.script_id)
+            viewOutput(relaunchData.script_id);
         }
 
         async function stopScript(script_id) {
@@ -258,16 +261,28 @@
 
         function copyToClipboard(text, element) {
             navigator.clipboard.writeText(text).then(() => {
-                element.classList.add('copy_clip_ok')
+                element.classList.add('copy_clip_ok');
                 setTimeout(() => {
                     element.classList.remove('copy_clip_ok');
                 }, 2000);
             });
         }
 
+        function adjustOutputHeight() {
+            const outputDiv = document.getElementById('output');
+            const windowHeight = window.innerHeight;
+            const outputTop = outputDiv.getBoundingClientRect().top;
+            const maxHeight = windowHeight - outputTop - 30; // 20px for padding/margin
+            outputDiv.style.maxHeight = `${maxHeight}px`;
+        }
+
+        window.addEventListener('resize', adjustOutputHeight);
+        window.addEventListener('load', adjustOutputHeight);
+
         fetchScripts();
         fetchExecutables();
         setInterval(fetchScripts, 5000);
+        adjustOutputHeight();
     </script>
 </body>
 </html>
