@@ -24,7 +24,7 @@ $ pywebexec
 
 ## features
 
-* Serve executables in current directory
+* Serve executables in a directory
 * Launch commands with params from web browser or API call
 * Follow live output
 * Stop command
@@ -33,11 +33,12 @@ $ pywebexec
 * HTTPS self-signed certificate generator
 * Can be started as a daemon (POSIX)
 * uses gunicorn to serve http/https
+* compatible Linux/MacOS
 
 ## Customize server
 ```
-$ pywebexec --listen 0.0.0.0 --port 8080
-$ pywebexec -l 0.0.0.0 -p 8080
+$ pywebexec --dir ~/myscripts --listen 0.0.0.0 --port 8080
+$ pywebexec -d ~/myscripts -l 0.0.0.0 -p 8080
 ```
 
 ## Basic auth user/password
@@ -61,7 +62,7 @@ $ pywebfs --cert /pathto/host.cert --key /pathto/host.key
 $ pywebfs -c /pathto/host.cert -k /pathto/host.key
 ```
 
-## Launch server as a daemon (Linux)
+## Launch server as a daemon
 
 ```
 $ pywebexec start
@@ -70,3 +71,20 @@ $ pywebexec stop
 ```
 * log of server are stored in directory `[.config/].pywebexec/pywebexec_<listen>:<port>.log`
 
+## Launch command through API
+
+```
+# curl http://myhost:8080/run_script -H 'Content-Type: application/json' -X POST -d '{ "script_name":"myscript", "param":["param1", ...]}
+```
+
+## API reference
+
+
+| method    | route                       | params/payload     | returns
+|-----------|-----------------------------|--------------------|---------------------|
+| POST      | /run_command                | command: str<br>params: array[str]       | command_id: uuid<br>message: str    |
+| POST      | /stop_command/command_id    |                    | message: str        |
+| GET       | /command_status/command_id  |                    | command_id: uuid<br>command: str<br>params: array[str]<br>start_time: isotime<br>end_time: isotime<br>status: str<br>exit_code: int      |
+| GET       | /command_output/command_id  |                    | output: str<br>status: str         |
+| GET       | /commands                   |                    | array of<br>command_id: uuid<br>command: str<br>start_time: isotime<br>end_time: isotime<br>status: str<br>exit_code: int      |
+| GET       | /executables                |                    | array of str        |
