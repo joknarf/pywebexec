@@ -376,11 +376,11 @@ def get_command_status(command_id):
     if not status:
         return jsonify({'error': 'Invalid command_id'}), 404
 
-    output_file_path = get_output_file_path(command_id)
-    if os.path.exists(output_file_path):
-        with open(output_file_path, 'r') as output_file:
-            output = output_file.read()
-        status['output'] = output
+    # output_file_path = get_output_file_path(command_id)
+    # if os.path.exists(output_file_path):
+    #     with open(output_file_path, 'r') as output_file:
+    #         output = output_file.read()
+    #     status['output'] = output
 
     return jsonify(status)
 
