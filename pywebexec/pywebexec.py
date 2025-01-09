@@ -11,7 +11,7 @@ import random
 import string
 from datetime import datetime
 import shlex
-from gunicorn.app.base import BaseApplication, Application
+from gunicorn.app.base import Application
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -311,7 +311,11 @@ def list_scripts():
             script_id = filename[:-5]
             status = read_script_status(script_id)
             if status:
-                command = status['script_name'] + ' ' + shlex.join(status['params'])
+                try:
+                    params = shlex.join(status['params'])
+                except AttributeError:
+                    params = " ".join([shlex.quote(p) if " " in p else p for p in status['params']])
+                command = status['script_name'] + ' ' + params
                 scripts.append({
                     'script_id': script_id,
                     'status': status['status'],
