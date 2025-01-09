@@ -15,9 +15,22 @@ from gunicorn.app.base import Application
 from datetime import timezone, timedelta
 import ipaddress
 from socket import gethostname, gethostbyname_ex
+try:
+    from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
+except:
+    pass
+import ssl
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
+
+app.config['LDAP_SERVER'] = os.environ['PYWEBEXEC_LDAP_SERVER']
+app.config['LDAP_USER_ID'] = os.environ['PYWEBEXEC_LDAP_USER_ID']
+app.config['LDAP_GROUP_DN'] = os.environ['PYWEBEXEC_LDAP_GROUP_DN']
+app.config['LDAP_BASE_DN'] = os.environ['PYWEBEXEC_LDAP_BASE_DN']
+app.config['LDAP_BIND_DN'] = os.environ['PYWEBEXEC_LDAP_BIND_DN']
+app.config['LDAP_BIND_PASSWORD'] = os.environ['PYWEBEXEC_LDAP_BIND_PASSWORD']
+app.config['LDAP_USE_SSL'] = os.environ['PYWEBEXEC_LDAP_USE_SSL']
 
 # Directory to store the command status and output
 COMMAND_STATUS_DIR = '.web_status'
@@ -241,6 +254,7 @@ def parseargs():
     else:
         app.config['USER'] = None
         app.config['PASSWORD'] = None
+
     return args
 
 parseargs()
@@ -308,9 +322,47 @@ def run_command(command, params, command_id):
             output_file.write(str(e))
 
 def auth_required(f):
-    if app.config.get('USER'):
+    if app.config.get('USER') or app.config.get('LDAP_SERVER'):
         return auth.login_required(f)
     return f
+
+@auth.verify_password
+def verify_password(username, password):
+    if app.config['USER']:
+        return username == app.config['USER'] and password == app.config['PASSWORD']
+    elif app.config['LDAP_SERVER']:
+        return verify_ldap(username, password)
+    return False
+
+def verify_ldap(username, password):
+    tls_configuration = Tls(validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLSv1_2) if app.config['LDAP_USE_SSL'] else None
+    server = Server(app.config['LDAP_SERVER'], use_ssl=app.config['LDAP_USE_SSL'], tls=tls_configuration, get_info=ALL)
+    try:
+        # Bind with the bind DN and password
+        conn = Connection(server, user=app.config['LDAP_BIND_DN'], password=app.config['LDAP_BIND_PASSWORD'], authentication=SIMPLE, auto_bind=True)
+        # Search for the user DN
+        # print("conn", conn.result)
+        user_filter = f"({app.config['LDAP_USER_ID']}={username})"
+        group_dn = app.config['LDAP_GROUP_DN']
+        conn.search(search_base=app.config['LDAP_BASE_DN'], search_filter=user_filter)
+        
+        #conn.search(user_dn, '(objectClass=*)', search_scope=SUBTREE)
+        print(len(conn.entries))
+        print("conn", conn.result)
+        print(conn.entries[0])
+        if len(conn.entries) == 0:
+            return False
+        user_dn = conn.entries[0].entry_dn
+        # Bind with the user DN and password to verify credentials
+        conn = Connection(server, user=user_dn, password=password, authentication=SIMPLE, auto_bind=True)
+        if not group_dn and conn.result["result"] == 0:
+            return True
+        # Check if the user is a member of the specified group
+        conn.search(group_dn, f'(member={user_dn})', search_scope=SUBTREE)
+        return len(conn.entries) > 0
+    except Exception as e:
+        print(f"LDAP authentication failed: {e}")
+        return False
 
 @app.route('/run_command', methods=['POST'])
 @auth_required
@@ -431,10 +483,6 @@ def get_command_output(command_id):
 def list_executables():
     executables = [f for f in os.listdir('.') if os.path.isfile(f) and os.access(f, os.X_OK)]
     return jsonify(executables)
-
-@auth.verify_password
-def verify_password(username, password):
-    return username == app.config['USER'] and password == app.config['PASSWORD']
 
 def main():
     basef = f"{CONFDIR}/pywebexec_{args.listen}:{args.port}"
