@@ -126,7 +126,7 @@ def parseargs():
         "-t",
         "--title",
         type=str,
-        default="FileBrowser",
+        default="pywebexec",
         help="Web html title",
     )
     parser.add_argument("-c", "--cert", type=str, help="Path to https certificate")
@@ -300,7 +300,7 @@ def get_script_status(script_id):
 @app.route('/')
 @auth_required
 def index():
-    return render_template('index.html')
+    return render_template('index.html', title=args.title)
 
 @app.route('/scripts', methods=['GET'])
 @auth_required
