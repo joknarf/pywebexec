@@ -1,3 +1,4 @@
+import sys
 from flask import Flask, request, jsonify, render_template
 from flask_httpauth import HTTPBasicAuth
 import subprocess
@@ -10,7 +11,7 @@ import random
 import string
 from datetime import datetime
 import shlex
-from gunicorn.app.base import BaseApplication
+from gunicorn.app.base import BaseApplication, Application
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -25,7 +26,7 @@ def generate_random_password(length=12):
     characters = string.ascii_letters + string.digits + string.punctuation
     return ''.join(random.choice(characters) for i in range(length))
 
-class StandaloneApplication(BaseApplication):
+class StandaloneApplication(Application):
 
     def __init__(self, app, options=None):
         self.options = options or {}
@@ -44,13 +45,25 @@ class StandaloneApplication(BaseApplication):
         return self.application
 
 
-def start_gunicorn():
+def start_gunicorn(daemon=False, baselog=None):
+    if daemon:
+        errorlog = f"{baselog}.error.log"
+        accesslog = f"{baselog}.access.log"
+        pidfile = f"{baselog}.pid"
+    else:
+        errorlog = "-"
+        accesslog = "-"
+        pidfile = None
     options = {
         'bind': '%s:%s' % (args.listen, args.port),
         'workers': 4,
         'timeout': 600,
         'certfile': args.cert,
         'keyfile': args.key,
+        'daemon': daemon,
+        'errorlog': errorlog,
+        'accesslog': accesslog,
+        'pidfile': pidfile,
     }
     StandaloneApplication(app, options=options).run()
 
@@ -86,7 +99,10 @@ def daemon_d(action, pidfilepath, hostname=None, args=None):
             working_directory=os.getcwd(),
         )
         with daemon_context:
-            start_gunicorn()
+            try:
+                start_gunicorn()
+            except Exception as e:
+                print(e)
 
 def parseargs():
     global app, args
@@ -114,6 +130,15 @@ def parseargs():
     parser.add_argument("action", nargs="?", help="daemon action start/stop/restart/status", choices=["start","stop","restart","status"])
 
     args = parser.parse_args()
+    if os.path.isdir(args.dir):
+        try:
+            os.chdir(args.dir)
+        except OSError:
+            print(f"Error: cannot chdir {args.dir}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        print(f"Error: {args.dir} not found", file=sys.stderr)
+        sys.exit(1)
 
     if args.user:
         app.config['USER'] = args.user
@@ -317,10 +342,12 @@ def verify_password(username, password):
     return username == app.config['USER'] and password == app.config['PASSWORD']
 
 def main():
+    basef = f"{SCRIPT_STATUS_DIR}/pywebexec"
+    if args.action == "start":
+        return start_gunicorn(daemon=True, baselog=basef)
     if args.action:
-        daemon_d(args.action, pidfilepath=SCRIPT_STATUS_DIR+'/pywebexec')
-    else:
-        start_gunicorn()
+        return daemon_d(args.action, pidfilepath=basef)
+    return start_gunicorn()
 
 if __name__ == '__main__':
     main()
