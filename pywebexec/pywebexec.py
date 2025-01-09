@@ -251,12 +251,12 @@ def get_status_file_path(command_id):
 def get_output_file_path(command_id):
     return os.path.join(COMMAND_STATUS_DIR, f'{command_id}_output.txt')
 
-def update_command_status(command_id, status, command_name=None, params=None, start_time=None, end_time=None, exit_code=None, pid=None):
+def update_command_status(command_id, status, command=None, params=None, start_time=None, end_time=None, exit_code=None, pid=None):
     status_file_path = get_status_file_path(command_id)
     status_data = read_command_status(command_id) or {}
     status_data['status'] = status
-    if command_name is not None:
-        status_data['command_name'] = command_name
+    if command is not None:
+        status_data['command'] = command
     if params is not None:
         status_data['params'] = params
     if start_time is not None:
@@ -280,14 +280,14 @@ def read_command_status(command_id):
 # Dictionary to store the process objects
 processes = {}
 
-def run_command(command_name, params, command_id):
+def run_command(command, params, command_id):
     start_time = datetime.now().isoformat()
-    update_command_status(command_id, 'running', command_name=command_name, params=params, start_time=start_time)
+    update_command_status(command_id, 'running', command=command, params=params, start_time=start_time)
     try:
         output_file_path = get_output_file_path(command_id)
         with open(output_file_path, 'w') as output_file:
             # Run the command with parameters and redirect stdout and stderr to the file
-            process = subprocess.Popen([command_name] + params, stdout=output_file, stderr=output_file, bufsize=0) #text=True)
+            process = subprocess.Popen([command] + params, stdout=output_file, stderr=output_file, bufsize=0) #text=True)
             update_command_status(command_id, 'running', pid=process.pid)
             processes[command_id] = process
             process.wait()
@@ -316,16 +316,16 @@ def auth_required(f):
 @auth_required
 def run_command_endpoint():
     data = request.json
-    command_name = data.get('command_name')
+    command = data.get('command')
     params = data.get('params', [])
 
-    if not command_name:
-        return jsonify({'error': 'command_name is required'}), 400
+    if not command:
+        return jsonify({'error': 'command is required'}), 400
 
     # Ensure the command is an executable in the current directory
-    command_path = os.path.join(".", os.path.basename(command_name))
+    command_path = os.path.join(".", os.path.basename(command))
     if not os.path.isfile(command_path) or not os.access(command_path, os.X_OK):
-        return jsonify({'error': 'command_name must be an executable in the current directory'}), 400
+        return jsonify({'error': 'command must be an executable in the current directory'}), 400
 
     # Split params using shell-like syntax
     try:
@@ -337,7 +337,7 @@ def run_command_endpoint():
     command_id = str(uuid.uuid4())
 
     # Set the initial status to running and save command details
-    update_command_status(command_id, 'running', command_name, params)
+    update_command_status(command_id, 'running', command, params)
 
     # Run the command in a separate thread
     thread = threading.Thread(target=run_command, args=(command_path, params, command_id))
@@ -402,7 +402,7 @@ def list_commands():
                     params = shlex.join(status['params'])
                 except AttributeError:
                     params = " ".join([shlex.quote(p) if " " in p else p for p in status['params']])
-                command = status['command_name'] + ' ' + params
+                command = status['command'] + ' ' + params
                 commands.append({
                     'command_id': command_id,
                     'status': status['status'],

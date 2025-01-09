@@ -145,7 +145,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ command_name: commandName, params: params })
+                body: JSON.stringify({ command: commandName, params: params })
             });
             const data = await response.json();
             fetchCommands();
@@ -237,7 +237,7 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    command_name: data.command_name,
+                    command: data.command,
                     params: data.params
                 })
             });
