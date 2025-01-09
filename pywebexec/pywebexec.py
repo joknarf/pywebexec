@@ -12,6 +12,9 @@ import string
 from datetime import datetime
 import shlex
 from gunicorn.app.base import Application
+from datetime import timezone, timedelta
+import ipaddress
+from socket import gethostname, gethostbyname_ex
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -29,6 +32,78 @@ if not os.path.exists(SCRIPT_STATUS_DIR):
 def generate_random_password(length=12):
     characters = string.ascii_letters + string.digits + string.punctuation
     return ''.join(random.choice(characters) for i in range(length))
+
+
+def resolve_hostname(host):
+    """try get fqdn from DNS"""
+    try:
+        return gethostbyname_ex(host)[0]
+    except OSError:
+        return host
+
+
+def generate_selfsigned_cert(hostname, ip_addresses=None, key=None):
+    """Generates self signed certificate for a hostname, and optional IP addresses.
+    from: https://gist.github.com/bloodearnest/9017111a313777b9cce5
+    """
+    from cryptography import x509
+    from cryptography.x509.oid import NameOID
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    
+    # Generate our key
+    if key is None:
+        key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+            backend=default_backend(),
+        )
+    
+    name = x509.Name([
+        x509.NameAttribute(NameOID.COMMON_NAME, hostname)
+    ])
+ 
+    # best practice seem to be to include the hostname in the SAN, which *SHOULD* mean COMMON_NAME is ignored.    
+    alt_names = [x509.DNSName(hostname)]
+    alt_names.append(x509.DNSName("localhost"))
+    
+    # allow addressing by IP, for when you don't have real DNS (common in most testing scenarios 
+    if ip_addresses:
+        for addr in ip_addresses:
+            # openssl wants DNSnames for ips...
+            alt_names.append(x509.DNSName(addr))
+            # ... whereas golang's crypto/tls is stricter, and needs IPAddresses
+            # note: older versions of cryptography do not understand ip_address objects
+            alt_names.append(x509.IPAddress(ipaddress.ip_address(addr)))
+    san = x509.SubjectAlternativeName(alt_names)
+    
+    # path_len=0 means this cert can only sign itself, not other certs.
+    basic_contraints = x509.BasicConstraints(ca=True, path_length=0)
+    now = datetime.now(timezone.utc)
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(name)
+        .issuer_name(name)
+        .public_key(key.public_key())
+        .serial_number(1000)
+        .not_valid_before(now)
+        .not_valid_after(now + timedelta(days=10*365))
+        .add_extension(basic_contraints, False)
+        .add_extension(san, False)
+        .sign(key, hashes.SHA256(), default_backend())
+    )
+    cert_pem = cert.public_bytes(encoding=serialization.Encoding.PEM)
+    key_pem = key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+
+    return cert_pem, key_pem
+
+
 
 class StandaloneApplication(Application):
 
@@ -131,6 +206,7 @@ def parseargs():
     )
     parser.add_argument("-c", "--cert", type=str, help="Path to https certificate")
     parser.add_argument("-k", "--key", type=str, help="Path to https certificate key")
+    parser.add_argument("-g", "--gencert", action="store_true", help="https server self signed cert")
     parser.add_argument("action", nargs="?", help="daemon action start/stop/restart/status", choices=["start","stop","restart","status"])
 
     args = parser.parse_args()
@@ -143,6 +219,17 @@ def parseargs():
     else:
         print(f"Error: {args.dir} not found", file=sys.stderr)
         sys.exit(1)
+
+    if args.gencert:
+        hostname = resolve_hostname(gethostname())
+        args.cert = args.cert or f"{CONFDIR}/pywebexec.crt"
+        args.key = args.key or f"{CONFDIR}/pywebexec.key"
+        if not os.path.exists(args.cert):
+            (cert, key) = generate_selfsigned_cert(hostname)
+            with open(args.cert, "wb") as fd:
+                fd.write(cert)
+            with open(args.key, "wb") as fd:
+                fd.write(key)
 
     if args.user:
         app.config['USER'] = args.user
