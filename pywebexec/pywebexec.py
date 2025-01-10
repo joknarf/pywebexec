@@ -14,11 +14,14 @@ import shlex
 from gunicorn.app.base import Application
 import ipaddress
 from socket import gethostname, gethostbyname_ex
-try:
-    from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
-except:
-    pass
 import ssl
+
+if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
+    try:
+        from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
+    except:
+        print("Need to install ldap3: pip install ldap3", file=sys.stderr)
+        sys.exit(1)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Secret key for session management
