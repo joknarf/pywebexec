@@ -35,8 +35,6 @@
             outline: none;
             text-indent: 10px;
             background-color: #eee;
-            display: inline-block;
-            vertical-align: middle;
         }
         form {
             padding-bottom: 15px;
@@ -69,11 +67,6 @@
             background-size: 25px 16px;
             white-space: nowrap;
         }
-        .copy_clip_left {
-            padding-left: 25px;
-            padding-right: 0px;
-            background-position: left top;
-        }
         .copy_clip:hover {
             cursor: pointer;
             background-image: url("/static/images/copy.svg");
@@ -82,7 +75,19 @@
             background-image: url("/static/images/copy_ok.svg");
         }
         input {
-            width: 50%
+            width: 50%;
+            -webkit-appearance: none;
+            -webkit-border-radius: none;
+            appearance: none;
+            border-radius: 15px;
+            padding: 3px;
+            padding-right: 13px;
+            border: 1px #aaa solid;
+            height: 15px;
+            font-size: 15px;
+            outline: none;
+            text-indent: 10px;
+            background-color: white;
         }
         .currentcommand {
             background-color: #eef;
