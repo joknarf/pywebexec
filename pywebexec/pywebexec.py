@@ -34,7 +34,7 @@ app.config['LDAP_GROUPS'] = os.environ.get('PYWEBEXEC_LDAP_GROUPS')
 app.config['LDAP_BASE_DN'] = os.environ.get('PYWEBEXEC_LDAP_BASE_DN')
 app.config['LDAP_BIND_DN'] = os.environ.get('PYWEBEXEC_LDAP_BIND_DN')
 app.config['LDAP_BIND_PASSWORD'] = os.environ.get('PYWEBEXEC_LDAP_BIND_PASSWORD')
-app.config['LDAP_USE_SSL'] = os.environ.get('PYWEBEXEC_LDAP_USE_SSL')
+app.config['LDAP_USE_SSL'] = int(os.environ.get('PYWEBEXEC_LDAP_USE_SSL', False))
 
 # Directory to store the command status and output
 COMMAND_STATUS_DIR = '.web_status'
@@ -239,8 +239,8 @@ def daemon_d(action, pidfilepath, hostname=None, args=None):
 def parseargs():
     global app, args
     parser = argparse.ArgumentParser(description='Run the command execution server.')
-    parser.add_argument('--user', help='Username for basic auth')
-    parser.add_argument('--password', help='Password for basic auth')
+    parser.add_argument('-u', '--user', help='Username for basic auth')
+    parser.add_argument('-P', '--password', help='Password for basic auth')
     parser.add_argument(
         "-l", "--listen", type=str, default="0.0.0.0", help="HTTP server listen address"
     )
