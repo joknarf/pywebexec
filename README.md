@@ -42,8 +42,8 @@ all commands output / statuses are available in the executables directory in sub
 
 ## Customize server
 ```shell
-$ pywebexec --dir ~/myscripts --listen 0.0.0.0 --port 8080
-$ pywebexec -d ~/myscripts -l 0.0.0.0 -p 8080
+$ pywebexec --dir ~/myscripts --listen 0.0.0.0 --port 8080 --title myscripts
+$ pywebexec -d ~/myscripts -l 0.0.0.0 -p 8080 -t myscripts
 ```
 
 ## Basic auth 
