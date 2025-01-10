@@ -34,7 +34,6 @@ app.config['LDAP_GROUPS'] = os.environ.get('PYWEBEXEC_LDAP_GROUPS')
 app.config['LDAP_BASE_DN'] = os.environ.get('PYWEBEXEC_LDAP_BASE_DN')
 app.config['LDAP_BIND_DN'] = os.environ.get('PYWEBEXEC_LDAP_BIND_DN')
 app.config['LDAP_BIND_PASSWORD'] = os.environ.get('PYWEBEXEC_LDAP_BIND_PASSWORD')
-app.config['LDAP_USE_SSL'] = int(os.environ.get('PYWEBEXEC_LDAP_USE_SSL', False))
 
 # Directory to store the command status and output
 COMMAND_STATUS_DIR = '.web_status'
@@ -401,14 +400,14 @@ def verify_password(username, password):
     return False
 
 def verify_ldap(username, password):
-    tls_configuration = Tls(validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLSv1_2) if app.config['LDAP_USE_SSL'] else None
-    server = Server(app.config['LDAP_SERVER'], use_ssl=app.config['LDAP_USE_SSL'], tls=tls_configuration, get_info=ALL)
+    tls_configuration = Tls(validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLSv1_2) if app.config['LDAP_SERVER'].startswith("ldaps:") else None
+    server = Server(app.config['LDAP_SERVER'], tls=tls_configuration, get_info=ALL)
     user_filter = f"({app.config['LDAP_USER_ID']}={username})"
     try:
         # Bind with the bind DN and password
-        conn = Connection(server, user=app.config['LDAP_BIND_DN'], password=app.config['LDAP_BIND_PASSWORD'], authentication=SIMPLE, auto_bind=True)
+        conn = Connection(server, user=app.config['LDAP_BIND_DN'], password=app.config['LDAP_BIND_PASSWORD'], authentication=SIMPLE, auto_bind=True, read_only=True)
         try:
-            conn.search(search_base=app.config['LDAP_BASE_DN'], search_filter=user_filter)
+            conn.search(search_base=app.config['LDAP_BASE_DN'], search_filter=user_filter, search_scope=SUBTREE)
             if len(conn.entries) == 0:
                 print(f"User {username} not found in LDAP.")
                 return False
@@ -417,13 +416,13 @@ def verify_ldap(username, password):
             conn.unbind()
         
         # Bind with the user DN and password to verify credentials
-        conn = Connection(server, user=user_dn, password=password, authentication=SIMPLE, auto_bind=True)
+        conn = Connection(server, user=user_dn, password=password, authentication=SIMPLE, auto_bind=True, read_only=True)
         try:
             if not app.config['LDAP_GROUPS'] and conn.result["result"] == 0:
                 return True
-            group_filter = "".join([f'(ou={group})' for group in app.config['LDAP_GROUPS'].split(",")])
+            group_filter = "".join([f'({group})' for group in app.config['LDAP_GROUPS'].split(",")])
             group_filter = f"(&{group_filter}(|(member={user_dn})(uniqueMember={user_dn})))"
-            conn.search(search_base=app.config['LDAP_BASE_DN'], search_filter=group_filter)
+            conn.search(search_base=app.config['LDAP_BASE_DN'], search_filter=group_filter, search_scope=SUBTREE)
             result = len(conn.entries) > 0
             if not result:
                 print(f"User {username} is not a member of groups {app.config['LDAP_GROUPS']}.")
