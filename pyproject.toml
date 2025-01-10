@@ -20,7 +20,7 @@ dynamic=["version"]
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">= 3.6"
-keywords = ["http", "fileserver", "browser", "explorer"]
+keywords = ["http", "server", "remote commands", "api", "website"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: System Administrators",
