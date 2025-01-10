@@ -60,7 +60,7 @@ Generated password is given if no `--pasword` option
 $ export PYWEBEXEC_LDAP_SERVER=ldap://ldap.forumsys.com:389
 $ export PYWEBEXEC_LDAP_BIND_DN="cn=read-only-admin,dc=example,dc=com"
 $ export PYWEBEXEC_LDAP_BIND_PASSWORD="password"
-$ export PYWEBEXEC_LDAP_GROUPS=ou=mathematicians,ou=scientists
+$ export PYWEBEXEC_LDAP_GROUPS="ou=mathematicians,ou=scientists"
 $ export PYWEBEXEC_LDAP_USER_ID="uid"
 $ export PYWEBEXEC_LDAP_BASE_DN="dc=example,dc=com"
 $ pywebexec
