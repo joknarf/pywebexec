@@ -143,6 +143,16 @@ class StandaloneApplication(Application):
     def load(self):
         return self.application
 
+def get_last_non_empty_line_of_file(file_path):
+    """Get the last non-empty line of a file."""
+    with open(file_path, 'rb') as f:
+        f.seek(-2, os.SEEK_END)
+        while f.read(1) != b'\n':
+            f.seek(-2, os.SEEK_CUR)
+        while True:
+            line = f.readline().decode().strip()
+            if line:
+                return line
 
 def start_gunicorn(daemon=False, baselog=None):
     if daemon:
@@ -288,6 +298,10 @@ def update_command_status(command_id, status, command=None, params=None, start_t
         status_data['exit_code'] = exit_code
     if pid is not None:
         status_data['pid'] = pid
+    if status != 'running':
+        output_file_path = get_output_file_path(command_id)
+        if os.path.exists(output_file_path):
+            status_data['last_output_line'] = get_last_non_empty_line_of_file(output_file_path)
     with open(status_file_path, 'w') as f:
         json.dump(status_data, f)
     
@@ -489,7 +503,8 @@ def list_commands():
                     'start_time': status.get('start_time', 'N/A'),
                     'end_time': status.get('end_time', 'N/A'),
                     'command': command,
-                    'exit_code': status.get('exit_code', 'N/A')
+                    'exit_code': status.get('exit_code', 'N/A'),
+                    'last_output_line': status.get('last_output_line'),
                 })
     # Sort commands by start_time in descending order
     commands.sort(key=lambda x: x['start_time'], reverse=True)
