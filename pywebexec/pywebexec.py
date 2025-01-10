@@ -1,5 +1,5 @@
 import sys
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from flask_httpauth import HTTPBasicAuth
 import subprocess
 import threading
@@ -9,15 +9,32 @@ import uuid
 import argparse
 import random
 import string
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import shlex
 from gunicorn.app.base import Application
-from datetime import timezone, timedelta
 import ipaddress
 from socket import gethostname, gethostbyname_ex
+import ssl
+
+if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
+    try:
+        from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
+    except:
+        print("Need to install ldap3: pip install ldap3", file=sys.stderr)
+        sys.exit(1)
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)  # Secret key for session management
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Add SameSite attribute to session cookies
 auth = HTTPBasicAuth()
+
+app.config['LDAP_SERVER'] = os.environ.get('PYWEBEXEC_LDAP_SERVER')
+app.config['LDAP_USER_ID'] = os.environ.get('PYWEBEXEC_LDAP_USER_ID', "uid")
+app.config['LDAP_GROUPS'] = os.environ.get('PYWEBEXEC_LDAP_GROUPS')
+app.config['LDAP_BASE_DN'] = os.environ.get('PYWEBEXEC_LDAP_BASE_DN')
+app.config['LDAP_BIND_DN'] = os.environ.get('PYWEBEXEC_LDAP_BIND_DN')
+app.config['LDAP_BIND_PASSWORD'] = os.environ.get('PYWEBEXEC_LDAP_BIND_PASSWORD')
+app.config['LDAP_USE_SSL'] = int(os.environ.get('PYWEBEXEC_LDAP_USE_SSL', False))
 
 # Directory to store the command status and output
 COMMAND_STATUS_DIR = '.web_status'
@@ -28,6 +45,9 @@ CONFDIR += "/.pywebexec"
 
 if not os.path.exists(COMMAND_STATUS_DIR):
     os.makedirs(COMMAND_STATUS_DIR)
+
+# In-memory cache for command statuses
+command_status_cache = {}
 
 def generate_random_password(length=12):
     characters = string.ascii_letters + string.digits + string.punctuation
@@ -124,6 +144,39 @@ class StandaloneApplication(Application):
         return self.application
 
 
+def decode_line(line: bytes) -> str:
+    """try decode line exception on binary"""
+    try:
+        return line.decode()
+    except UnicodeDecodeError:
+        return ""
+
+
+def last_line(fd, maxline=1000):
+    """last non empty line of file"""
+    line = "\n"
+    fd.seek(0, os.SEEK_END)
+    size = 0
+    while line in ["\n", "\r"] and size < maxline:
+        try:  # catch if file empty / only empty lines
+            while fd.read(1) not in [b"\n", b"\r"]:
+                fd.seek(-2, os.SEEK_CUR)
+                size += 1
+        except OSError:
+            fd.seek(0)
+            line = decode_line(fd.readline())
+            break
+        line = decode_line(fd.readline())
+        fd.seek(-4, os.SEEK_CUR)
+    return line.strip()
+
+
+def get_last_non_empty_line_of_file(file_path):
+    """Get the last non-empty line of a file."""
+    with open(file_path, 'rb') as f:
+        return last_line(f)
+    
+
 def start_gunicorn(daemon=False, baselog=None):
     if daemon:
         errorlog = f"{baselog}.log"
@@ -186,8 +239,8 @@ def daemon_d(action, pidfilepath, hostname=None, args=None):
 def parseargs():
     global app, args
     parser = argparse.ArgumentParser(description='Run the command execution server.')
-    parser.add_argument('--user', help='Username for basic auth')
-    parser.add_argument('--password', help='Password for basic auth')
+    parser.add_argument('-u', '--user', help='Username for basic auth')
+    parser.add_argument('-P', '--password', help='Password for basic auth')
     parser.add_argument(
         "-l", "--listen", type=str, default="0.0.0.0", help="HTTP server listen address"
     )
@@ -241,6 +294,7 @@ def parseargs():
     else:
         app.config['USER'] = None
         app.config['PASSWORD'] = None
+
     return args
 
 parseargs()
@@ -267,15 +321,35 @@ def update_command_status(command_id, status, command=None, params=None, start_t
         status_data['exit_code'] = exit_code
     if pid is not None:
         status_data['pid'] = pid
+    if status != 'running':
+        output_file_path = get_output_file_path(command_id)
+        if os.path.exists(output_file_path):
+            status_data['last_output_line'] = get_last_non_empty_line_of_file(output_file_path)
     with open(status_file_path, 'w') as f:
         json.dump(status_data, f)
+    
+    # Update cache if status is not "running"
+    if status != 'running':
+        command_status_cache[command_id] = status_data
+    elif command_id in command_status_cache:
+        del command_status_cache[command_id]
 
 def read_command_status(command_id):
+    # Return cached status if available
+    if command_id in command_status_cache:
+        return command_status_cache[command_id]
+    
     status_file_path = get_status_file_path(command_id)
     if not os.path.exists(status_file_path):
         return None
     with open(status_file_path, 'r') as f:
-        return json.load(f)
+        status_data = json.load(f)
+    
+    # Cache the status if it is not "running"
+    if status_data['status'] != 'running':
+        command_status_cache[command_id] = status_data
+    
+    return status_data
 
 # Dictionary to store the process objects
 processes = {}
@@ -307,13 +381,60 @@ def run_command(command, params, command_id):
         with open(get_output_file_path(command_id), 'a') as output_file:
             output_file.write(str(e))
 
-def auth_required(f):
-    if app.config.get('USER'):
-        return auth.login_required(f)
-    return f
+@app.before_request
+def check_authentication():
+    if 'username' not in session and request.endpoint not in ['login', 'static']:
+        return auth.login_required(lambda: None)()
+
+@auth.verify_password
+def verify_password(username, password):
+    if not username:
+        return False
+    if app.config['USER']:
+        if username == app.config['USER'] and password == app.config['PASSWORD']:
+            session['username'] = username
+            return True
+    elif app.config['LDAP_SERVER']:
+        if verify_ldap(username, password):
+            session['username'] = username
+            return True
+    return False
+
+def verify_ldap(username, password):
+    tls_configuration = Tls(validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLSv1_2) if app.config['LDAP_USE_SSL'] else None
+    server = Server(app.config['LDAP_SERVER'], use_ssl=app.config['LDAP_USE_SSL'], tls=tls_configuration, get_info=ALL)
+    user_filter = f"({app.config['LDAP_USER_ID']}={username})"
+    try:
+        # Bind with the bind DN and password
+        conn = Connection(server, user=app.config['LDAP_BIND_DN'], password=app.config['LDAP_BIND_PASSWORD'], authentication=SIMPLE, auto_bind=True)
+        try:
+            conn.search(search_base=app.config['LDAP_BASE_DN'], search_filter=user_filter)
+            if len(conn.entries) == 0:
+                print(f"User {username} not found in LDAP.")
+                return False
+            user_dn = conn.entries[0].entry_dn
+        finally:
+            conn.unbind()
+        
+        # Bind with the user DN and password to verify credentials
+        conn = Connection(server, user=user_dn, password=password, authentication=SIMPLE, auto_bind=True)
+        try:
+            if not app.config['LDAP_GROUPS'] and conn.result["result"] == 0:
+                return True
+            group_filter = "".join([f'(ou={group})' for group in app.config['LDAP_GROUPS'].split(",")])
+            group_filter = f"(&{group_filter}(|(member={user_dn})(uniqueMember={user_dn})))"
+            conn.search(search_base=app.config['LDAP_BASE_DN'], search_filter=group_filter)
+            result = len(conn.entries) > 0
+            if not result:
+                print(f"User {username} is not a member of groups {app.config['LDAP_GROUPS']}.")
+            return result
+        finally:
+            conn.unbind()
+    except Exception as e:
+        print(f"LDAP authentication failed: {e}")
+        return False
 
 @app.route('/run_command', methods=['POST'])
-@auth_required
 def run_command_endpoint():
     data = request.json
     command = data.get('command')
@@ -346,7 +467,6 @@ def run_command_endpoint():
     return jsonify({'message': 'Command is running', 'command_id': command_id})
 
 @app.route('/stop_command/<command_id>', methods=['POST'])
-@auth_required
 def stop_command(command_id):
     status = read_command_status(command_id)
     if not status or 'pid' not in status:
@@ -370,7 +490,6 @@ def stop_command(command_id):
         return jsonify({'error': 'Failed to terminate command'}), 500
 
 @app.route('/command_status/<command_id>', methods=['GET'])
-@auth_required
 def get_command_status(command_id):
     status = read_command_status(command_id)
     if not status:
@@ -385,12 +504,10 @@ def get_command_status(command_id):
     return jsonify(status)
 
 @app.route('/')
-@auth_required
 def index():
     return render_template('index.html', title=args.title)
 
 @app.route('/commands', methods=['GET'])
-@auth_required
 def list_commands():
     commands = []
     for filename in os.listdir(COMMAND_STATUS_DIR):
@@ -409,14 +526,14 @@ def list_commands():
                     'start_time': status.get('start_time', 'N/A'),
                     'end_time': status.get('end_time', 'N/A'),
                     'command': command,
-                    'exit_code': status.get('exit_code', 'N/A')
+                    'exit_code': status.get('exit_code', 'N/A'),
+                    'last_output_line': status.get('last_output_line', get_last_non_empty_line_of_file(get_output_file_path(command_id))),
                 })
     # Sort commands by start_time in descending order
     commands.sort(key=lambda x: x['start_time'], reverse=True)
     return jsonify(commands)
 
 @app.route('/command_output/<command_id>', methods=['GET'])
-@auth_required
 def get_command_output(command_id):
     output_file_path = get_output_file_path(command_id)
     if os.path.exists(output_file_path):
@@ -427,14 +544,9 @@ def get_command_output(command_id):
     return jsonify({'error': 'Invalid command_id'}), 404
 
 @app.route('/executables', methods=['GET'])
-@auth_required
 def list_executables():
     executables = [f for f in os.listdir('.') if os.path.isfile(f) and os.access(f, os.X_OK)]
     return jsonify(executables)
-
-@auth.verify_password
-def verify_password(username, password):
-    return username == app.config['USER'] and password == app.config['PASSWORD']
 
 def main():
     basef = f"{CONFDIR}/pywebexec_{args.listen}:{args.port}"
