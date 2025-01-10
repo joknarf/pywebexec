@@ -21,7 +21,7 @@ $ pywebexec
 ```
 
 * Launch commands with params/view live output/Status using browser
-![image](https://github.com/user-attachments/assets/921da56f-6d4b-46e3-b16c-e01a2dc9accf)
+![pywebexec](https://github.com/user-attachments/assets/1bfec34f-8e3b-4ad0-b6c4-c03c957c070a)
 
 ## features
 
