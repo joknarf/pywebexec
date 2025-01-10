@@ -143,16 +143,39 @@ class StandaloneApplication(Application):
     def load(self):
         return self.application
 
+
+def decode_line(line: bytes) -> str:
+    """try decode line exception on binary"""
+    try:
+        return line.decode()
+    except UnicodeDecodeError:
+        return ""
+
+
+def last_line(fd, maxline=1000):
+    """last non empty line of file"""
+    line = "\n"
+    fd.seek(0, os.SEEK_END)
+    size = 0
+    while line in ["\n", "\r"] and size < maxline:
+        try:  # catch if file empty / only empty lines
+            while fd.read(1) not in [b"\n", b"\r"]:
+                fd.seek(-2, os.SEEK_CUR)
+                size += 1
+        except OSError:
+            fd.seek(0)
+            line = decode_line(fd.readline())
+            break
+        line = decode_line(fd.readline())
+        fd.seek(-4, os.SEEK_CUR)
+    return line.strip()
+
+
 def get_last_non_empty_line_of_file(file_path):
     """Get the last non-empty line of a file."""
     with open(file_path, 'rb') as f:
-        f.seek(-2, os.SEEK_END)
-        while f.read(1) != b'\n':
-            f.seek(-2, os.SEEK_CUR)
-        while True:
-            line = f.readline().decode().strip()
-            if line:
-                return line
+        return last_line(f)
+    
 
 def start_gunicorn(daemon=False, baselog=None):
     if daemon:
@@ -504,7 +527,7 @@ def list_commands():
                     'end_time': status.get('end_time', 'N/A'),
                     'command': command,
                     'exit_code': status.get('exit_code', 'N/A'),
-                    'last_output_line': status.get('last_output_line'),
+                    'last_output_line': status.get('last_output_line', get_last_non_empty_line_of_file(get_output_file_path(command_id))),
                 })
     # Sort commands by start_time in descending order
     commands.sort(key=lambda x: x['start_time'], reverse=True)
