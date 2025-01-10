@@ -40,11 +40,11 @@ async function fetchCommands() {
             <td>${command.status === 'running' ? formatDuration(command.start_time, new Date().toISOString()) : formatDuration(command.start_time, command.end_time)}</td>
             <td>${command.exit_code}</td>
             <td>${command.command.replace(/^\.\//, '')}</td>
-            <td class="monospace outcol">${command.last_output_line || ''}</td>
             <td>
-                <button onclick="relaunchCommand('${command.command_id}')">Relaunch</button>
-                ${command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}')">Stop</button>` : ''}
+                ${command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}')">Stop</button>` : `                <button onclick="relaunchCommand('${command.command_id}')">Run</button>
+`}
             </td>
+            <td class="monospace outcol">${command.last_output_line || ''}</td>
         `;
         commandsTbody.appendChild(commandRow);
     });
