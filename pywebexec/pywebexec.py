@@ -46,6 +46,9 @@ CONFDIR += "/.pywebexec"
 if not os.path.exists(COMMAND_STATUS_DIR):
     os.makedirs(COMMAND_STATUS_DIR)
 
+# In-memory cache for command statuses
+command_status_cache = {}
+
 def generate_random_password(length=12):
     characters = string.ascii_letters + string.digits + string.punctuation
     return ''.join(random.choice(characters) for i in range(length))
@@ -287,13 +290,29 @@ def update_command_status(command_id, status, command=None, params=None, start_t
         status_data['pid'] = pid
     with open(status_file_path, 'w') as f:
         json.dump(status_data, f)
+    
+    # Update cache if status is not "running"
+    if status != 'running':
+        command_status_cache[command_id] = status_data
+    elif command_id in command_status_cache:
+        del command_status_cache[command_id]
 
 def read_command_status(command_id):
+    # Return cached status if available
+    if command_id in command_status_cache:
+        return command_status_cache[command_id]
+    
     status_file_path = get_status_file_path(command_id)
     if not os.path.exists(status_file_path):
         return None
     with open(status_file_path, 'r') as f:
-        return json.load(f)
+        status_data = json.load(f)
+    
+    # Cache the status if it is not "running"
+    if status_data['status'] != 'running':
+        command_status_cache[command_id] = status_data
+    
+    return status_data
 
 # Dictionary to store the process objects
 processes = {}
