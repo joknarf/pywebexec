@@ -11,6 +11,11 @@ th { background-color: #f2f2f2; position: sticky; top: 0; z-index: 1; }
 .outcol {
     width: 100%;
 }
+select { /* Safari bug */
+    font-size: 15px;
+    border: #aaa solid 1px;
+    border-radius: 5px;
+}
 .output {
     white-space: pre-wrap;
     background: #f0f0f0;
