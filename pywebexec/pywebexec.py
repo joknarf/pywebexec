@@ -30,7 +30,7 @@ auth = HTTPBasicAuth()
 
 app.config['LDAP_SERVER'] = os.environ.get('PYWEBEXEC_LDAP_SERVER')
 app.config['LDAP_USER_ID'] = os.environ.get('PYWEBEXEC_LDAP_USER_ID', "uid")
-app.config['LDAP_GROUP_DN'] = os.environ.get('PYWEBEXEC_LDAP_GROUP_DN')
+app.config['LDAP_GROUPS'] = os.environ.get('PYWEBEXEC_LDAP_GROUPS')
 app.config['LDAP_BASE_DN'] = os.environ.get('PYWEBEXEC_LDAP_BASE_DN')
 app.config['LDAP_BIND_DN'] = os.environ.get('PYWEBEXEC_LDAP_BIND_DN')
 app.config['LDAP_BIND_PASSWORD'] = os.environ.get('PYWEBEXEC_LDAP_BIND_PASSWORD')
@@ -347,12 +347,11 @@ def verify_password(username, password):
 def verify_ldap(username, password):
     tls_configuration = Tls(validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLSv1_2) if app.config['LDAP_USE_SSL'] else None
     server = Server(app.config['LDAP_SERVER'], use_ssl=app.config['LDAP_USE_SSL'], tls=tls_configuration, get_info=ALL)
+    user_filter = f"({app.config['LDAP_USER_ID']}={username})"
     try:
         # Bind with the bind DN and password
         conn = Connection(server, user=app.config['LDAP_BIND_DN'], password=app.config['LDAP_BIND_PASSWORD'], authentication=SIMPLE, auto_bind=True)
         try:
-            user_filter = f"({app.config['LDAP_USER_ID']}={username})"
-            group_dn = app.config['LDAP_GROUP_DN']
             conn.search(search_base=app.config['LDAP_BASE_DN'], search_filter=user_filter)
             if len(conn.entries) == 0:
                 print(f"User {username} not found in LDAP.")
@@ -364,12 +363,14 @@ def verify_ldap(username, password):
         # Bind with the user DN and password to verify credentials
         conn = Connection(server, user=user_dn, password=password, authentication=SIMPLE, auto_bind=True)
         try:
-            if not group_dn and conn.result["result"] == 0:
+            if not app.config['LDAP_GROUPS'] and conn.result["result"] == 0:
                 return True
-            conn.search(group_dn, f'(member={user_dn})', search_scope=SUBTREE)
+            group_filter = "".join([f'(ou={group})' for group in app.config['LDAP_GROUPS'].split(",")])
+            group_filter = f"(&{group_filter}(|(member={user_dn})(uniqueMember={user_dn})))"
+            conn.search(search_base=app.config['LDAP_BASE_DN'], search_filter=group_filter)
             result = len(conn.entries) > 0
             if not result:
-                print(f"User {username} is not a member of group {group_dn}.")
+                print(f"User {username} is not a member of groups {app.config['LDAP_GROUPS']}.")
             return result
         finally:
             conn.unbind()
