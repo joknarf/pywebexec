@@ -1,13 +1,29 @@
-body { font-family: Arial, sans-serif; }
-.table-container { height: 270px; overflow-y: auto; position: relative; }
-table { width: 100%; border-collapse: collapse; }
+body {
+    font-family: Arial, sans-serif; 
+}
+.table-container {
+    height: 270px;
+    overflow-y: auto;
+    position: relative;
+    border-radius: 10px;
+    border: 1px solid #aaa;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
 th, td {
     padding: 8px;
     text-align: left;
     border-bottom: 1px solid #ddd;
     white-space: nowrap;
 }
-th { background-color: #f2f2f2; position: sticky; top: 0; z-index: 1; }
+th { 
+    background-color: #f2f2f2;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
 .outcol {
     width: 100%;
 }
@@ -22,7 +38,7 @@ select { /* Safari bug */
     padding: 10px;
     border: 1px solid #ccc;
     font-family: monospace;
-    border-radius: 15px;
+    border-radius: 10px;
     overflow-y: auto;
 }
 .copy-icon { cursor: pointer; }
@@ -55,7 +71,7 @@ form {
     vertical-align: middle;
 }
 .status-running { 
-    background-image: url("/static/images/running.svg")
+    background-image: url("/static/images/running.gif")
 }
 .status-success { 
     background-image: url("/static/images/success.svg")
@@ -101,6 +117,7 @@ input {
 .resizer {
     width: 100%;
     height: 5px;
+    border-radius: 5px;
     background: #aaa;
     cursor: ns-resize;
     position: absolute;
@@ -110,7 +127,8 @@ input {
 .resizer-container {
     position: relative;
     height: 5px;
-    margin-bottom: 10px;
+    margin: 5px;
+    /*margin-bottom: 10px;*/
 }
 tr.clickable-row {
     cursor: pointer;
