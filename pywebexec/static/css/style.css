@@ -7,6 +7,7 @@ body {
     position: relative;
     border-radius: 10px;
     border: 1px solid #aaa;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.30);
 }
 table {
     width: 100%;
@@ -19,7 +20,8 @@ th, td {
     white-space: nowrap;
 }
 th { 
-    background-color: #f2f2f2;
+    background-color: #444;
+    color: #eee;
     position: sticky;
     top: 0;
     z-index: 1;
@@ -49,7 +51,6 @@ button {
     -webkit-border-radius: none;
     appearance: none;
     border-radius: 15px;
-    padding: 3px;
     padding-right: 13px;
     border: 1px #555 solid;
     height: 22px;
@@ -69,6 +70,11 @@ form {
     background-size: contain;
     background-repeat: no-repeat;
     vertical-align: middle;
+}
+.title-icon {
+    width: 30px;
+    height: 30px;
+    background-image: url("/static/images/favicon.svg")
 }
 .status-running { 
     background-image: url("/static/images/running.gif")
