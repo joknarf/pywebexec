@@ -15,13 +15,8 @@ from gunicorn.app.base import Application
 import ipaddress
 from socket import gethostname, gethostbyname_ex
 import ssl
-
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
-    try:
-        from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
-    except:
-        print("Need to install ldap3: pip install ldap3", file=sys.stderr)
-        sys.exit(1)
+    from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Secret key for session management
@@ -42,8 +37,6 @@ if os.path.isdir(f"{CONFDIR}/.config"):
     CONFDIR += '/.config'
 CONFDIR += "/.pywebexec"
 
-if not os.path.exists(COMMAND_STATUS_DIR):
-    os.makedirs(COMMAND_STATUS_DIR)
 
 # In-memory cache for command statuses
 command_status_cache = {}
@@ -271,7 +264,8 @@ def parseargs():
     else:
         print(f"Error: {args.dir} not found", file=sys.stderr)
         sys.exit(1)
-
+    if not os.path.exists(COMMAND_STATUS_DIR):
+        os.makedirs(COMMAND_STATUS_DIR)
     if args.gencert:
         hostname = resolve_hostname(gethostname())
         args.cert = args.cert or f"{CONFDIR}/pywebexec.crt"
