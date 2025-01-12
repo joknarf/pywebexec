@@ -21,7 +21,7 @@ $ pywebexec
 ```
 
 * Launch commands with params/view live output/Status using browser
-![pywebexecnew3](https://github.com/user-attachments/assets/3e9aef92-2989-4690-8abe-c454683a30f4)
+![pywebexecnew4](https://github.com/user-attachments/assets/55e9058c-d2d9-470e-b3ea-60b10dfc7fce)
 
 all commands output / statuses are available in the executables directory in subdirectory `.web_status`
 
