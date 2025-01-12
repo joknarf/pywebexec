@@ -47,11 +47,11 @@ async function fetchCommands() {
                 <td class="monospace">
                     ${navigator.clipboard == undefined ? `${command.command_id.slice(0, 8)}` : `<span class="copy_clip" onclick="copyToClipboard('${command.command_id}', this, event)">${command.command_id.slice(0, 8)}</span>`}
                 </td>
-                <td><span class="status-icon status-${command.status}"></span>${command.status}</td>
                 <td>${formatTime(command.start_time)}</td>
                 <td>${command.status === 'running' ? formatDuration(command.start_time, new Date().toISOString()) : formatDuration(command.start_time, command.end_time)}</td>
-                <td>${command.exit_code}</td>
                 <td>${command.command.replace(/^\.\//, '')}</td>
+                <td>${command.exit_code}</td>
+                <td><span class="status-icon status-${command.status}"></span>${command.status}</td>
                 <td>
                     ${command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}')">Stop</button>` : `<button onclick="relaunchCommand('${command.command_id}')">Run</button>`}
                 </td>
