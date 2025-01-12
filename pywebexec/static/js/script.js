@@ -182,7 +182,6 @@ async function stopCommand(command_id) {
         if (data.error) {
             alert(data.error);
         } else {
-            alert(data.message);
             fetchCommands();
         }
     } catch (error) {

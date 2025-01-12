@@ -278,7 +278,7 @@ def parseargs():
         "-t",
         "--title",
         type=str,
-        default="pywebexec",
+        default="PyWebExec",
         help="Web html title",
     )
     parser.add_argument("-c", "--cert", type=str, help="Path to https certificate")
