@@ -15,6 +15,7 @@ from gunicorn.app.base import Application
 import ipaddress
 from socket import gethostname, gethostbyname_ex
 import ssl
+import re
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
 
@@ -136,10 +137,28 @@ class StandaloneApplication(Application):
         return self.application
 
 
+def strip_ansi_control_chars(text):
+    """Remove ANSI and control characters from the text."""
+    # To clean
+    # ansi_escape = re.compile(r'''
+    #     (?:\x1B[@-_]|    # ANSI ESCape sequences
+    #     \x1B\[.*?[ -/]*[@-~]|  # ANSI CSI sequences
+    #     \x1B\].*?\x07|   # ANSI OSC sequences
+    #     \x1B=P|          # ANSI DCS sequences
+    #     \x1B\\|          # ANSI ST sequences
+    #     \x1B\^|          # ANSI PM sequences
+    #     \x1B_.*?\x1B\\|  # ANSI APC sequences
+    #     [\x00-\x1F\x7F]) # Control characters
+    # ''', re.VERBOSE)
+    # ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~]|[(]B)|>')
+    ansi_escape = re.compile(br'(?:\x1B[@-Z\\-_]|[\x80-\x9A\x9C-\x9F]|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B([(]B|>))')
+    return ansi_escape.sub(b'', text)
+
+
 def decode_line(line: bytes) -> str:
     """try decode line exception on binary"""
     try:
-        return line.decode()
+        return strip_ansi_control_chars(line).decode().strip(" ")
     except UnicodeDecodeError:
         return ""
 
@@ -149,17 +168,21 @@ def last_line(fd, maxline=1000):
     line = "\n"
     fd.seek(0, os.SEEK_END)
     size = 0
-    while line in ["\n", "\r"] and size < maxline:
+    last_pos = 0
+    while line in ["", "\n", "\r"] and size < maxline:
         try:  # catch if file empty / only empty lines
+            if last_pos:
+                fd.seek(last_pos-2, os.SEEK_SET)
             while fd.read(1) not in [b"\n", b"\r"]:
                 fd.seek(-2, os.SEEK_CUR)
                 size += 1
+                print(size)
         except OSError:
             fd.seek(0)
             line = decode_line(fd.readline())
             break
+        last_pos = fd.tell()
         line = decode_line(fd.readline())
-        fd.seek(-4, os.SEEK_CUR)
     return line.strip()
 
 
@@ -317,6 +340,7 @@ def update_command_status(command_id, status, command=None, params=None, start_t
     if status != 'running':
         output_file_path = get_output_file_path(command_id)
         if os.path.exists(output_file_path):
+            print(output_file_path)
             status_data['last_output_line'] = get_last_non_empty_line_of_file(output_file_path)
     with open(status_file_path, 'w') as f:
         json.dump(status_data, f)
@@ -474,7 +498,7 @@ def stop_command(command_id):
     end_time = datetime.now().isoformat()
     try:
         os.kill(pid, 15)  # Send SIGTERM
-        update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
+        #update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
         return jsonify({'message': 'Command aborted'})
     except Exception as e:
         status_data = read_command_status(command_id) or {}
@@ -518,6 +542,11 @@ def list_commands():
                 except AttributeError:
                     params = " ".join([shlex.quote(p) if " " in p else p for p in status['params']])
                 command = status.get('command', '-') + ' ' + params
+                last_line = status.get('last_output_line')
+                if last_line is None:
+                    output_file_path = get_output_file_path(command_id)
+                    if os.path.exists(output_file_path):
+                        last_line = get_last_non_empty_line_of_file(output_file_path)
                 commands.append({
                     'command_id': command_id,
                     'status': status['status'],
@@ -525,7 +554,7 @@ def list_commands():
                     'end_time': status.get('end_time', 'N/A'),
                     'command': command,
                     'exit_code': status.get('exit_code', 'N/A'),
-                    'last_output_line': status.get('last_output_line', get_last_non_empty_line_of_file(get_output_file_path(command_id))),
+                    'last_output_line': last_line,
                 })
     # Sort commands by start_time in descending order
     commands.sort(key=lambda x: x['start_time'], reverse=True)
