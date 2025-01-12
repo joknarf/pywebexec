@@ -5,6 +5,7 @@
     <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
     <title>{{ title }}</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/xterm.css">
 </head>
 <body>
     <div id="dimmer" class="dimmer">
@@ -39,6 +40,9 @@
         <div class="resizer" id="resizer"></div>
     </div>
     <div id="output" class="output"></div>
+    <script src="/static/js/ansi_up.min.js"></script>
+    <script src="/static/js/xterm.js"></script>
+    <script src="/static/js/xterm-addon-fit.js"></script>
     <script type="text/javascript" src="/static/js/script.js"></script>
 </body>
 </html>

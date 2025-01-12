@@ -1,5 +1,10 @@
 let currentCommandId = null;
 let outputInterval = null;
+const terminal = new Terminal();
+const fitAddon = new FitAddon.FitAddon();
+terminal.loadAddon(fitAddon);
+terminal.open(document.getElementById('output'));
+fitAddon.fit();
 
 document.getElementById('launchForm').addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -90,18 +95,17 @@ async function fetchExecutables() {
 
 async function fetchOutput(command_id) {
     try {
-        const outputDiv = document.getElementById('output');
         const response = await fetch(`/command_output/${command_id}`);
         if (!response.ok) {
             return;
         }
         const data = await response.json();
         if (data.error) {
-            outputDiv.innerHTML = data.error;
+            terminal.write(data.error);
             clearInterval(outputInterval);
         } else {
-            outputDiv.innerHTML = data.output;
-            outputDiv.scrollTop = outputDiv.scrollHeight;
+            terminal.clear();
+            terminal.write(data.output.replace(/\n/g, '\n\r'));
             if (data.status != 'running') {
                 clearInterval(outputInterval);
             }
@@ -220,7 +224,8 @@ function adjustOutputHeight() {
     const windowHeight = window.innerHeight;
     const outputTop = outputDiv.getBoundingClientRect().top;
     const maxHeight = windowHeight - outputTop - 30; // 20px for padding/margin
-    outputDiv.style.maxHeight = `${maxHeight}px`;
+    outputDiv.style.height = `${maxHeight}px`;
+    fitAddon.fit();
 }
 
 function initResizer() {
