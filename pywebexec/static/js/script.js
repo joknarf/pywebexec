@@ -41,8 +41,7 @@ async function fetchCommands() {
             <td>${command.exit_code}</td>
             <td>${command.command.replace(/^\.\//, '')}</td>
             <td>
-                ${command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}')">Stop</button>` : `                <button onclick="relaunchCommand('${command.command_id}')">Run</button>
-`}
+                ${command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}')">Stop</button>` : `<button onclick="relaunchCommand('${command.command_id}')">Run</button>`}
             </td>
             <td class="monospace outcol">${command.last_output_line || ''}</td>
         `;
