@@ -176,7 +176,6 @@ def last_line(fd, maxline=1000):
             while fd.read(1) not in [b"\n", b"\r"]:
                 fd.seek(-2, os.SEEK_CUR)
                 size += 1
-                print(size)
         except OSError:
             fd.seek(0)
             line = decode_line(fd.readline())
