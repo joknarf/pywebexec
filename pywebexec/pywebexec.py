@@ -541,6 +541,8 @@ def get_command_output(command_id):
         with open(output_file_path, 'r') as output_file:
             output = output_file.read()
         status_data = read_command_status(command_id) or {}
+        if request.headers.get('Accept') == 'text/plain':
+            return f"{output}\nstatus: {status_data.get('status')}", 200, {'Content-Type': 'text/plain'}
         return jsonify({'output': output, 'status': status_data.get("status")})
     return jsonify({'error': 'Invalid command_id'}), 404
 
