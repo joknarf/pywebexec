@@ -137,27 +137,37 @@ class StandaloneApplication(Application):
         return self.application
 
 
+ANSI_ESCAPE = re.compile(br'(?:\x1B[@-Z\\-_]|\x1B([(]B|>)|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B\[[0-9]{1,2};[0-9]{1,2}[m|K]|\x1B\[[0-9;]*[mGKHF]|[\x00-\x1F\x7F])')
+
 def strip_ansi_control_chars(text):
     """Remove ANSI and control characters from the text."""
     # To clean
-    # ansi_escape = re.compile(r'''
-    #     (?:\x1B[@-_]|    # ANSI ESCape sequences
-    #     \x1B\[.*?[ -/]*[@-~]|  # ANSI CSI sequences
-    #     \x1B\].*?\x07|   # ANSI OSC sequences
-    #     \x1B=P|          # ANSI DCS sequences
-    #     \x1B\\|          # ANSI ST sequences
-    #     \x1B\^|          # ANSI PM sequences
-    #     \x1B_.*?\x1B\\|  # ANSI APC sequences
-    #     [\x00-\x1F\x7F]) # Control characters
+    # ansi_escape = re.compile(br'''
+    #      (
+    #      \x1B[@-_]|    # ANSI ESCape sequences
+    #      \x1B\[[0-9]{1,2};[0-9]{1,2}[m|K]| # ANSI color sequences
+    #      \x1B\[[0-9;]*[mGKHF]| # ANSI color sequences
+    #      \x1B\[.*?[ -/]*[@-~]|  # ANSI CSI sequences
+    #      \x1B\].*?\x07|   # ANSI OSC sequences
+    #      \x1B=P|          # ANSI DCS sequences
+    #      \x1B\\|          # ANSI ST sequences
+    #      \x1B\^|          # ANSI PM sequences
+    #      \x1B_.*?\x1B\\|  # ANSI APC sequences
+    #      [\x00-\x1F\x7F]| # Control characters
+    #      \x1B([(]B|>)
+    #      )
     # ''', re.VERBOSE)
+
     # ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~]|[(]B)|>')
-    ansi_escape = re.compile(br'(?:\x1B[@-Z\\-_]|[\x80-\x9A\x9C-\x9F]|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B([(]B|>))')
-    return ansi_escape.sub(b'', text)
+    # ansi_escape = re.compile(br'(?:\x1B\[[0-9]{1,2};[0-9]{1,2}[m|K]|\x1B[@-Z\\-_]|[\x80-\x9A\x9C-\x9F]|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B([(]B|>))')
+    return ANSI_ESCAPE.sub(b'', text)
 
 
 def decode_line(line: bytes) -> str:
     """try decode line exception on binary"""
     try:
+        print(line.decode())
+        print("=>", strip_ansi_control_chars(line).decode())
         return strip_ansi_control_chars(line).decode().strip(" ")
     except UnicodeDecodeError:
         return ""
@@ -268,7 +278,7 @@ def parseargs():
         "-t",
         "--title",
         type=str,
-        default="pywebexec",
+        default="PyWebExec",
         help="Web html title",
     )
     parser.add_argument("-c", "--cert", type=str, help="Path to https certificate")

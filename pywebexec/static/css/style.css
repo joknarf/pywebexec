@@ -1,5 +1,6 @@
 body {
-    font-family: Arial, sans-serif; 
+    font-family: Arial, sans-serif;
+    overflow: hidden;
 }
 .table-container {
     height: 270px;
@@ -36,12 +37,12 @@ select { /* Safari bug */
 }
 .output {
     white-space: pre-wrap;
-    background: #f0f0f0;
+    background: #111;
     padding: 10px;
     border: 1px solid #ccc;
     font-family: monospace;
     border-radius: 10px;
-    overflow-y: auto;
+    overflow-y: hidden;
 }
 .copy-icon { cursor: pointer; }
 .monospace { font-family: monospace; }
@@ -156,6 +157,7 @@ body.dimmed * {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 1000;
+    overflow-y: hidden;
 }
 .dimmer-text {
     color: white;
@@ -165,4 +167,9 @@ body.dimmed * {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+}
+.xterm-cursor {
+    display: none;
+    visibility: hidden;
+    height: 0px;
 }
