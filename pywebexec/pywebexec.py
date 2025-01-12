@@ -342,7 +342,10 @@ def read_command_status(command_id):
     if not os.path.exists(status_file_path):
         return None
     with open(status_file_path, 'r') as f:
-        status_data = json.load(f)
+        try:
+            status_data = json.load(f)
+        except json.JSONDecodeError:
+            return None
     
     # Cache the status if it is not "running"
     if status_data['status'] != 'running':
@@ -520,7 +523,7 @@ def list_commands():
                     params = shlex.join(status['params'])
                 except AttributeError:
                     params = " ".join([shlex.quote(p) if " " in p else p for p in status['params']])
-                command = status['command'] + ' ' + params
+                command = status.get('command', '-') + ' ' + params
                 commands.append({
                     'command_id': command_id,
                     'status': status['status'],
