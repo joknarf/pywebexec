@@ -173,3 +173,6 @@ body.dimmed * {
     visibility: hidden;
     height: 0px;
 }
+.xterm-rows {
+    font-family: monospace, courier-new, courier !important;
+}
