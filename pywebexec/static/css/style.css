@@ -41,7 +41,7 @@ select { /* Safari bug */
     border: 1px solid #ccc;
     font-family: monospace;
     border-radius: 10px;
-    overflow-y: auto;
+    overflow-y: none;
 }
 .copy-icon { cursor: pointer; }
 .monospace { font-family: monospace; }
