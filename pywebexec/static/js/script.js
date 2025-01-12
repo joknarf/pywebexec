@@ -1,6 +1,10 @@
 let currentCommandId = null;
 let outputInterval = null;
-const terminal = new Terminal();
+const terminal = new Terminal({
+    cursorBlink: false,
+    cursorHidden: true,
+    disableStdin: true
+});
 const fitAddon = new FitAddon.FitAddon();
 terminal.loadAddon(fitAddon);
 terminal.open(document.getElementById('output'));
