@@ -37,8 +37,8 @@ all commands output / statuses are available in the executables directory in sub
 * Basic Auth
 * LDAP(S)
 * Can be started as a daemon (POSIX)
-* uses gunicorn to serve http/https
-* compatible Linux/MacOS
+* Uses gunicorn to serve http/https
+* Linux/MacOS compatible
 
 ## Customize server
 ```shell
@@ -86,12 +86,14 @@ $ pywebexec start
 $ pywebexec status
 $ pywebexec stop
 ```
-* log of server are stored in directory `[.config/].pywebexec/pywebexec_<listen>:<port>.log`
+* log of server are stored in directory `~/[.config/].pywebexec/pywebexec_<listen>:<port>.log`
 
 ## Launch command through API
 
 ```shell
-$ curl http://myhost:8080/run_script -H 'Content-Type: application/json' -X POST -d '{ "script_name":"myscript", "param":["param1", ...]}
+$ curl http://myhost:8080/run_script -H 'Content-Type: application/json' -X POST -d '{ "script_name":"myscript", "params":["param1", ...]}
+$ curl http://myhost:8080/command_status/<uuid>
+$ curl http://myhost:8080/command_output/<uuid> -H "Accept: text/plain"
 ```
 
 ## API reference
