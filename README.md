@@ -92,8 +92,8 @@ $ pywebexec stop
 
 ```shell
 $ curl http://myhost:8080/run_script -H 'Content-Type: application/json' -X POST -d '{ "script_name":"myscript", "params":["param1", ...]}
-$ curl http://myhost:8080/command_status/<uuid>
-$ curl http://myhost:8080/command_output/<uuid> -H "Accept: text/plain"
+$ curl http://myhost:8080/command_status/<command_id>
+$ curl http://myhost:8080/command_output/<command_id> -H "Accept: text/plain"
 ```
 
 ## API reference
