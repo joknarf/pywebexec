@@ -62,6 +62,7 @@ async function fetchCommands() {
         document.getElementById('dimmer').style.display = 'none';
     } catch (error) {
         console.log('Error fetching commands:', error);
+        document.getElementById('dimmer').style.display = 'block';
     }
 }
 
