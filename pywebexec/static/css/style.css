@@ -74,7 +74,8 @@ form {
 .title-icon {
     width: 30px;
     height: 30px;
-    background-image: url("/static/images/favicon.svg")
+    background-image: url("/static/images/favicon.svg");
+    vertical-align: bottom;
 }
 .status-running { 
     background-image: url("/static/images/running.gif")

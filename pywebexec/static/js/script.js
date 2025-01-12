@@ -17,6 +17,7 @@ document.getElementById('launchForm').addEventListener('submit', async (event) =
             throw new Error('Failed to launch command');
         }
         const data = await response.json();
+        await new Promise(r => setTimeout(r, 200));
         fetchCommands();
         viewOutput(data.command_id);
     } catch (error) {
