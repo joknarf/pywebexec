@@ -69,14 +69,14 @@ $ pywebexec
 
 * Generate auto-signed certificate and start https server
 ```shell
-$ pywebfs --gencert
-$ pywebfs --g
+$ pywebexec --gencert
+$ pywebexec --g
 ```
 
 * Start https server using existing certificate
 ```shell
-$ pywebfs --cert /pathto/host.cert --key /pathto/host.key
-$ pywebfs -c /pathto/host.cert -k /pathto/host.key
+$ pywebexec --cert /pathto/host.cert --key /pathto/host.key
+$ pywebexec -c /pathto/host.cert -k /pathto/host.key
 ```
 
 ## Launch server as a daemon
