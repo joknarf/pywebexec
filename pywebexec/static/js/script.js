@@ -45,7 +45,7 @@ async function fetchCommands() {
             commandRow.onclick = () => viewOutput(command.command_id);
             commandRow.innerHTML = `
                 <td class="monospace">
-                    ${navigator.clipboard == undefined ? `${command.command_id}` : `<span class="copy_clip" onclick="copyToClipboard('${command.command_id.slice(0, 8)}', this, event)">${command.command_id.slice(0, 8)}</span>`}
+                    ${navigator.clipboard == undefined ? `${command.command_id.slice(0, 8)}` : `<span class="copy_clip" onclick="copyToClipboard('${command.command_id}', this, event)">${command.command_id.slice(0, 8)}</span>`}
                 </td>
                 <td><span class="status-icon status-${command.status}"></span>${command.status}</td>
                 <td>${formatTime(command.start_time)}</td>
