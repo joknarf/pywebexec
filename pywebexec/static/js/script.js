@@ -33,7 +33,7 @@ async function fetchCommands() {
         commandRow.onclick = () => viewOutput(command.command_id);
         commandRow.innerHTML = `
             <td class="monospace">
-                <span class="copy_clip" onclick="copyToClipboard('${command.command_id}', this)">${command.command_id.slice(0, 8)}</span>
+                <span class="copy_clip" onclick="copyToClipboard('${command.command_id}', this, event)">${command.command_id.slice(0, 8)}</span>
             </td>
             <td><span class="status-icon status-${command.status}"></span>${command.status}</td>
             <td>${formatTime(command.start_time)}</td>
@@ -145,12 +145,14 @@ function formatDuration(startTime, endTime) {
     return `${hours}h ${minutes}m ${seconds}s`;
 }
 
-function copyToClipboard(text, element) {
+function copyToClipboard(text, element, event) {
+    event.stopPropagation();
+    event.stopImmediatePropagation();
     navigator.clipboard.writeText(text).then(() => {
         element.classList.add('copy_clip_ok');
         setTimeout(() => {
             element.classList.remove('copy_clip_ok');
-        }, 2000);
+        }, 1000);
     });
 }
 

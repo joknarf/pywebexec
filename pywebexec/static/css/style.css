@@ -89,10 +89,10 @@ form {
     background-image: url("/static/images/aborted.svg")
 }
 .copy_clip {
-    padding-right: 25px;
+    padding-right: 20px;
     background-repeat: no-repeat;
     background-position: right top;
-    background-size: 25px 16px;
+    background-size: 20px 12px;
     white-space: nowrap;
 }
 .copy_clip:hover {
