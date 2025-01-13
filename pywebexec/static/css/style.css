@@ -40,12 +40,11 @@ select { /* Safari bug */
     background: #111;
     padding: 10px;
     border: 1px solid #ccc;
-    font-family: monospace;
     border-radius: 10px;
     overflow-y: hidden;
 }
 .copy-icon { cursor: pointer; }
-.monospace { font-family: monospace; }
+.monospace { font-family: Consolas NF, monospace; }
 .copied { color: green; margin-left: 5px; }
 button {
     -webkit-appearance: none;
