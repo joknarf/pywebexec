@@ -555,14 +555,24 @@ def list_commands():
 
 @app.route('/command_output/<command_id>', methods=['GET'])
 def get_command_output(command_id):
+    offset = int(request.args.get('offset', 0))
     output_file_path = get_output_file_path(command_id)
     if os.path.exists(output_file_path):
         with open(output_file_path, 'r') as output_file:
+            output_file.seek(offset)
             output = output_file.read()
+            new_offset = output_file.tell()
         status_data = read_command_status(command_id) or {}
+        response = {
+            'output': output,
+            'status': status_data.get("status"),
+            'links': {
+                'next': f'/command_output/{command_id}?offset={new_offset}'
+            }
+        }
         if request.headers.get('Accept') == 'text/plain':
-            return f"{output}\nstatus: {status_data.get('status')}", 200, {'Content-Type': 'text/plain'}
-        return jsonify({'output': output, 'status': status_data.get("status")})
+            return f"{output}\nstatus: {status_data.get('status')}\nnext: /command_output/{command_id}?offset={new_offset}", 200, {'Content-Type': 'text/plain'}
+        return jsonify(response)
     return jsonify({'error': 'Invalid command_id'}), 404
 
 @app.route('/executables', methods=['GET'])

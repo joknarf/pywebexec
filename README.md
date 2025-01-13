@@ -104,6 +104,6 @@ $ curl http://myhost:8080/command_output/<command_id> -H "Accept: text/plain"
 | POST      | /run_command                | command: str<br>params: array[str]       | command_id: uuid<br>message: str    |
 | POST      | /stop_command/command_id    |                    | message: str        |
 | GET       | /command_status/command_id  |                    | command_id: uuid<br>command: str<br>params: array[str]<br>start_time: isotime<br>end_time: isotime<br>status: str<br>exit_code: int<br>last_output_line: str      |
-| GET       | /command_output/command_id  |                    | output: str<br>status: str         |
+| GET       | /command_output/command_id  | offset: int        | output: str<br>status: str<br>links: { next: str }         |
 | GET       | /commands                   |                    | array of<br>command_id: uuid<br>command: str<br>start_time: isotime<br>end_time: isotime<br>status: str<br>exit_code: int<br>last_output_line: str      |
 | GET       | /executables                |                    | array of str        |
