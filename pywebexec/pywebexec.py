@@ -277,6 +277,8 @@ def parseargs():
         sys.exit(1)
     if not os.path.exists(COMMAND_STATUS_DIR):
         os.makedirs(COMMAND_STATUS_DIR)
+    if not os.path.exists(CONFDIR):
+        os.mkdir(CONFDIR, mode=0o700)
     if args.gencert:
         hostname = resolve_hostname(gethostname())
         args.cert = args.cert or f"{CONFDIR}/pywebexec.crt"
@@ -582,8 +584,6 @@ def list_executables():
 
 def main():
     basef = f"{CONFDIR}/pywebexec_{args.listen}:{args.port}"
-    if not os.path.exists(CONFDIR):
-        os.mkdir(CONFDIR, mode=0o700)
     if args.action == "start":
         return start_gunicorn(daemon=True, baselog=basef)
     if args.action:
