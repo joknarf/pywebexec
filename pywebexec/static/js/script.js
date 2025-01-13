@@ -1,14 +1,27 @@
 let currentCommandId = null;
 let outputInterval = null;
+let nextOutputLink = null;
+
 const terminal = new Terminal({
     cursorBlink: false,
     cursorHidden: true,
-    disableStdin: true
+    disableStdin: true,
+    convertEol: true,
+    fontFamily: 'Consolas NF, monospace, courier-new, courier'
 });
 const fitAddon = new FitAddon.FitAddon();
 terminal.loadAddon(fitAddon);
 terminal.open(document.getElementById('output'));
 fitAddon.fit();
+
+terminal.onSelectionChange(() => {
+    const selectionText = terminal.getSelection();
+    if (selectionText) {
+        navigator.clipboard.writeText(selectionText).catch(err => {
+            console.error('Failed to copy text to clipboard:', err);
+        });
+    }
+});
 
 document.getElementById('launchForm').addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -97,9 +110,9 @@ async function fetchExecutables() {
     }
 }
 
-async function fetchOutput(command_id) {
+async function fetchOutput(url) {
     try {
-        const response = await fetch(`/command_output/${command_id}`);
+        const response = await fetch(url);
         if (!response.ok) {
             return;
         }
@@ -108,8 +121,8 @@ async function fetchOutput(command_id) {
             terminal.write(data.error);
             clearInterval(outputInterval);
         } else {
-            terminal.clear();
-            terminal.write(data.output.replace(/\n/g, '\n\r'));
+            terminal.write(data.output);
+            nextOutputLink = data.links.next;
             if (data.status != 'running') {
                 clearInterval(outputInterval);
             }
@@ -122,7 +135,9 @@ async function fetchOutput(command_id) {
 async function viewOutput(command_id) {
     adjustOutputHeight();
     currentCommandId = command_id;
+    nextOutputLink = `/command_output/${command_id}`;
     clearInterval(outputInterval);
+    terminal.clear();
     try {
         const response = await fetch(`/command_status/${command_id}`);
         if (!response.ok) {
@@ -130,10 +145,10 @@ async function viewOutput(command_id) {
         }
         const data = await response.json();
         if (data.status === 'running') {
-            fetchOutput(command_id);
-            outputInterval = setInterval(() => fetchOutput(command_id), 1000);
+            fetchOutput(nextOutputLink);
+            outputInterval = setInterval(() => fetchOutput(nextOutputLink), 1000);
         } else {
-            fetchOutput(command_id);
+            fetchOutput(nextOutputLink);
         }
         fetchCommands(); // Refresh the command list to highlight the current command
     } catch (error) {

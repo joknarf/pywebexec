@@ -173,6 +173,6 @@ body.dimmed * {
     visibility: hidden;
     height: 0px;
 }
-.xterm-rows {
-    font-family: monospace, courier-new, courier !important;
+span { /* allow wide chars in terminal */
+    letter-spacing: unset !important;
 }
