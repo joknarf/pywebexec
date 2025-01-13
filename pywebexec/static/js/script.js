@@ -6,12 +6,22 @@ const terminal = new Terminal({
     cursorBlink: false,
     cursorHidden: true,
     disableStdin: true,
-    convertEol: true
+    convertEol: true,
+    fontFamily: 'Consolas NF, monospace, courier-new, courier'
 });
 const fitAddon = new FitAddon.FitAddon();
 terminal.loadAddon(fitAddon);
 terminal.open(document.getElementById('output'));
 fitAddon.fit();
+
+terminal.onSelectionChange(() => {
+    const selectionText = terminal.getSelection();
+    if (selectionText) {
+        navigator.clipboard.writeText(selectionText).catch(err => {
+            console.error('Failed to copy text to clipboard:', err);
+        });
+    }
+});
 
 document.getElementById('launchForm').addEventListener('submit', async (event) => {
     event.preventDefault();
