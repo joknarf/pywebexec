@@ -176,3 +176,6 @@ body.dimmed * {
 .xterm-rows {
     font-family: Consolas NF, monospace, courier-new, courier !important;
 }
+span { /* allow wide chars in terminal */
+    letter-spacing: unset !important;
+}

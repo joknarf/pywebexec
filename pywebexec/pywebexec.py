@@ -558,9 +558,9 @@ def get_command_output(command_id):
     offset = int(request.args.get('offset', 0))
     output_file_path = get_output_file_path(command_id)
     if os.path.exists(output_file_path):
-        with open(output_file_path, 'r') as output_file:
+        with open(output_file_path, 'rb') as output_file:
             output_file.seek(offset)
-            output = output_file.read()
+            output = output_file.read().decode('utf-8', errors='replace')
             new_offset = output_file.tell()
         status_data = read_command_status(command_id) or {}
         response = {

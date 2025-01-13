@@ -5,7 +5,8 @@ let nextOutputLink = null;
 const terminal = new Terminal({
     cursorBlink: false,
     cursorHidden: true,
-    disableStdin: true
+    disableStdin: true,
+    convertEol: true
 });
 const fitAddon = new FitAddon.FitAddon();
 terminal.loadAddon(fitAddon);
@@ -110,7 +111,7 @@ async function fetchOutput(url) {
             terminal.write(data.error);
             clearInterval(outputInterval);
         } else {
-            terminal.write(data.output.replace(/\n/g, '\n\r'));
+            terminal.write(data.output);
             nextOutputLink = data.links.next;
             if (data.status != 'running') {
                 clearInterval(outputInterval);
