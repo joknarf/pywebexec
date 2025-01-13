@@ -567,11 +567,11 @@ def get_command_output(command_id):
             'output': output,
             'status': status_data.get("status"),
             'links': {
-                'next': f'/command_output/{command_id}?offset={new_offset}'
+                'next': f'{request.url_root}command_output/{command_id}?offset={new_offset}'
             }
         }
         if request.headers.get('Accept') == 'text/plain':
-            return f"{output}\nstatus: {status_data.get('status')}\nnext: /command_output/{command_id}?offset={new_offset}", 200, {'Content-Type': 'text/plain'}
+            return f"{output}\nstatus: {status_data.get('status')}", 200, {'Content-Type': 'text/plain'}
         return jsonify(response)
     return jsonify({'error': 'Invalid command_id'}), 404
 
