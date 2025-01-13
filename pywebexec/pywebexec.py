@@ -141,33 +141,12 @@ ANSI_ESCAPE = re.compile(br'(?:\x1B[@-Z\\-_]|\x1B([(]B|>)|(?:\x1B\[|\x9B)[0-?]*[
 
 def strip_ansi_control_chars(text):
     """Remove ANSI and control characters from the text."""
-    # To clean
-    # ansi_escape = re.compile(br'''
-    #      (
-    #      \x1B[@-_]|    # ANSI ESCape sequences
-    #      \x1B\[[0-9]{1,2};[0-9]{1,2}[m|K]| # ANSI color sequences
-    #      \x1B\[[0-9;]*[mGKHF]| # ANSI color sequences
-    #      \x1B\[.*?[ -/]*[@-~]|  # ANSI CSI sequences
-    #      \x1B\].*?\x07|   # ANSI OSC sequences
-    #      \x1B=P|          # ANSI DCS sequences
-    #      \x1B\\|          # ANSI ST sequences
-    #      \x1B\^|          # ANSI PM sequences
-    #      \x1B_.*?\x1B\\|  # ANSI APC sequences
-    #      [\x00-\x1F\x7F]| # Control characters
-    #      \x1B([(]B|>)
-    #      )
-    # ''', re.VERBOSE)
-
-    # ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~]|[(]B)|>')
-    # ansi_escape = re.compile(br'(?:\x1B\[[0-9]{1,2};[0-9]{1,2}[m|K]|\x1B[@-Z\\-_]|[\x80-\x9A\x9C-\x9F]|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B([(]B|>))')
     return ANSI_ESCAPE.sub(b'', text)
 
 
 def decode_line(line: bytes) -> str:
     """try decode line exception on binary"""
     try:
-        print(line.decode())
-        print("=>", strip_ansi_control_chars(line).decode())
         return strip_ansi_control_chars(line).decode().strip(" ")
     except UnicodeDecodeError:
         return ""
@@ -330,7 +309,7 @@ def get_status_file_path(command_id):
 def get_output_file_path(command_id):
     return os.path.join(COMMAND_STATUS_DIR, f'{command_id}_output.txt')
 
-def update_command_status(command_id, status, command=None, params=None, start_time=None, end_time=None, exit_code=None, pid=None):
+def update_command_status(command_id, status, command=None, params=None, start_time=None, end_time=None, exit_code=None, pid=None, user=None):
     status_file_path = get_status_file_path(command_id)
     status_data = read_command_status(command_id) or {}
     status_data['status'] = status
@@ -346,10 +325,11 @@ def update_command_status(command_id, status, command=None, params=None, start_t
         status_data['exit_code'] = exit_code
     if pid is not None:
         status_data['pid'] = pid
+    if user is not None:
+        status_data['user'] = user
     if status != 'running':
         output_file_path = get_output_file_path(command_id)
         if os.path.exists(output_file_path):
-            print(output_file_path)
             status_data['last_output_line'] = get_last_non_empty_line_of_file(output_file_path)
     with open(status_file_path, 'w') as f:
         json.dump(status_data, f)
@@ -383,15 +363,15 @@ def read_command_status(command_id):
 # Dictionary to store the process objects
 processes = {}
 
-def run_command(command, params, command_id):
+def run_command(command, params, command_id, user):
     start_time = datetime.now().isoformat()
-    update_command_status(command_id, 'running', command=command, params=params, start_time=start_time)
+    update_command_status(command_id, 'running', command=command, params=params, start_time=start_time, user=user)
     try:
         output_file_path = get_output_file_path(command_id)
         with open(output_file_path, 'w') as output_file:
             # Run the command with parameters and redirect stdout and stderr to the file
             process = subprocess.Popen([command] + params, stdout=output_file, stderr=output_file, bufsize=0) #text=True)
-            update_command_status(command_id, 'running', pid=process.pid)
+            update_command_status(command_id, 'running', pid=process.pid, user=user)
             processes[command_id] = process
             process.wait()
             processes.pop(command_id, None)
@@ -399,14 +379,14 @@ def run_command(command, params, command_id):
         end_time = datetime.now().isoformat()
         # Update the status based on the result
         if process.returncode == 0:
-            update_command_status(command_id, 'success', end_time=end_time, exit_code=process.returncode)
+            update_command_status(command_id, 'success', end_time=end_time, exit_code=process.returncode, user=user)
         elif process.returncode == -15:
-            update_command_status(command_id, 'aborted', end_time=end_time, exit_code=process.returncode)
+            update_command_status(command_id, 'aborted', end_time=end_time, exit_code=process.returncode, user=user)
         else:
-            update_command_status(command_id, 'failed', end_time=end_time, exit_code=process.returncode)
+            update_command_status(command_id, 'failed', end_time=end_time, exit_code=process.returncode, user=user)
     except Exception as e:
         end_time = datetime.now().isoformat()
-        update_command_status(command_id, 'failed', end_time=end_time, exit_code=1)
+        update_command_status(command_id, 'failed', end_time=end_time, exit_code=1, user=user)
         with open(get_output_file_path(command_id), 'a') as output_file:
             output_file.write(str(e))
 
@@ -420,6 +400,7 @@ def check_authentication():
 @auth.verify_password
 def verify_password(username, password):
     if not username:
+        session['username'] = '-'
         return False
     if app.config['USER']:
         if username == app.config['USER'] and password == app.config['PASSWORD']:
@@ -488,11 +469,14 @@ def run_command_endpoint():
     # Generate a unique command_id
     command_id = str(uuid.uuid4())
 
+    # Get the user from the session
+    user = session.get('username', '-')
+
     # Set the initial status to running and save command details
-    update_command_status(command_id, 'running', command, params)
+    update_command_status(command_id, 'running', command, params, user=user)
 
     # Run the command in a separate thread
-    thread = threading.Thread(target=run_command, args=(command_path, params, command_id))
+    thread = threading.Thread(target=run_command, args=(command_path, params, command_id, user))
     thread.start()
 
     return jsonify({'message': 'Command is running', 'command_id': command_id})

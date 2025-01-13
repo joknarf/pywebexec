@@ -174,5 +174,5 @@ body.dimmed * {
     height: 0px;
 }
 .xterm-rows {
-    font-family: monospace, courier-new, courier !important;
+    font-family: Consolas NF, monospace, courier-new, courier !important;
 }
