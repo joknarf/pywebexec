@@ -109,13 +109,12 @@ async function fetchExecutables() {
             throw new Error('Failed to fetch command status');
         }
         const executables = await response.json();
-        const commandNameSelect = document.getElementById('commandName');
-        commandNameSelect.innerHTML = '';
+        const commandList = document.getElementById('commandList');
+        commandList.innerHTML = '';
         executables.forEach(executable => {
             const option = document.createElement('option');
             option.value = executable;
-            option.textContent = executable;
-            commandNameSelect.appendChild(option);
+            commandList.appendChild(option);
         });
     } catch (error) {
         console.log('Error fetching executables:', error);
@@ -285,6 +284,11 @@ function initResizer() {
         document.documentElement.removeEventListener('mouseup', stopDrag, false);
     }
 }
+
+document.getElementById('commandName').addEventListener('mouseover', () => {
+    document.getElementById('commandName').focus();
+    document.getElementById('commandName').setAttribute('list', 'commandList');
+});
 
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', () => {

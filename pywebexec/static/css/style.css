@@ -103,8 +103,7 @@ form {
 .copy_clip_ok, .copy_clip_ok:hover {
     background-image: url("/static/images/copy_ok.svg");
 }
-input {
-    width: 50%;
+#params, #commandName {
     -webkit-appearance: none;
     -webkit-border-radius: none;
     appearance: none;
@@ -117,6 +116,23 @@ input {
     outline: none;
     text-indent: 5px;
     background-color: white;
+}
+
+[list]::-webkit-calendar-picker-indicator {
+    display: none !important;
+}
+#commandName:focus, #commandName:hover {
+    background: url('/static/images/down-arrow.svg') no-repeat calc(100% - 5px) center;
+    background-size: 16px 16px;
+    padding-right: 16px;
+}
+#commandName {
+    background-size: 16px 16px;
+    border-radius: 15px 0px 0px 15px;
+}
+#params {
+    width: 50%;
+    border-radius: 0px 15px 15px 0px;
 }
 .currentcommand {
     background-color: #eef;
@@ -173,7 +189,6 @@ body.dimmed * {
     height: 0px;
 }
 /* allow wide chars in terminal */
-
 span {
     letter-spacing: -0.03px !important;
 }

@@ -14,8 +14,8 @@
     <h2><span class="status-icon title-icon"></span>{{ title }}</h2>
     <form id="launchForm">
         <label for="commandName">Command</label>
-        <select id="commandName" name="commandName"></select>
-        <label for="params">Params</label>
+        <input list="commandList" id="commandName" name="commandName">
+        <datalist id="commandList"></datalist>
         <input type="text" id="params" name="params">
         <button type="submit">Run</button>
     </form>
