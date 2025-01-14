@@ -172,6 +172,9 @@ body.dimmed * {
     visibility: hidden;
     height: 0px;
 }
-span { /* allow wide chars in terminal */
-    letter-spacing: unset !important;
+/* allow wide chars in terminal */
+
+span {
+    letter-spacing: -0.03px !important;
 }
+

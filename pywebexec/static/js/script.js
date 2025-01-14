@@ -7,7 +7,21 @@ const terminal = new Terminal({
     cursorHidden: true,
     disableStdin: true,
     convertEol: true,
-    fontFamily: 'Consolas NF, monospace, courier-new, courier'
+    fontFamily: 'Consolas NF, monospace, courier-new, courier',
+    scrollBack: 999999,
+    theme: {
+        background: '#111412',
+        black: '#111412',
+        green: '#088a5b',
+        blue: "#2760aa",
+        red: '#ba1611',
+        yellow: "#cf8700",
+        magenta: "#4c3d80",
+        cyan: "#00a7aa",
+        brightBlack: "#243C4F",
+        brightBlue: "#5584b1",
+    },
+    rescaleOverlappingGlyphs: true,
 });
 const fitAddon = new FitAddon.FitAddon();
 terminal.loadAddon(fitAddon);
@@ -75,7 +89,7 @@ async function fetchCommands() {
                 <td>${command.command.replace(/^\.\//, '')}</td>
                 <td><span class="status-icon status-${command.status}"></span>${command.status}${command.status === 'failed' ? ` (${command.exit_code})` : ''}</td>
                 <td>
-                    ${command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}')">Stop</button>` : `<button onclick="relaunchCommand('${command.command_id}')">Run</button>`}
+                    ${command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}', event)">Stop</button>` : `<button onclick="relaunchCommand('${command.command_id}', event)">Run</button>`}
                 </td>
                 <td class="monospace outcol">${command.last_output_line || ''}</td>
             `;
@@ -155,7 +169,9 @@ async function viewOutput(command_id) {
     }
 }
 
-async function relaunchCommand(command_id) {
+async function relaunchCommand(command_id, event) {
+    event.stopPropagation();
+    event.stopImmediatePropagation();
     try {
         const response = await fetch(`/command_status/${command_id}`);
         if (!response.ok) {
@@ -188,7 +204,9 @@ async function relaunchCommand(command_id) {
     }
 }
 
-async function stopCommand(command_id) {
+async function stopCommand(command_id, event) {
+    event.stopPropagation();
+    event.stopImmediatePropagation();
     try {
         const response = await fetch(`/stop_command/${command_id}`, {
             method: 'POST'
