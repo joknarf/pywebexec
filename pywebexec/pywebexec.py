@@ -533,7 +533,7 @@ def list_commands():
             status = read_command_status(command_id)
             if status:
                 try:
-                    params = shlex.join(status['params'])
+                    params = shlex.join(status.get('params', []))
                 except AttributeError:
                     params = " ".join([shlex.quote(p) if " " in p else p for p in status['params']])
                 command = status.get('command', '-') + ' ' + params
