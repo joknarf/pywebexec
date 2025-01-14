@@ -287,7 +287,27 @@ function initResizer() {
 
 document.getElementById('commandName').addEventListener('mouseover', () => {
     document.getElementById('commandName').focus();
-    document.getElementById('commandName').setAttribute('list', 'commandList');
+});
+
+document.getElementById('commandName').addEventListener('input', (event) => {
+    const input = document.getElementById('commandName');
+    const datalist = document.getElementById('commandList');
+    const options = Array.from(datalist.options);
+    if (event.inputType === 'deleteContentBackward') {
+        const newValue = input.value.slice(0, -1);
+        input.value = newValue;
+        input.setSelectionRange(newValue.length, newValue.length);
+    }
+    const value = input.value
+    if (value) {
+        const match = options.find(option => option.value.startsWith(value));
+        if (match) {
+            input.value = match.value;
+            input.setSelectionRange(value.length, match.value.length);
+        }else{
+            input.value = value.slice(0, -1);
+        }
+    }
 });
 
 window.addEventListener('resize', adjustOutputHeight);
