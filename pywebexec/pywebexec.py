@@ -580,6 +580,7 @@ def get_command_output(command_id):
 @app.route('/executables', methods=['GET'])
 def list_executables():
     executables = [f for f in os.listdir('.') if os.path.isfile(f) and os.access(f, os.X_OK)]
+    executables.sort()  # Sort the list of executables alphabetically
     return jsonify(executables)
 
 def main():
