@@ -62,6 +62,11 @@ button {
 form {
     padding-bottom: 15px;
 }
+.form-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 .status-icon {
     display: inline-block;
     width: 16px;
@@ -103,8 +108,7 @@ form {
 .copy_clip_ok, .copy_clip_ok:hover {
     background-image: url("/static/images/copy_ok.svg");
 }
-input {
-    width: 50%;
+#params, #commandName {
     -webkit-appearance: none;
     -webkit-border-radius: none;
     appearance: none;
@@ -117,7 +121,75 @@ input {
     outline: none;
     text-indent: 5px;
     background-color: white;
+    margin: 0; /* Remove margin */
 }
+
+.input-group {
+    display: flex;
+    align-items: center;
+    /*width: 60%;*/
+}
+
+.show-command-list-button {
+    background-color: white;
+    cursor: pointer;
+    height: 21px;
+    font-size: 15px;
+    border-top: 1px solid #aaa;
+    border-bottom: 1px solid #aaa;
+    border-radius: 0px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.show-command-list-button .arrow {
+    visibility: hidden; /* Hide arrow by default */
+}
+
+#commandName:focus + .show-command-list-button .arrow {
+    visibility: visible; /* Show arrow when input has focus */
+}
+
+#commandList.show + .show-command-list-button .arrow {
+    display: none; /* Hide arrow when list is shown */
+}
+
+[list]::-webkit-calendar-picker-indicator {
+    display: none !important;
+}
+
+#commandName {
+    width: auto; /* Allow dynamic width */
+    background-size: 16px 16px;
+    border-radius: 15px 0px 0px 15px;
+    border-right: 0px;
+}
+#params {
+    width: auto; /* Allow dynamic width */
+    border-radius: 0px 15px 15px 0px;
+    border-left: 0px;
+}
+.command-list {
+    display: none;
+    position: absolute;
+    background-color: white;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.command-item {
+    padding: 5px;
+    cursor: pointer;
+}
+
+.command-item:hover {
+    background-color: #eee;
+}
+
 .currentcommand {
     background-color: #eef;
 }
@@ -173,7 +245,6 @@ body.dimmed * {
     height: 0px;
 }
 /* allow wide chars in terminal */
-
 span {
     letter-spacing: -0.03px !important;
 }

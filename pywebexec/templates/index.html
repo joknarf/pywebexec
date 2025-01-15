@@ -12,13 +12,18 @@
         <div class="dimmer-text">Server not reachable</div>
     </div>
     <h2><span class="status-icon title-icon"></span>{{ title }}</h2>
-    <form id="launchForm">
+    <form id="launchForm" class="form-inline">
         <label for="commandName">Command</label>
-        <select id="commandName" name="commandName"></select>
-        <label for="params">Params</label>
-        <input type="text" id="params" name="params">
+        <div class="input-group">
+            <input type="text" id="commandName" name="commandName" size=5 autocomplete="off" style="width: 100px;">
+            <div id="showCommandListButton" class="show-command-list-button">
+                <span class="arrow">&#9660;</span>
+            </div>
+            <input type="text" id="params" name="params" oninput="this.style.width = ((this.value.length + 1) * 8) + 'px';">
+        </div>
         <button type="submit">Run</button>
     </form>
+    <div id="commandList" class="command-list"></div>
     <div class="table-container" id="tableContainer">
         <table>
             <thead>
@@ -43,5 +48,6 @@
     <script src="/static/js/xterm/xterm.js"></script>
     <script src="/static/js/xterm/xterm-addon-fit.js"></script>
     <script type="text/javascript" src="/static/js/script.js"></script>
+    <script type="text/javascript" src="/static/js/commands.js"></script>
 </body>
 </html>

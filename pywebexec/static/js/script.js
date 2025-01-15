@@ -102,27 +102,6 @@ async function fetchCommands() {
     }
 }
 
-async function fetchExecutables() {
-    try {
-        const response = await fetch('/executables');
-        if (!response.ok) {
-            throw new Error('Failed to fetch command status');
-        }
-        const executables = await response.json();
-        const commandNameSelect = document.getElementById('commandName');
-        commandNameSelect.innerHTML = '';
-        executables.forEach(executable => {
-            const option = document.createElement('option');
-            option.value = executable;
-            option.textContent = executable;
-            commandNameSelect.appendChild(option);
-        });
-    } catch (error) {
-        console.log('Error fetching executables:', error);
-        alert("Failed to fetch executables");
-    }
-}
-
 async function fetchOutput(url) {
     try {
         const response = await fetch(url);
@@ -287,11 +266,6 @@ function initResizer() {
 }
 
 window.addEventListener('resize', adjustOutputHeight);
-window.addEventListener('load', () => {
-    adjustOutputHeight();
-    initResizer();
-});
 
-fetchExecutables();
 fetchCommands();
 setInterval(fetchCommands, 5000);
