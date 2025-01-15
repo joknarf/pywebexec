@@ -4,6 +4,14 @@ let paramsInput = document.getElementById('params');
 let commandListDiv = document.getElementById('commandList');
 let showCommandListButton = document.getElementById('showCommandListButton');
 
+function unfilterCommands() {
+    const items = commandListDiv.getElementsByClassName('command-item');
+    Array.from(items).forEach(item => {
+        item.style.display = 'block';
+    });
+    adjustCommandListWidth();
+}
+
 function filterCommands() {
     const value = commandInput.value;
     const items = commandListDiv.getElementsByClassName('command-item');
@@ -59,19 +67,16 @@ commandInput.addEventListener('input', () => {
 });
 
 paramsInput.addEventListener('mouseover', () => {
-    console.log('Mouse over params');
     paramsInput.focus();
     paramsInput.setSelectionRange(0, paramsInput.value.length);
 });
 
 commandInput.addEventListener('mouseover', () => {
-    console.log('Mouse over input');
     commandInput.focus();
     commandInput.setSelectionRange(0, commandInput.value.length);
 });
 
 commandInput.addEventListener('input', (event) => {
-    console.log('Input event:', event);
     if (event.inputType === 'deleteContentBackward') {
         const newValue = commandInput.value.slice(0, -1);
         commandInput.value = newValue;
@@ -93,7 +98,6 @@ commandInput.addEventListener('input', (event) => {
 });
 
 commandInput.addEventListener('click', () => {
-    console.log('Input clicked');
     setCommandListPosition();
     commandListDiv.style.display = 'block';
     filterCommands();
@@ -101,10 +105,9 @@ commandInput.addEventListener('click', () => {
 
 commandInput.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowDown') {
-        console.log('Arrow down pressed');
         setCommandListPosition();
         commandListDiv.style.display = 'block';
-        filterCommands();
+        unfilterCommands();
     }
 });
 
@@ -113,7 +116,6 @@ commandInput.addEventListener('blur', (event) => {
         event.preventDefault();
         return;
     }
-    console.log('Input lost focus');
     commandListDiv.style.display = 'none';
     commandListDiv.classList.remove('show');
     adjustInputWidth(commandInput);
@@ -121,15 +123,13 @@ commandInput.addEventListener('blur', (event) => {
 
 showCommandListButton.addEventListener('mousedown', (event) => {
     event.preventDefault();
-    console.log('Show command list button clicked');
     setCommandListPosition();
     commandListDiv.style.display = 'block';
-    filterCommands();
+    unfilterCommands();
 });
 
 window.addEventListener('click', (event) => {
     if (!commandInput.contains(event.target) && !commandListDiv.contains(event.target) && !showCommandListButton.contains(event.target)) {
-        console.log('Window clicked outside input and list');
         commandListDiv.style.display = 'none';
         commandListDiv.classList.remove('show');
         adjustInputWidth(commandInput);
@@ -137,12 +137,10 @@ window.addEventListener('click', (event) => {
 });
 
 window.addEventListener('resize', () => {
-    console.log('Window resized');
     setCommandListPosition();
 });
 
 window.addEventListener('load', () => {
-    console.log('Window loaded');
     fetchExecutables();
     adjustInputWidth(paramsInput); // Adjust width on load
     adjustInputWidth(commandInput); // Adjust width on load
@@ -162,7 +160,6 @@ async function fetchExecutables() {
             div.className = 'command-item';
             div.textContent = executable;
             div.addEventListener('mousedown', () => {
-                console.log(`Clicked on: ${executable}`);
                 commandInput.value = executable;
                 commandListDiv.style.display = 'none';
                 commandListDiv.classList.remove('show');
@@ -174,7 +171,6 @@ async function fetchExecutables() {
         // Ensure the elements are rendered before measuring their widths
         requestAnimationFrame(adjustCommandListWidth);
     } catch (error) {
-        console.log('Error fetching executables:', error);
         alert("Failed to fetch executables");
     }
 }

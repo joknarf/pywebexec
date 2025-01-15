@@ -118,9 +118,22 @@ form {
     height: 15px;
     font-size: 15px;
     outline: none;
-    text-indent: 5px;
     background-color: white;
     margin: 0; /* Remove margin */
+}
+
+#commandName {
+    width: auto; /* Allow dynamic width */
+    background-size: 16px 16px;
+    border-radius: 15px 0px 0px 15px;
+    border-right: 0px;
+    text-indent: 5px;
+    padding-right: 0px;
+}
+#params {
+    width: auto; /* Allow dynamic width */
+    border-radius: 0px 15px 15px 0px;
+    border-left: 0px;
 }
 
 .input-group {
@@ -146,28 +159,16 @@ form {
     visibility: hidden; /* Hide arrow by default */
 }
 
+.show-command-list-button:hover .arrow {
+    visibility: visible; /* Show arrow on hover */
+}
+
 #commandName:focus + .show-command-list-button .arrow {
     visibility: visible; /* Show arrow when input has focus */
 }
 
 #commandList.show + .show-command-list-button .arrow {
     display: none; /* Hide arrow when list is shown */
-}
-
-[list]::-webkit-calendar-picker-indicator {
-    display: none !important;
-}
-
-#commandName {
-    width: auto; /* Allow dynamic width */
-    background-size: 16px 16px;
-    border-radius: 15px 0px 0px 15px;
-    border-right: 0px;
-}
-#params {
-    width: auto; /* Allow dynamic width */
-    border-radius: 0px 15px 15px 0px;
-    border-left: 0px;
 }
 .command-list {
     display: none;
