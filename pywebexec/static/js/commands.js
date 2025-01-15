@@ -136,6 +136,13 @@ window.addEventListener('click', (event) => {
     }
 });
 
+window.addEventListener('keydown', (event) => {
+    if (document.activeElement !== paramsInput) {
+        commandInput.focus();
+        commandInput.dispatchEvent(new KeyboardEvent('keydown', event));
+    }
+});
+
 window.addEventListener('resize', () => {
     setCommandListPosition();
 });
