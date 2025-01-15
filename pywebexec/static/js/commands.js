@@ -123,7 +123,6 @@ showCommandListButton.addEventListener('mousedown', (event) => {
     console.log('Show command list button clicked');
     setCommandListPosition();
     commandListDiv.style.display = 'block';
-    filterCommands();
     adjustCommandListWidth();
 });
 
