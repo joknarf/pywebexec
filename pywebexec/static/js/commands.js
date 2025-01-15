@@ -98,7 +98,7 @@ commandInput.addEventListener('input', (event) => {
 });
 
 commandInput.addEventListener('keydown', (event) => {
-    if (event.key === ' ') {
+    if (event.key === ' ' || event.key === 'ArrowRight') {
         event.preventDefault();
         paramsInput.focus();
         paramsInput.setSelectionRange(0, paramsInput.value.length);
@@ -106,6 +106,14 @@ commandInput.addEventListener('keydown', (event) => {
         setCommandListPosition();
         commandListDiv.style.display = 'block';
         unfilterCommands();
+    }
+});
+
+paramsInput.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft' && paramsInput.selectionStart === 0) {
+        commandInput.focus();
+        commandInput.setSelectionRange(0, commandInput.value.length);
+        event.preventDefault();
     }
 });
 
