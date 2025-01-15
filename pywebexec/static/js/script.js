@@ -266,6 +266,7 @@ function initResizer() {
 }
 
 window.addEventListener('resize', adjustOutputHeight);
+window.addEventListener('load', initResizer);
 
 fetchCommands();
 setInterval(fetchCommands, 5000);
