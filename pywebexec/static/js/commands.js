@@ -97,18 +97,21 @@ commandInput.addEventListener('input', (event) => {
     adjustInputWidth(commandInput); // Adjust width on input
 });
 
-commandInput.addEventListener('click', () => {
-    setCommandListPosition();
-    commandListDiv.style.display = 'block';
-    filterCommands();
-});
-
 commandInput.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowDown') {
+    if (event.key === ' ') {
+        event.preventDefault();
+        paramsInput.focus();
+    } else if (event.key === 'ArrowDown') {
         setCommandListPosition();
         commandListDiv.style.display = 'block';
         unfilterCommands();
     }
+});
+
+commandInput.addEventListener('click', () => {
+    setCommandListPosition();
+    commandListDiv.style.display = 'block';
+    filterCommands();
 });
 
 commandInput.addEventListener('blur', (event) => {
