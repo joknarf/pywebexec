@@ -101,6 +101,7 @@ commandInput.addEventListener('keydown', (event) => {
     if (event.key === ' ') {
         event.preventDefault();
         paramsInput.focus();
+        paramsInput.setSelectionRange(0, paramsInput.value.length);
     } else if (event.key === 'ArrowDown') {
         setCommandListPosition();
         commandListDiv.style.display = 'block';

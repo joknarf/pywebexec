@@ -56,6 +56,8 @@ document.getElementById('launchForm').addEventListener('submit', async (event) =
         await new Promise(r => setTimeout(r, 200));
         fetchCommands();
         viewOutput(data.command_id);
+        commandInput.focus()
+        commandInput.setSelectionRange(0, commandInput.value.length)
     } catch (error) {
         console.log('Error running command:', error);
     }
