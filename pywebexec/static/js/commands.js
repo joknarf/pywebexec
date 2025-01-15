@@ -22,6 +22,7 @@ function filterCommands() {
     } else {
         commandListDiv.classList.remove('show');
     }
+    adjustCommandListWidth(); // Adjust width after filtering commands
 }
 
 function setCommandListPosition() {
@@ -37,12 +38,15 @@ function adjustInputWidth(input) {
 }
 
 function adjustCommandListWidth() {
+    commandListDiv.style.width = 'auto'; // Reset width before recalculating
     const items = Array.from(commandListDiv.getElementsByClassName('command-item'));
-    let maxWidth = commandInput.offsetWidth;
+    let maxWidth = 0;
     items.forEach(item => {
-        const itemWidth = item.offsetWidth;
-        if (itemWidth > maxWidth) {
-            maxWidth = itemWidth;
+        if (item.style.display !== 'none') {
+            const itemWidth = item.scrollWidth;
+            if (itemWidth > maxWidth) {
+                maxWidth = itemWidth;
+            }
         }
     });
     commandListDiv.style.width = `${maxWidth}px`;
@@ -51,14 +55,13 @@ function adjustCommandListWidth() {
 paramsInput.addEventListener('input', () => adjustInputWidth(paramsInput));
 commandInput.addEventListener('input', () => {
     adjustInputWidth(commandInput);
-    filterCommands();
-    adjustCommandListWidth();
+    filterCommands(); // Filter commands on input
 });
 
 paramsInput.addEventListener('mouseover', () => {
     console.log('Mouse over params');
     paramsInput.focus();
-    paramsInput.setSelectionRange(0, commandInput.value.length);
+    paramsInput.setSelectionRange(0, paramsInput.value.length);
 });
 
 commandInput.addEventListener('mouseover', () => {
@@ -94,7 +97,6 @@ commandInput.addEventListener('click', () => {
     setCommandListPosition();
     commandListDiv.style.display = 'block';
     filterCommands();
-    adjustCommandListWidth();
 });
 
 commandInput.addEventListener('keydown', (event) => {
@@ -103,7 +105,6 @@ commandInput.addEventListener('keydown', (event) => {
         setCommandListPosition();
         commandListDiv.style.display = 'block';
         filterCommands();
-        adjustCommandListWidth();
     }
 });
 
@@ -123,7 +124,7 @@ showCommandListButton.addEventListener('mousedown', (event) => {
     console.log('Show command list button clicked');
     setCommandListPosition();
     commandListDiv.style.display = 'block';
-    adjustCommandListWidth();
+    filterCommands();
 });
 
 window.addEventListener('click', (event) => {
@@ -145,6 +146,7 @@ window.addEventListener('load', () => {
     fetchExecutables();
     adjustInputWidth(paramsInput); // Adjust width on load
     adjustInputWidth(commandInput); // Adjust width on load
+    setCommandListPosition();
 });
 
 async function fetchExecutables() {
@@ -169,6 +171,8 @@ async function fetchExecutables() {
             });
             commandListDiv.appendChild(div);
         });
+        // Ensure the elements are rendered before measuring their widths
+        requestAnimationFrame(adjustCommandListWidth);
     } catch (error) {
         console.log('Error fetching executables:', error);
         alert("Failed to fetch executables");
