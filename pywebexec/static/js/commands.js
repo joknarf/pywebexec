@@ -89,11 +89,12 @@ commandInput.addEventListener('keydown', (event) => {
         paramsInput.focus();
         paramsInput.setSelectionRange(0, paramsInput.value.length);
     } else if (event.key === 'ArrowDown') {
-        setCommandListPosition();
-        commandListSelect.style.display = 'block';
+        /*setCommandListPosition();*/
         unfilterCommands();
+        commandListSelect.style.display = 'block';
         commandListSelect.focus();
         commandListSelect.selectedIndex = 0;
+        event.preventDefault();
     }
 });
 
@@ -113,7 +114,12 @@ commandListSelect.addEventListener('keydown', (event) => {
         commandListSelect.style.display = 'none';
         adjustInputWidth(commandInput);
         paramsInput.focus();
-    } 
+        return;
+    }
+    if (event.key === 'ArrowUp' && commandListSelect.selectedIndex == 0) {
+        commandInput.focus();
+        commandListSelect.style.display = 'none'
+    }
 });
 
 commandListSelect.addEventListener('click', (event) => {
@@ -156,8 +162,8 @@ window.addEventListener('click', (event) => {
 });
 
 window.addEventListener('keydown', (event) => {
-    if (document.activeElement === commandInput) return;
-    if (document.activeElement !== paramsInput && event.code === `Key${event.key.toUpperCase()}`) {
+    if ([commandInput, paramsInput, commandListSelect].includes(document.activeElement)) return;
+    if (event.code === `Key${event.key.toUpperCase()}`) {
         commandInput.focus();
         commandInput.dispatchEvent(new KeyboardEvent('keydown', event));
     }
