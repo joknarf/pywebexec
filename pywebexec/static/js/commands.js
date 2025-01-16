@@ -1,43 +1,43 @@
 // commands.js
 let commandInput = document.getElementById('commandName');
 let paramsInput = document.getElementById('params');
-let commandListDiv = document.getElementById('commandList');
+let commandListSelect = document.getElementById('commandList');
 let showCommandListButton = document.getElementById('showCommandListButton');
+let isHandlingKeydown = false;
 
 function unfilterCommands() {
-    const items = commandListDiv.getElementsByClassName('command-item');
-    Array.from(items).forEach(item => {
-        item.style.display = 'block';
-    });
-    adjustCommandListWidth();
+    const options = commandListSelect.options;
+    for (let i = 0; i < options.length; i++) {
+        options[i].style.display = 'block';
+    }
+    commandListSelect.size = Math.min(20, commandListSelect.options.length);
 }
 
 function filterCommands() {
-    const value = commandInput.value;
-    const items = commandListDiv.getElementsByClassName('command-item');
-    let hasVisibleItems = false;
-    Array.from(items).forEach(item => {
-        if (item.textContent.startsWith(value)) {
-            item.style.display = 'block';
-            hasVisibleItems = true;
+    const value = commandInput.value.slice(0, commandInput.selectionStart);
+    const options = commandListSelect.options;
+    let nbVisibleItems = 0;
+    for (let i = 0; i < options.length; i++) {
+        if (options[i].text.startsWith(value)) {
+            options[i].style.display = 'block';
+            nbVisibleItems += 1;
         } else {
-            item.style.display = 'none';
+            options[i].style.display = 'none';
         }
-    });
-    commandListDiv.style.display = hasVisibleItems ? 'block' : 'none';
-    if (hasVisibleItems) {
-        commandListDiv.classList.add('show');
-    } else {
-        commandListDiv.classList.remove('show');
     }
-    adjustCommandListWidth(); // Adjust width after filtering commands
+    if (nbVisibleItems>1) {
+        commandListSelect.size = Math.min(20, nbVisibleItems);
+        commandListSelect.style.display = 'block';
+    } else {
+        commandListSelect.style.display = 'none';
+    }
 }
 
 function setCommandListPosition() {
     const rect = commandInput.getBoundingClientRect();
-    commandListDiv.style.left = `${rect.left}px`;
-    commandListDiv.style.top = `${rect.bottom}px`;
-    commandListDiv.style.minWidth = `${rect.width}px`;
+    commandListSelect.style.left = `${rect.left}px`;
+    commandListSelect.style.top = `${rect.bottom}px`;
+    /*commandListSelect.style.minWidth = `${rect.width}px`;*/
 }
 
 function adjustInputWidth(input) {
@@ -45,20 +45,6 @@ function adjustInputWidth(input) {
     input.style.width = `${input.scrollWidth}px`;
 }
 
-function adjustCommandListWidth() {
-    commandListDiv.style.width = 'auto'; // Reset width before recalculating
-    const items = Array.from(commandListDiv.getElementsByClassName('command-item'));
-    let maxWidth = 0;
-    items.forEach(item => {
-        if (item.style.display !== 'none') {
-            const itemWidth = item.scrollWidth;
-            if (itemWidth > maxWidth) {
-                maxWidth = itemWidth;
-            }
-        }
-    });
-    commandListDiv.style.width = `${maxWidth}px`;
-}
 
 paramsInput.addEventListener('input', () => adjustInputWidth(paramsInput));
 commandInput.addEventListener('input', () => {
@@ -83,12 +69,12 @@ commandInput.addEventListener('input', (event) => {
         commandInput.setSelectionRange(newValue.length, newValue.length);
     }
     const value = commandInput.value;
-    const items = Array.from(commandListDiv.getElementsByClassName('command-item'));
+    const options = commandListSelect.options;
     if (value) {
-        const match = items.find(item => item.textContent.startsWith(value));
+        const match = Array.from(options).find(option => option.text.startsWith(value));
         if (match) {
-            commandInput.value = match.textContent;
-            commandInput.setSelectionRange(value.length, match.textContent.length);
+            commandInput.value = match.text;
+            commandInput.setSelectionRange(value.length, match.text.length);
         } else {
             commandInput.value = value.slice(0, -1);
         }
@@ -104,8 +90,10 @@ commandInput.addEventListener('keydown', (event) => {
         paramsInput.setSelectionRange(0, paramsInput.value.length);
     } else if (event.key === 'ArrowDown') {
         setCommandListPosition();
-        commandListDiv.style.display = 'block';
+        commandListSelect.style.display = 'block';
         unfilterCommands();
+        commandListSelect.focus();
+        commandListSelect.selectedIndex = 0;
     }
 });
 
@@ -117,41 +105,53 @@ paramsInput.addEventListener('keydown', (event) => {
     }
 });
 
+commandListSelect.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // Prevent form submission
+        const selectedOption = commandListSelect.options[commandListSelect.selectedIndex];
+        commandInput.value = selectedOption.text;
+        commandListSelect.style.display = 'none';
+        adjustInputWidth(commandInput);
+        paramsInput.focus();
+    } 
+});
+
+commandListSelect.addEventListener('click', (event) => {
+    event.preventDefault(); // Prevent form submission
+    const selectedOption = commandListSelect.options[commandListSelect.selectedIndex];
+    commandInput.value = selectedOption.text;
+    commandListSelect.style.display = 'none';
+    adjustInputWidth(commandInput);
+    paramsInput.focus();
+});
+
+
 commandInput.addEventListener('click', () => {
     setCommandListPosition();
-    commandListDiv.style.display = 'block';
+    commandListSelect.style.display = 'block';
     filterCommands();
 });
 
 commandInput.addEventListener('blur', (event) => {
-    if (event.relatedTarget === showCommandListButton) {
+    if (event.relatedTarget === showCommandListButton || event.relatedTarget === commandListSelect) {
         event.preventDefault();
         return;
     }
-    commandListDiv.style.display = 'none';
-    commandListDiv.classList.remove('show');
+    commandListSelect.style.display = 'none';
     adjustInputWidth(commandInput);
 });
 
 showCommandListButton.addEventListener('mousedown', (event) => {
     event.preventDefault();
     setCommandListPosition();
-    commandListDiv.style.display = 'block';
+    commandListSelect.style.display = 'block';
     unfilterCommands();
 });
 
 window.addEventListener('click', (event) => {
-    if (!commandInput.contains(event.target) && !commandListDiv.contains(event.target) && !showCommandListButton.contains(event.target)) {
-        commandListDiv.style.display = 'none';
-        commandListDiv.classList.remove('show');
+    if (!commandInput.contains(event.target) && !commandListSelect.contains(event.target) && !showCommandListButton.contains(event.target)) {
+        commandListSelect.style.display = 'none';
         adjustInputWidth(commandInput);
-    }
-});
-
-window.addEventListener('keydown', (event) => {
-    if (document.activeElement !== paramsInput) {
-        commandInput.focus();
-        commandInput.dispatchEvent(new KeyboardEvent('keydown', event));
     }
 });
 
@@ -173,23 +173,16 @@ async function fetchExecutables() {
             throw new Error('Failed to fetch command status');
         }
         const executables = await response.json();
-        commandListDiv.innerHTML = '';
+        commandListSelect.innerHTML = '';
         executables.forEach(executable => {
-            const div = document.createElement('div');
-            div.className = 'command-item';
-            div.textContent = executable;
-            div.addEventListener('mousedown', () => {
-                commandInput.value = executable;
-                commandListDiv.style.display = 'none';
-                commandListDiv.classList.remove('show');
-                adjustInputWidth(commandInput);
-                paramsInput.focus();
-            });
-            commandListDiv.appendChild(div);
+            const option = document.createElement('option');
+            option.className = 'command-item';
+            option.text = executable;
+            commandListSelect.appendChild(option);
         });
-        // Ensure the elements are rendered before measuring their widths
-        requestAnimationFrame(adjustCommandListWidth);
     } catch (error) {
         alert("Failed to fetch executables");
     }
+    commandListSelect.size = Math.min(20, commandListSelect.options.length)
+
 }
