@@ -27,6 +27,7 @@ function filterCommands() {
     }
     if (nbVisibleItems>1) {
         commandListSelect.size = Math.min(20, nbVisibleItems);
+        commandListSelect.style.display = 'block';
     } else {
         commandListSelect.style.display = 'none';
     }
@@ -97,7 +98,16 @@ commandInput.addEventListener('keydown', (event) => {
 });
 
 paramsInput.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowLeft' && paramsInput.selectionStart === 0) {
+    if (paramsInput.selectionStart > 0) return;
+    if (event.key === 'ArrowLeft') {
+        commandInput.focus();
+        commandInput.setSelectionRange(0, commandInput.value.length);
+        event.preventDefault();
+        return;
+    }
+    if (event.key === 'Backspace') {
+        val = paramsInput.value
+        paramsInput.value = val.slice(0, paramsInput.selectionStart) + val.slice(paramsInput.selectionEnd)
         commandInput.focus();
         commandInput.setSelectionRange(0, commandInput.value.length);
         event.preventDefault();
