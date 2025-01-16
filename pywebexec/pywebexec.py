@@ -402,7 +402,6 @@ def check_authentication():
 @auth.verify_password
 def verify_password(username, password):
     if not username:
-        session['username'] = '-'
         return False
     if app.config['USER']:
         if username == app.config['USER'] and password == app.config['PASSWORD']:
