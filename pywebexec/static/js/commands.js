@@ -27,7 +27,6 @@ function filterCommands() {
     }
     if (nbVisibleItems>1) {
         commandListSelect.size = Math.min(20, nbVisibleItems);
-        commandListSelect.style.display = 'block';
     } else {
         commandListSelect.style.display = 'none';
     }
@@ -37,7 +36,6 @@ function setCommandListPosition() {
     const rect = commandInput.getBoundingClientRect();
     commandListSelect.style.left = `${rect.left}px`;
     commandListSelect.style.top = `${rect.bottom}px`;
-    /*commandListSelect.style.minWidth = `${rect.width}px`;*/
 }
 
 function adjustInputWidth(input) {
@@ -134,7 +132,10 @@ commandListSelect.addEventListener('click', (event) => {
 
 commandInput.addEventListener('click', () => {
     setCommandListPosition();
-    commandListSelect.style.display = 'block';
+    if (commandListSelect.style.display == 'none')
+        commandListSelect.style.display = 'block';
+    else
+        commandListSelect.style.display = 'none';
     filterCommands();
 });
 
@@ -147,17 +148,19 @@ commandInput.addEventListener('blur', (event) => {
     adjustInputWidth(commandInput);
 });
 
-showCommandListButton.addEventListener('mousedown', (event) => {
+showCommandListButton.addEventListener('click', (event) => {
     event.preventDefault();
     setCommandListPosition();
-    commandListSelect.style.display = 'block';
+    if (commandListSelect.style.display == 'none')
+        commandListSelect.style.display = 'block';
+    else
+        commandListSelect.style.display = 'none';
     unfilterCommands();
 });
 
 window.addEventListener('click', (event) => {
     if (!commandInput.contains(event.target) && !commandListSelect.contains(event.target) && !showCommandListButton.contains(event.target)) {
         commandListSelect.style.display = 'none';
-        adjustInputWidth(commandInput);
     }
 });
 
