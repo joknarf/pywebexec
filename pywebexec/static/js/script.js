@@ -1,38 +1,45 @@
 let currentCommandId = null;
 let outputInterval = null;
 let nextOutputLink = null;
+let fullOutput = '';
 
-const terminal = new Terminal({
-    cursorBlink: false,
-    cursorHidden: true,
-    disableStdin: true,
-    convertEol: true,
-    fontFamily: 'Consolas NF, monospace, courier-new, courier',
-    scrollback: 999999,
-    theme: {
-        background: '#111412',
-        black: '#111412',
-        green: '#088a5b',
-        blue: "#2760aa",
-        red: '#ba1611',
-        yellow: "#cf8700",
-        magenta: "#4c3d80",
-        cyan: "#00a7aa",
-        brightBlack: "#243C4F",
-        brightBlue: "#5584b1",
-    },
-    rescaleOverlappingGlyphs: true,
-});
+
+function initTerminal()
+{
+    return new Terminal({
+        cursorBlink: false,
+        cursorHidden: true,
+        disableStdin: true,
+        convertEol: true,
+        fontFamily: 'Consolas NF, monospace, courier-new, courier',
+        scrollback: 999999,
+        theme: {
+            background: '#111412',
+            black: '#111412',
+            green: '#088a5b',
+            blue: "#2760aa",
+            red: '#ba1611',
+            yellow: "#cf8700",
+            magenta: "#4c3d80",
+            cyan: "#00a7aa",
+            brightBlack: "#243C4F",
+            brightBlue: "#5584b1",
+        },
+        rescaleOverlappingGlyphs: true,
+    });
+}
+let terminal = initTerminal()
+
 const fitAddon = new FitAddon.FitAddon();
 terminal.loadAddon(fitAddon);
 terminal.open(document.getElementById('output'));
 fitAddon.fit();
+
 function getTokenParam() {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('token') ? `?token=${urlParams.get('token')}` : '';
 }
 const urlToken = getTokenParam();
-
 
 terminal.onSelectionChange(() => {
     const selectionText = terminal.getSelection();
@@ -42,7 +49,6 @@ terminal.onSelectionChange(() => {
         });
     }
 });
-
 
 document.getElementById('launchForm').addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -122,7 +128,8 @@ async function fetchOutput(url) {
             terminal.write(data.error);
             clearInterval(outputInterval);
         } else {
-            terminal.write(data.output);
+            fullOutput += data.output;
+            updateTerminalOutput();
             nextOutputLink = data.links.next;
             if (data.status != 'running') {
                 clearInterval(outputInterval);
@@ -134,11 +141,14 @@ async function fetchOutput(url) {
 }
 
 async function viewOutput(command_id) {
+    document.getElementById('outputSlider').value = 100;
     adjustOutputHeight();
     currentCommandId = command_id;
     nextOutputLink = `/command_output/${command_id}${urlToken}`;
     clearInterval(outputInterval);
     terminal.clear();
+    terminal.reset();
+    fullOutput = '';
     try {
         const response = await fetch(`/command_status/${command_id}${urlToken}`);
         if (!response.ok) {
@@ -246,7 +256,7 @@ function adjustOutputHeight() {
     const outputDiv = document.getElementById('output');
     const windowHeight = window.innerHeight;
     const outputTop = outputDiv.getBoundingClientRect().top;
-    const maxHeight = windowHeight - outputTop - 30; // 20px for padding/margin
+    const maxHeight = windowHeight - outputTop - 60; // Adjusted for slider height
     outputDiv.style.height = `${maxHeight}px`;
     fitAddon.fit();
 }
@@ -273,6 +283,19 @@ function initResizer() {
         document.documentElement.removeEventListener('mouseup', stopDrag, false);
     }
 }
+
+function updateTerminalOutput() {
+    const slider = document.getElementById('outputSlider');
+    const percentage = slider.value;
+    const outputLength = Math.floor((fullOutput.length * percentage) / 100);
+    const limitedOutput = fullOutput.slice(0, outputLength);
+    terminal.clear();
+    terminal.reset();
+    terminal.write(limitedOutput);
+    document.getElementById('outputPercentage').innerText = `${percentage}%`;
+}
+
+document.getElementById('outputSlider').addEventListener('input', updateTerminalOutput);
 
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', initResizer);

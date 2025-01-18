@@ -256,4 +256,13 @@ body.dimmed * {
 span {
     letter-spacing: -0.03px !important;
 }
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+#outputSlider {
+    width: 100%;
+}
 
