@@ -148,7 +148,7 @@ def generate_selfsigned_cert(hostname, ip_addresses=None, key=None):
 
 
 
-class StandaloneApplication(Application):
+class PyWebExec(Application):
 
     def __init__(self, app, options=None):
         self.options = options or {}
@@ -230,7 +230,7 @@ def start_gunicorn(daemon=False, baselog=None):
         'accesslog': accesslog,
         'pidfile': pidfile,
     }
-    StandaloneApplication(app, options=options).run()
+    PyWebExec(app, options=options).run()
 
 def daemon_d(action, pidfilepath, hostname=None, args=None):
     """start/stop daemon"""
@@ -255,7 +255,6 @@ def daemon_d(action, pidfilepath, hostname=None, args=None):
         print("pywebexec not running")
         return False
     elif action == "start":
-        print(f"Starting server")
         log = open(pidfilepath + ".log", "ab+")
         daemon_context = daemon.DaemonContext(
             stderr=log,
@@ -322,7 +321,7 @@ def parseargs():
         sys.exit(res)
     (hostname, ip) = resolve(gethostname()) if args.listen == '0.0.0.0' else resolve(args.listen)
     url_params = ""
-    
+
     if args.tokenurl:
         token = token_urlsafe()
         app.config["TOKEN_URL"] = token
@@ -350,8 +349,10 @@ def parseargs():
         app.config['PASSWORD'] = None
 
     if args.action != 'stop':
-        print(f"Starting http://{hostname}{url_params}")
-        print(f"Starting http://{ip}{url_params}")
+        print("Starting server:")
+        protocol = 'https' if args.cert else 'http'
+        print(f"{protocol}://{hostname}:{args.port}{url_params}")
+        print(f"{protocol}://{ip}:{args.port}{url_params}")
 
     return args
 
@@ -448,6 +449,13 @@ parseargs()
 
 @app.before_request
 def check_authentication():
+    # Check for token in URL if TOKEN_URL is set
+    token = app.config.get('TOKEN_URL')
+    if token and request.endpoint not in ['login', 'static']:
+        if request.args.get('token') == token:
+            return
+        return jsonify({'error': 'Forbidden'}), 403
+    
     if not app.config['USER'] and not app.config['LDAP_SERVER']:
         return
     if 'username' not in session and request.endpoint not in ['login', 'static']:
