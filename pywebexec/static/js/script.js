@@ -49,7 +49,7 @@ document.getElementById('launchForm').addEventListener('submit', async (event) =
     const commandName = document.getElementById('commandName').value;
     const params = document.getElementById('params').value.split(' ');
     try {
-        const response = await fetch(`/run_command${kenPagetToram()}`, {
+        const response = await fetch(`/run_command${urlToken}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
