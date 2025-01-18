@@ -38,6 +38,7 @@ all commands output / statuses are available in the executables directory in sub
 * HTTPS self-signed certificate generator
 * Basic Auth
 * LDAP(S)
+* safe url token
 * Can be started as a daemon (POSIX)
 * Uses gunicorn to serve http/https
 * Linux/MacOS compatible
@@ -48,7 +49,18 @@ $ pywebexec --dir ~/myscripts --listen 0.0.0.0 --port 8080 --title myscripts
 $ pywebexec -d ~/myscripts -l 0.0.0.0 -p 8080 -t myscripts
 ```
 
-## Basic auth 
+## Safe url token
+
+* generate safe url, use the url to access the server
+```shell
+$ pywebexec -T
+$ pywebexec --tokenurl
+Starting server:
+http://<host>:8080?token=jSTWiNgEVkddeEJ7I97x2ekOeaiXs2mErRSKNxm3DP0
+http://x.x.x.x:8080?token=jSTWiNgEVkddeEJ7I97x2ekOeaiXs2mErRSKNxm3DP0
+```
+
+## Basic auth
 
 * single user/password
 ```shell
