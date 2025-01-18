@@ -277,7 +277,8 @@ def daemon_d(action, pidfilepath, silent=False, hostname=None, args=None):
                 print(e)
 
 def parseargs():
-    global app, args
+    global app, args, COMMAND_STATUS_DIR
+
     parser = argparse.ArgumentParser(description='Run the command execution server.')
     parser.add_argument('-u', '--user', help='Username for basic auth')
     parser.add_argument('-P', '--password', help='Password for basic auth')
@@ -304,6 +305,7 @@ def parseargs():
     parser.add_argument("action", nargs="?", help="daemon action start/stop/restart/status/term", choices=["start","stop","restart","status","term"])
 
     args = parser.parse_args()
+    cwd = os.getcwd()
     if os.path.isdir(args.dir):
         try:
             os.chdir(args.dir)
@@ -318,6 +320,8 @@ def parseargs():
     if not os.path.exists(CONFDIR):
         os.mkdir(CONFDIR, mode=0o700)
     if args.action == "term":
+        COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
+        os.chdir(cwd)
         command_id = str(uuid.uuid4())
         start_time = datetime.now().isoformat()
         user = pwd.getpwuid(os.getuid())[0]
