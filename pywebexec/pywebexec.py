@@ -470,7 +470,7 @@ def check_authentication():
     
     if not app.config['USER'] and not app.config['LDAP_SERVER']:
         return
-    print("why")
+
     if 'username' not in session and request.endpoint not in ['login', 'static']:
         return auth.login_required(lambda: None)()
 

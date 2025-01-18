@@ -5,11 +5,6 @@ let commandListSelect = document.getElementById('commandList');
 let showCommandListButton = document.getElementById('showCommandListButton');
 let isHandlingKeydown = false;
 
-function getTokenParam() {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('token') ? `?token=${urlParams.get('token')}` : '';
-}
-
 function unfilterCommands() {
     const options = commandListSelect.options;
     for (let i = 0; i < options.length; i++) {
@@ -200,7 +195,7 @@ window.addEventListener('load', () => {
 
 async function fetchExecutables() {
     try {
-        const response = await fetch(`/executables${getTokenParam()}`);
+        const response = await fetch(`/executables${urlToken}`);
         if (!response.ok) {
             throw new Error('Failed to fetch command status');
         }

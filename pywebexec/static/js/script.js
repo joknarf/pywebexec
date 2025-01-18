@@ -27,6 +27,12 @@ const fitAddon = new FitAddon.FitAddon();
 terminal.loadAddon(fitAddon);
 terminal.open(document.getElementById('output'));
 fitAddon.fit();
+function getTokenParam() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('token') ? `?token=${urlParams.get('token')}` : '';
+}
+const urlToken = getTokenParam();
+
 
 terminal.onSelectionChange(() => {
     const selectionText = terminal.getSelection();
@@ -37,17 +43,13 @@ terminal.onSelectionChange(() => {
     }
 });
 
-function getTokenParam() {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('token') ? `?token=${urlParams.get('token')}` : '';
-}
 
 document.getElementById('launchForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const commandName = document.getElementById('commandName').value;
     const params = document.getElementById('params').value.split(' ');
     try {
-        const response = await fetch(`/run_command${getTokenParam()}`, {
+        const response = await fetch(`/run_command${kenPagetToram()}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -70,7 +72,7 @@ document.getElementById('launchForm').addEventListener('submit', async (event) =
 
 async function fetchCommands() {
     try {
-        const response = await fetch(`/commands${getTokenParam()}`);
+        const response = await fetch(`/commands${urlToken}`);
         if (!response.ok) {
             document.getElementById('dimmer').style.display = 'block';
             return;
@@ -134,11 +136,11 @@ async function fetchOutput(url) {
 async function viewOutput(command_id) {
     adjustOutputHeight();
     currentCommandId = command_id;
-    nextOutputLink = `/command_output/${command_id}${getTokenParam()}`;
+    nextOutputLink = `/command_output/${command_id}${urlToken}`;
     clearInterval(outputInterval);
     terminal.clear();
     try {
-        const response = await fetch(`/command_status/${command_id}${getTokenParam()}`);
+        const response = await fetch(`/command_status/${command_id}${urlToken}`);
         if (!response.ok) {
             return;
         }
@@ -159,7 +161,7 @@ async function relaunchCommand(command_id, event) {
     event.stopPropagation();
     event.stopImmediatePropagation();
     try {
-        const response = await fetch(`/command_status/${command_id}${getTokenParam()}`);
+        const response = await fetch(`/command_status/${command_id}${urlToken}`);
         if (!response.ok) {
             throw new Error('Failed to fetch command status');
         }
@@ -168,7 +170,7 @@ async function relaunchCommand(command_id, event) {
             alert(data.error);
             return;
         }
-        const relaunchResponse = await fetch(`/run_command${getTokenParam()}`, {
+        const relaunchResponse = await fetch(`/run_command${urlToken}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -194,7 +196,7 @@ async function stopCommand(command_id, event) {
     event.stopPropagation();
     event.stopImmediatePropagation();
     try {
-        const response = await fetch(`/stop_command/${command_id}${getTokenParam()}`, {
+        const response = await fetch(`/stop_command/${command_id}${urlToken}`, {
             method: 'POST'
         });
         if (!response.ok) {
