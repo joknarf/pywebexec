@@ -8,7 +8,7 @@ const terminal = new Terminal({
     disableStdin: true,
     convertEol: true,
     fontFamily: 'Consolas NF, monospace, courier-new, courier',
-    scrollBack: 999999,
+    scrollback: 999999,
     theme: {
         background: '#111412',
         black: '#111412',

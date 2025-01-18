@@ -13,9 +13,12 @@ from datetime import datetime, timezone, timedelta
 import shlex
 from gunicorn.app.base import Application
 import ipaddress
-from socket import gethostname, gethostbyname_ex
+from socket import gethostname, gethostbyname_ex, gethostbyaddr, inet_aton, inet_ntoa
 import ssl
 import re
+import pwd
+from secrets import token_urlsafe
+
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
 
@@ -48,11 +51,38 @@ def generate_random_password(length=12):
 
 
 def resolve_hostname(host):
-    """try get fqdn from DNS"""
+    """try get fqdn from DNS/hosts"""
     try:
-        return gethostbyname_ex(host)[0]
+        hostinfo = gethostbyname_ex(host)
+        return (hostinfo[0].rstrip('.'), hostinfo[2][0])
     except OSError:
-        return host
+        return (host, host)
+
+
+def resolve_ip(ip):
+    """try resolve hostname by reverse dns query on ip addr"""
+    ip = inet_ntoa(inet_aton(ip))
+    try:
+        ipinfo = gethostbyaddr(ip)
+        return (ipinfo[0].rstrip('.'), ipinfo[2][0])
+    except OSError:
+        return (ip, ip)
+
+
+def is_ip(host):
+    """determine if host is valid ip"""
+    try:
+        inet_aton(host)
+        return True
+    except OSError:
+        return False
+
+
+def resolve(host_or_ip):
+    """resolve hostname from ip / hostname"""
+    if is_ip(host_or_ip):
+        return resolve_ip(host_or_ip)
+    return resolve_hostname(host_or_ip)
 
 
 def generate_selfsigned_cert(hostname, ip_addresses=None, key=None):
@@ -263,7 +293,8 @@ def parseargs():
     parser.add_argument("-c", "--cert", type=str, help="Path to https certificate")
     parser.add_argument("-k", "--key", type=str, help="Path to https certificate key")
     parser.add_argument("-g", "--gencert", action="store_true", help="https server self signed cert")
-    parser.add_argument("action", nargs="?", help="daemon action start/stop/restart/status", choices=["start","stop","restart","status"])
+    parser.add_argument("-T", "--tokenurl", action="store_true", help="generate safe url to access")
+    parser.add_argument("action", nargs="?", help="daemon action start/stop/restart/status/term", choices=["start","stop","restart","status","term"])
 
     args = parser.parse_args()
     if os.path.isdir(args.dir):
@@ -279,8 +310,25 @@ def parseargs():
         os.makedirs(COMMAND_STATUS_DIR)
     if not os.path.exists(CONFDIR):
         os.mkdir(CONFDIR, mode=0o700)
+    if args.action == "term":
+        command_id = str(uuid.uuid4())
+        start_time = datetime.now().isoformat()
+        user = pwd.getpwuid(os.getuid())[0]
+        update_command_status(command_id, 'running', command="term", params=[user,os.ttyname(sys.stdout.fileno())], start_time=start_time, user=user)
+        output_file_path = get_output_file_path(command_id)
+        res = os.system(f"script -f {output_file_path}")
+        end_time = datetime.now().isoformat()
+        update_command_status(command_id, status="success", end_time=end_time, exit_code=res)
+        sys.exit(res)
+    (hostname, ip) = resolve(gethostname()) if args.listen == '0.0.0.0' else resolve(args.listen)
+    url_params = ""
+    
+    if args.tokenurl:
+        token = token_urlsafe()
+        app.config["TOKEN_URL"] = token
+        url_params = f"?token={token}"
+
     if args.gencert:
-        hostname = resolve_hostname(gethostname())
         args.cert = args.cert or f"{CONFDIR}/pywebexec.crt"
         args.key = args.key or f"{CONFDIR}/pywebexec.key"
         if not os.path.exists(args.cert):
@@ -301,9 +349,11 @@ def parseargs():
         app.config['USER'] = None
         app.config['PASSWORD'] = None
 
-    return args
+    if args.action != 'stop':
+        print(f"Starting http://{hostname}{url_params}")
+        print(f"Starting http://{ip}{url_params}")
 
-parseargs()
+    return args
 
 def get_status_file_path(command_id):
     return os.path.join(COMMAND_STATUS_DIR, f'{command_id}.json')
@@ -391,6 +441,10 @@ def run_command(command, params, command_id, user):
         update_command_status(command_id, 'failed', end_time=end_time, exit_code=1, user=user)
         with open(get_output_file_path(command_id), 'a') as output_file:
             output_file.write(str(e))
+
+
+parseargs()
+
 
 @app.before_request
 def check_authentication():
