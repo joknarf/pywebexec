@@ -23,22 +23,23 @@ $ pywebexec -d <dir>
 * Launch commands with params/view live output/Status using browser
 * Share your terminal output using `pywebexec -d <dir> term`
 
-![pywebexecnew6](https://github.com/user-attachments/assets/11415e1f-9f5f-409e-a04c-51eb062a9780)
 
 all commands output / statuses are available in the executables directory in subdirectory `.web_status`
+![pywebexecnew8](https://github.com/user-attachments/assets/b36c98e7-8209-46f9-a320-57f460255bc7)
 
 ## features
 
 * Serve executables in a directory
 * Launch commands with params from web browser or API call
+* multiple share terminal output
 * Follow live output
 * Stop command
 * Relaunch command
 * HTTPS support
 * HTTPS self-signed certificate generator
 * Basic Auth
-* LDAP(S)
-* safe url token
+* LDAP(S) password check/group member
+* Safe url token generation
 * Can be started as a daemon (POSIX)
 * Uses gunicorn to serve http/https
 * Linux/MacOS compatible
