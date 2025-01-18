@@ -215,6 +215,8 @@ async function fetchExecutables() {
     } catch (error) {
         alert("Failed to fetch executables");
     }
-    commandListSelect.size = Math.min(20, commandListSelect.options.length)
+    commandListSelect.size = Math.min(20, commandListSelect.options.length);
+    if (commandListSelect.options.length == 0)
+        document.getElementById('launchForm').style.display = 'none';
 
 }

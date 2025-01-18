@@ -210,11 +210,14 @@ def get_last_non_empty_line_of_file(file_path):
         return last_line(f)
     
 
-def start_gunicorn(daemon=False, baselog=None):
-    if daemon:
+def start_gunicorn(daemonized=False, baselog=None):
+    if daemonized:
         errorlog = f"{baselog}.log"
         accesslog = None # f"{baselog}.access.log"
         pidfile = f"{baselog}.pid"
+        if daemon_d('status', pidfilepath=baselog, silent=True):
+            print(f"Error: pywebexec already running on {args.listen}:{args.port}", file=sys.stderr)
+            sys.exit(1)
     else:
         errorlog = "-"
         accesslog = "-"
@@ -225,14 +228,14 @@ def start_gunicorn(daemon=False, baselog=None):
         'timeout': 600,
         'certfile': args.cert,
         'keyfile': args.key,
-        'daemon': daemon,
+        'daemon': daemonized,
         'errorlog': errorlog,
         'accesslog': accesslog,
         'pidfile': pidfile,
     }
     PyWebExec(app, options=options).run()
 
-def daemon_d(action, pidfilepath, hostname=None, args=None):
+def daemon_d(action, pidfilepath, silent=False, hostname=None, args=None):
     """start/stop daemon"""
     import signal
     import daemon, daemon.pidfile
@@ -252,9 +255,14 @@ def daemon_d(action, pidfilepath, hostname=None, args=None):
         if status:
             print(f"pywebexec running pid {pidfile.read_pid()}")
             return True
-        print("pywebexec not running")
+        if not silent:
+            print("pywebexec not running")
         return False
     elif action == "start":
+        status = pidfile.is_locked()
+        if status:
+            print(f"pywebexc already running pid {pidfile.read_pid()}", file=sys.stderr)
+            sys.exit(1)
         log = open(pidfilepath + ".log", "ab+")
         daemon_context = daemon.DaemonContext(
             stderr=log,
@@ -458,6 +466,7 @@ def check_authentication():
     
     if not app.config['USER'] and not app.config['LDAP_SERVER']:
         return
+    print("why")
     if 'username' not in session and request.endpoint not in ['login', 'static']:
         return auth.login_required(lambda: None)()
 
@@ -626,11 +635,13 @@ def get_command_output(command_id):
             output = output_file.read().decode('utf-8', errors='replace')
             new_offset = output_file.tell()
         status_data = read_command_status(command_id) or {}
+        token = app.config.get("TOKEN_URL")
+        token_param = f"&token={token}" if token else ""
         response = {
             'output': output,
             'status': status_data.get("status"),
             'links': {
-                'next': f'{request.url_root}command_output/{command_id}?offset={new_offset}'
+                'next': f'{request.url_root}command_output/{command_id}?offset={new_offset}{token_param}'
             }
         }
         if request.headers.get('Accept') == 'text/plain':
@@ -647,7 +658,7 @@ def list_executables():
 def main():
     basef = f"{CONFDIR}/pywebexec_{args.listen}:{args.port}"
     if args.action == "start":
-        return start_gunicorn(daemon=True, baselog=basef)
+        return start_gunicorn(daemonized=True, baselog=basef)
     if args.action:
         return daemon_d(args.action, pidfilepath=basef)
     return start_gunicorn()
