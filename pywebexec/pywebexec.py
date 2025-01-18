@@ -13,9 +13,12 @@ from datetime import datetime, timezone, timedelta
 import shlex
 from gunicorn.app.base import Application
 import ipaddress
-from socket import gethostname, gethostbyname_ex
+from socket import gethostname, gethostbyname_ex, gethostbyaddr, inet_aton, inet_ntoa
 import ssl
 import re
+import pwd
+from secrets import token_urlsafe
+
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
 
@@ -48,11 +51,38 @@ def generate_random_password(length=12):
 
 
 def resolve_hostname(host):
-    """try get fqdn from DNS"""
+    """try get fqdn from DNS/hosts"""
     try:
-        return gethostbyname_ex(host)[0]
+        hostinfo = gethostbyname_ex(host)
+        return (hostinfo[0].rstrip('.'), hostinfo[2][0])
     except OSError:
-        return host
+        return (host, host)
+
+
+def resolve_ip(ip):
+    """try resolve hostname by reverse dns query on ip addr"""
+    ip = inet_ntoa(inet_aton(ip))
+    try:
+        ipinfo = gethostbyaddr(ip)
+        return (ipinfo[0].rstrip('.'), ipinfo[2][0])
+    except OSError:
+        return (ip, ip)
+
+
+def is_ip(host):
+    """determine if host is valid ip"""
+    try:
+        inet_aton(host)
+        return True
+    except OSError:
+        return False
+
+
+def resolve(host_or_ip):
+    """resolve hostname from ip / hostname"""
+    if is_ip(host_or_ip):
+        return resolve_ip(host_or_ip)
+    return resolve_hostname(host_or_ip)
 
 
 def generate_selfsigned_cert(hostname, ip_addresses=None, key=None):
@@ -118,7 +148,7 @@ def generate_selfsigned_cert(hostname, ip_addresses=None, key=None):
 
 
 
-class StandaloneApplication(Application):
+class PyWebExec(Application):
 
     def __init__(self, app, options=None):
         self.options = options or {}
@@ -180,11 +210,14 @@ def get_last_non_empty_line_of_file(file_path):
         return last_line(f)
     
 
-def start_gunicorn(daemon=False, baselog=None):
-    if daemon:
+def start_gunicorn(daemonized=False, baselog=None):
+    if daemonized:
         errorlog = f"{baselog}.log"
         accesslog = None # f"{baselog}.access.log"
         pidfile = f"{baselog}.pid"
+        if daemon_d('status', pidfilepath=baselog, silent=True):
+            print(f"Error: pywebexec already running on {args.listen}:{args.port}", file=sys.stderr)
+            sys.exit(1)
     else:
         errorlog = "-"
         accesslog = "-"
@@ -195,14 +228,14 @@ def start_gunicorn(daemon=False, baselog=None):
         'timeout': 600,
         'certfile': args.cert,
         'keyfile': args.key,
-        'daemon': daemon,
+        'daemon': daemonized,
         'errorlog': errorlog,
         'accesslog': accesslog,
         'pidfile': pidfile,
     }
-    StandaloneApplication(app, options=options).run()
+    PyWebExec(app, options=options).run()
 
-def daemon_d(action, pidfilepath, hostname=None, args=None):
+def daemon_d(action, pidfilepath, silent=False, hostname=None, args=None):
     """start/stop daemon"""
     import signal
     import daemon, daemon.pidfile
@@ -222,10 +255,14 @@ def daemon_d(action, pidfilepath, hostname=None, args=None):
         if status:
             print(f"pywebexec running pid {pidfile.read_pid()}")
             return True
-        print("pywebexec not running")
+        if not silent:
+            print("pywebexec not running")
         return False
     elif action == "start":
-        print(f"Starting server")
+        status = pidfile.is_locked()
+        if status:
+            print(f"pywebexc already running pid {pidfile.read_pid()}", file=sys.stderr)
+            sys.exit(1)
         log = open(pidfilepath + ".log", "ab+")
         daemon_context = daemon.DaemonContext(
             stderr=log,
@@ -240,7 +277,8 @@ def daemon_d(action, pidfilepath, hostname=None, args=None):
                 print(e)
 
 def parseargs():
-    global app, args
+    global app, args, COMMAND_STATUS_DIR
+
     parser = argparse.ArgumentParser(description='Run the command execution server.')
     parser.add_argument('-u', '--user', help='Username for basic auth')
     parser.add_argument('-P', '--password', help='Password for basic auth')
@@ -263,9 +301,11 @@ def parseargs():
     parser.add_argument("-c", "--cert", type=str, help="Path to https certificate")
     parser.add_argument("-k", "--key", type=str, help="Path to https certificate key")
     parser.add_argument("-g", "--gencert", action="store_true", help="https server self signed cert")
-    parser.add_argument("action", nargs="?", help="daemon action start/stop/restart/status", choices=["start","stop","restart","status"])
+    parser.add_argument("-T", "--tokenurl", action="store_true", help="generate safe url to access")
+    parser.add_argument("action", nargs="?", help="daemon action start/stop/restart/status/term", choices=["start","stop","restart","status","term"])
 
     args = parser.parse_args()
+    cwd = os.getcwd()
     if os.path.isdir(args.dir):
         try:
             os.chdir(args.dir)
@@ -279,8 +319,27 @@ def parseargs():
         os.makedirs(COMMAND_STATUS_DIR)
     if not os.path.exists(CONFDIR):
         os.mkdir(CONFDIR, mode=0o700)
+    if args.action == "term":
+        COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
+        os.chdir(cwd)
+        command_id = str(uuid.uuid4())
+        start_time = datetime.now().isoformat()
+        user = pwd.getpwuid(os.getuid())[0]
+        update_command_status(command_id, 'running', command="term", params=[user,os.ttyname(sys.stdout.fileno())], start_time=start_time, user=user)
+        output_file_path = get_output_file_path(command_id)
+        res = os.system(f"script -f {output_file_path}")
+        end_time = datetime.now().isoformat()
+        update_command_status(command_id, status="success", end_time=end_time, exit_code=res)
+        sys.exit(res)
+    (hostname, ip) = resolve(gethostname()) if args.listen == '0.0.0.0' else resolve(args.listen)
+    url_params = ""
+
+    if args.tokenurl:
+        token = token_urlsafe()
+        app.config["TOKEN_URL"] = token
+        url_params = f"?token={token}"
+
     if args.gencert:
-        hostname = resolve_hostname(gethostname())
         args.cert = args.cert or f"{CONFDIR}/pywebexec.crt"
         args.key = args.key or f"{CONFDIR}/pywebexec.key"
         if not os.path.exists(args.cert):
@@ -301,9 +360,13 @@ def parseargs():
         app.config['USER'] = None
         app.config['PASSWORD'] = None
 
-    return args
+    if args.action != 'stop':
+        print("Starting server:")
+        protocol = 'https' if args.cert else 'http'
+        print(f"{protocol}://{hostname}:{args.port}{url_params}")
+        print(f"{protocol}://{ip}:{args.port}{url_params}")
 
-parseargs()
+    return args
 
 def get_status_file_path(command_id):
     return os.path.join(COMMAND_STATUS_DIR, f'{command_id}.json')
@@ -392,10 +455,22 @@ def run_command(command, params, command_id, user):
         with open(get_output_file_path(command_id), 'a') as output_file:
             output_file.write(str(e))
 
+
+parseargs()
+
+
 @app.before_request
 def check_authentication():
+    # Check for token in URL if TOKEN_URL is set
+    token = app.config.get('TOKEN_URL')
+    if token and request.endpoint not in ['login', 'static']:
+        if request.args.get('token') == token:
+            return
+        return jsonify({'error': 'Forbidden'}), 403
+    
     if not app.config['USER'] and not app.config['LDAP_SERVER']:
         return
+
     if 'username' not in session and request.endpoint not in ['login', 'static']:
         return auth.login_required(lambda: None)()
 
@@ -564,11 +639,13 @@ def get_command_output(command_id):
             output = output_file.read().decode('utf-8', errors='replace')
             new_offset = output_file.tell()
         status_data = read_command_status(command_id) or {}
+        token = app.config.get("TOKEN_URL")
+        token_param = f"&token={token}" if token else ""
         response = {
             'output': output,
             'status': status_data.get("status"),
             'links': {
-                'next': f'{request.url_root}command_output/{command_id}?offset={new_offset}'
+                'next': f'{request.url_root}command_output/{command_id}?offset={new_offset}{token_param}'
             }
         }
         if request.headers.get('Accept') == 'text/plain':
@@ -585,7 +662,7 @@ def list_executables():
 def main():
     basef = f"{CONFDIR}/pywebexec_{args.listen}:{args.port}"
     if args.action == "start":
-        return start_gunicorn(daemon=True, baselog=basef)
+        return start_gunicorn(daemonized=True, baselog=basef)
     if args.action:
         return daemon_d(args.action, pidfilepath=basef)
     return start_gunicorn()

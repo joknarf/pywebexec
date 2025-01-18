@@ -8,7 +8,7 @@ const terminal = new Terminal({
     disableStdin: true,
     convertEol: true,
     fontFamily: 'Consolas NF, monospace, courier-new, courier',
-    scrollBack: 999999,
+    scrollback: 999999,
     theme: {
         background: '#111412',
         black: '#111412',
@@ -27,6 +27,12 @@ const fitAddon = new FitAddon.FitAddon();
 terminal.loadAddon(fitAddon);
 terminal.open(document.getElementById('output'));
 fitAddon.fit();
+function getTokenParam() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('token') ? `?token=${urlParams.get('token')}` : '';
+}
+const urlToken = getTokenParam();
+
 
 terminal.onSelectionChange(() => {
     const selectionText = terminal.getSelection();
@@ -37,12 +43,13 @@ terminal.onSelectionChange(() => {
     }
 });
 
+
 document.getElementById('launchForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     const commandName = document.getElementById('commandName').value;
     const params = document.getElementById('params').value.split(' ');
     try {
-        const response = await fetch('/run_command', {
+        const response = await fetch(`/run_command${urlToken}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -65,7 +72,7 @@ document.getElementById('launchForm').addEventListener('submit', async (event) =
 
 async function fetchCommands() {
     try {
-        const response = await fetch('/commands');
+        const response = await fetch(`/commands${urlToken}`);
         if (!response.ok) {
             document.getElementById('dimmer').style.display = 'block';
             return;
@@ -91,7 +98,7 @@ async function fetchCommands() {
                 <td>${command.command.replace(/^\.\//, '')}</td>
                 <td><span class="status-icon status-${command.status}"></span>${command.status}${command.status === 'failed' ? ` (${command.exit_code})` : ''}</td>
                 <td>
-                    ${command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}', event)">Stop</button>` : `<button onclick="relaunchCommand('${command.command_id}', event)">Run</button>`}
+                    ${command.command.startsWith('term') ? '' : command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}', event)">Stop</button>` : `<button onclick="relaunchCommand('${command.command_id}', event)">Run</button>`}
                 </td>
                 <td class="monospace outcol">${command.last_output_line || ''}</td>
             `;
@@ -129,11 +136,11 @@ async function fetchOutput(url) {
 async function viewOutput(command_id) {
     adjustOutputHeight();
     currentCommandId = command_id;
-    nextOutputLink = `/command_output/${command_id}`;
+    nextOutputLink = `/command_output/${command_id}${urlToken}`;
     clearInterval(outputInterval);
     terminal.clear();
     try {
-        const response = await fetch(`/command_status/${command_id}`);
+        const response = await fetch(`/command_status/${command_id}${urlToken}`);
         if (!response.ok) {
             return;
         }
@@ -154,7 +161,7 @@ async function relaunchCommand(command_id, event) {
     event.stopPropagation();
     event.stopImmediatePropagation();
     try {
-        const response = await fetch(`/command_status/${command_id}`);
+        const response = await fetch(`/command_status/${command_id}${urlToken}`);
         if (!response.ok) {
             throw new Error('Failed to fetch command status');
         }
@@ -163,7 +170,7 @@ async function relaunchCommand(command_id, event) {
             alert(data.error);
             return;
         }
-        const relaunchResponse = await fetch('/run_command', {
+        const relaunchResponse = await fetch(`/run_command${urlToken}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -189,7 +196,7 @@ async function stopCommand(command_id, event) {
     event.stopPropagation();
     event.stopImmediatePropagation();
     try {
-        const response = await fetch(`/stop_command/${command_id}`, {
+        const response = await fetch(`/stop_command/${command_id}${urlToken}`, {
             method: 'POST'
         });
         if (!response.ok) {

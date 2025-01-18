@@ -5,7 +5,7 @@
 [![Python versions](https://img.shields.io/badge/python-3.6+-blue.svg)](https://shields.io/)
 
 # pywebexec
-Simple Python HTTP(S) API/Web Command Launcher
+Simple Python HTTP(S) API/Web Command Launcher and Terminal sharing
 
 ## Install
 ```
@@ -17,10 +17,12 @@ $ pip install pywebexec
 * put in a directory the scripts/commands/links to commands you want to expose
 * start http server serving current directory executables listening on 0.0.0.0 port 8080
 ```shell
-$ pywebexec
+$ pywebexec -d <dir>
 ```
 
 * Launch commands with params/view live output/Status using browser
+* Share your terminal output using `pywebexec -d <dir> term`
+
 ![pywebexecnew6](https://github.com/user-attachments/assets/11415e1f-9f5f-409e-a04c-51eb062a9780)
 
 all commands output / statuses are available in the executables directory in subdirectory `.web_status`
@@ -36,6 +38,7 @@ all commands output / statuses are available in the executables directory in sub
 * HTTPS self-signed certificate generator
 * Basic Auth
 * LDAP(S)
+* safe url token
 * Can be started as a daemon (POSIX)
 * Uses gunicorn to serve http/https
 * Linux/MacOS compatible
@@ -46,7 +49,18 @@ $ pywebexec --dir ~/myscripts --listen 0.0.0.0 --port 8080 --title myscripts
 $ pywebexec -d ~/myscripts -l 0.0.0.0 -p 8080 -t myscripts
 ```
 
-## Basic auth 
+## Safe url token
+
+* generate safe url, use the url to access the server
+```shell
+$ pywebexec -T
+$ pywebexec --tokenurl
+Starting server:
+http://<host>:8080?token=jSTWiNgEVkddeEJ7I97x2ekOeaiXs2mErRSKNxm3DP0
+http://x.x.x.x:8080?token=jSTWiNgEVkddeEJ7I97x2ekOeaiXs2mErRSKNxm3DP0
+```
+
+## Basic auth
 
 * single user/password
 ```shell

@@ -195,7 +195,7 @@ window.addEventListener('load', () => {
 
 async function fetchExecutables() {
     try {
-        const response = await fetch('/executables');
+        const response = await fetch(`/executables${urlToken}`);
         if (!response.ok) {
             throw new Error('Failed to fetch command status');
         }
@@ -210,6 +210,8 @@ async function fetchExecutables() {
     } catch (error) {
         alert("Failed to fetch executables");
     }
-    commandListSelect.size = Math.min(20, commandListSelect.options.length)
+    commandListSelect.size = Math.min(20, commandListSelect.options.length);
+    if (commandListSelect.options.length == 0)
+        document.getElementById('launchForm').style.display = 'none';
 
 }
