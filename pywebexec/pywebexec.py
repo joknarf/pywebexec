@@ -43,7 +43,6 @@ if os.path.isdir(f"{CONFDIR}/.config"):
     CONFDIR += '/.config'
 CONFDIR += "/.pywebexec"
 
-
 # In-memory cache for command statuses
 command_status_cache = {}
 
@@ -222,7 +221,7 @@ def start_gunicorn(daemonized=False, baselog=None):
             sys.exit(1)
     else:
         errorlog = "-"
-        accesslog = "-"
+        accesslog = None #"-"
         pidfile = None
     options = {
         'bind': '%s:%s' % (args.listen, args.port),
@@ -438,13 +437,14 @@ def script(filename):
             return data
         return pty.spawn(shell, read)
 
-
 def run_command(command, params, command_id, user):
     start_time = datetime.now().isoformat()
     update_command_status(command_id, 'running', command=command, params=params, start_time=start_time, user=user)
     try:
         output_file_path = get_output_file_path(command_id)
         with open(output_file_path, 'wb') as output_file:
+            master_fd, slave_fd = pty.openpty()
+
             def read(fd):
                 data = os.read(fd, 1024)
                 output_file.write(data)
@@ -452,39 +452,42 @@ def run_command(command, params, command_id, user):
                 return data
 
             def spawn_pty():
-                pid, fd = pty.fork()
-                if pid == 0: # children
-                    try:
-                        os.setsid()
-                    except:
-                        pass
-                    os.execvp(command, [command] + params)
-                else:
-                    update_command_status(command_id, 'running', pid=pid, user=user)
-                    while True:
-                        try:
-                            read(fd)
-                        except OSError:
-                            break
-                    (pid, status) = os.waitpid(pid, 0)
-                    print(status)
-                    return status
-            status = spawn_pty()
-        end_time = datetime.now().isoformat()
-        # Update the status based on the result
-        if os.WIFEXITED(status):
-            exit_code = os.WEXITSTATUS(status)
-            if exit_code == 0:
-                update_command_status(command_id, 'success', end_time=end_time, exit_code=exit_code, user=user)
-            elif exit_code == -15:
-                update_command_status(command_id, 'aborted', end_time=end_time, exit_code=exit_code, user=user)
-            else:
-                update_command_status(command_id, 'failed', end_time=end_time, exit_code=exit_code, user=user)
+                process = subprocess.Popen(
+                    [command] + params,
+                    stdin=slave_fd,
+                    stdout=slave_fd,
+                    stderr=slave_fd,
+                    preexec_fn=os.setsid
+                )
+                update_command_status(command_id, 'running', pid=process.pid, user=user)
+                while process.poll() is None:
+                    status = read_command_status(command_id)
+                    if status and status.get('status') == 'aborted':
+                        break
+                    read(master_fd)
+                if status.get('status') != 'aborted':
+                    read(master_fd)  # Read remaining data
+                process.wait()
+                end_time = datetime.now().isoformat()
+                # Update the status based on the result
+                if status.get('status') != 'aborted':
+                    if process.returncode == 0:
+                        update_command_status(command_id, 'success', end_time=end_time, exit_code=process.returncode, user=user)
+                    elif process.returncode == -15:
+                        update_command_status(command_id, 'aborted', end_time=end_time, exit_code=process.returncode, user=user)
+                    else:
+                        update_command_status(command_id, 'failed', end_time=end_time, exit_code=process.returncode, user=user)
+
+            thread = threading.Thread(target=spawn_pty)
+            thread.start()
+            thread.join()
     except Exception as e:
         end_time = datetime.now().isoformat()
         update_command_status(command_id, 'failed', end_time=end_time, exit_code=1, user=user)
         with open(get_output_file_path(command_id), 'a') as output_file:
             output_file.write(str(e))
+
+parseargs()
 
 @app.route('/stop_command/<command_id>', methods=['POST'])
 def stop_command(command_id):
@@ -495,9 +498,12 @@ def stop_command(command_id):
     pid = status['pid']
     end_time = datetime.now().isoformat()
     try:
+        update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
         os.killpg(os.getpgid(pid), 15)  # Send SIGTERM to the process group
-        #os.waitpid(pid, 0)  # Wait for the process to terminate
-        #update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
+        try:
+            os.waitpid(pid, 0)  # Wait for the process to terminate
+        except ChildProcessError:
+            pass  # Ignore if the process has already been reaped
         return jsonify({'message': 'Command aborted'})
     except Exception as e:
         status_data = read_command_status(command_id) or {}
@@ -509,9 +515,6 @@ def stop_command(command_id):
         with open(get_output_file_path(command_id), 'a') as output_file:
             output_file.write(str(e))
         return jsonify({'error': 'Failed to terminate command'}), 500
-
-parseargs()
-
 
 @app.before_request
 def check_authentication():
