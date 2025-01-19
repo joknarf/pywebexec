@@ -17,6 +17,7 @@ from socket import gethostname, gethostbyname_ex, gethostbyaddr, inet_aton, inet
 import ssl
 import re
 import pwd
+import platform
 from secrets import token_urlsafe
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
@@ -327,7 +328,12 @@ def parseargs():
         user = pwd.getpwuid(os.getuid())[0]
         update_command_status(command_id, 'running', command="term", params=[user,os.ttyname(sys.stdout.fileno())], start_time=start_time, user=user)
         output_file_path = get_output_file_path(command_id)
-        res = os.system(f"script -f {output_file_path}")
+        if platform.system() == 'Darwin':
+            script_opt = '-F'
+        else:
+            script_opt = '-f'
+        res = os.system(f"script {script_opt} {output_file_path}")
+
         end_time = datetime.now().isoformat()
         update_command_status(command_id, status="success", end_time=end_time, exit_code=res)
         sys.exit(res)
