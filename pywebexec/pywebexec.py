@@ -17,9 +17,9 @@ from socket import gethostname, gethostbyname_ex, gethostbyaddr, inet_aton, inet
 import ssl
 import re
 import pwd
-import platform
 from secrets import token_urlsafe
 import pty
+import select
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
@@ -427,9 +427,6 @@ def read_command_status(command_id):
     
     return status_data
 
-# Dictionary to store the process objects
-processes = {}
-
 
 def script(filename):
     shell = os.environ.get('SHELL', 'sh')
@@ -447,30 +444,71 @@ def run_command(command, params, command_id, user):
     update_command_status(command_id, 'running', command=command, params=params, start_time=start_time, user=user)
     try:
         output_file_path = get_output_file_path(command_id)
-        with open(output_file_path, 'w') as output_file:
-            # Run the command with parameters and redirect stdout and stderr to the file
+        with open(output_file_path, 'wb') as output_file:
+            def read(fd):
+                data = os.read(fd, 1024)
+                output_file.write(data)
+                output_file.flush()
+                return data
 
-            process = subprocess.Popen([command] + params, stdout=output_file, stderr=output_file, bufsize=0) #text=True)
-
-            update_command_status(command_id, 'running', pid=process.pid, user=user)
-            processes[command_id] = process
-            process.wait()
-            processes.pop(command_id, None)
-
+            def spawn_pty():
+                pid, fd = pty.fork()
+                if pid == 0: # children
+                    try:
+                        os.setsid()
+                    except:
+                        pass
+                    os.execvp(command, [command] + params)
+                else:
+                    update_command_status(command_id, 'running', pid=pid, user=user)
+                    while True:
+                        try:
+                            read(fd)
+                        except OSError:
+                            break
+                    (pid, status) = os.waitpid(pid, 0)
+                    print(status)
+                    return status
+            status = spawn_pty()
         end_time = datetime.now().isoformat()
         # Update the status based on the result
-        if process.returncode == 0:
-            update_command_status(command_id, 'success', end_time=end_time, exit_code=process.returncode, user=user)
-        elif process.returncode == -15:
-            update_command_status(command_id, 'aborted', end_time=end_time, exit_code=process.returncode, user=user)
-        else:
-            update_command_status(command_id, 'failed', end_time=end_time, exit_code=process.returncode, user=user)
+        if os.WIFEXITED(status):
+            exit_code = os.WEXITSTATUS(status)
+            if exit_code == 0:
+                update_command_status(command_id, 'success', end_time=end_time, exit_code=exit_code, user=user)
+            elif exit_code == -15:
+                update_command_status(command_id, 'aborted', end_time=end_time, exit_code=exit_code, user=user)
+            else:
+                update_command_status(command_id, 'failed', end_time=end_time, exit_code=exit_code, user=user)
     except Exception as e:
         end_time = datetime.now().isoformat()
         update_command_status(command_id, 'failed', end_time=end_time, exit_code=1, user=user)
         with open(get_output_file_path(command_id), 'a') as output_file:
             output_file.write(str(e))
 
+@app.route('/stop_command/<command_id>', methods=['POST'])
+def stop_command(command_id):
+    status = read_command_status(command_id)
+    if not status or 'pid' not in status:
+        return jsonify({'error': 'Invalid command_id or command not running'}), 400
+
+    pid = status['pid']
+    end_time = datetime.now().isoformat()
+    try:
+        os.killpg(os.getpgid(pid), 15)  # Send SIGTERM to the process group
+        #os.waitpid(pid, 0)  # Wait for the process to terminate
+        #update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
+        return jsonify({'message': 'Command aborted'})
+    except Exception as e:
+        status_data = read_command_status(command_id) or {}
+        status_data['status'] = 'failed'
+        status_data['end_time'] = end_time
+        status_data['exit_code'] = 1
+        with open(get_status_file_path(command_id), 'w') as f:
+            json.dump(status_data, f)
+        with open(get_output_file_path(command_id), 'a') as output_file:
+            output_file.write(str(e))
+        return jsonify({'error': 'Failed to terminate command'}), 500
 
 parseargs()
 
@@ -572,29 +610,6 @@ def run_command_endpoint():
     thread.start()
 
     return jsonify({'message': 'Command is running', 'command_id': command_id})
-
-@app.route('/stop_command/<command_id>', methods=['POST'])
-def stop_command(command_id):
-    status = read_command_status(command_id)
-    if not status or 'pid' not in status:
-        return jsonify({'error': 'Invalid command_id or command not running'}), 400
-
-    pid = status['pid']
-    end_time = datetime.now().isoformat()
-    try:
-        os.kill(pid, 15)  # Send SIGTERM
-        #update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
-        return jsonify({'message': 'Command aborted'})
-    except Exception as e:
-        status_data = read_command_status(command_id) or {}
-        status_data['status'] = 'failed'
-        status_data['end_time'] = end_time
-        status_data['exit_code'] = 1
-        with open(get_status_file_path(command_id), 'w') as f:
-            json.dump(status_data, f)
-        with open(get_output_file_path(command_id), 'a') as output_file:
-            output_file.write(str(e))
-        return jsonify({'error': 'Failed to terminate command'}), 500
 
 @app.route('/command_status/<command_id>', methods=['GET'])
 def get_command_status(command_id):
