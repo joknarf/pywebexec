@@ -329,9 +329,9 @@ def parseargs():
         update_command_status(command_id, 'running', command="term", params=[user,os.ttyname(sys.stdout.fileno())], start_time=start_time, user=user)
         output_file_path = get_output_file_path(command_id)
         if platform.system() == 'Darwin':
-            script_opt = '-F'
+            script_opt = '-qF'
         else:
-            script_opt = '-f'
+            script_opt = '-qf'
         res = os.system(f"script {script_opt} {output_file_path}")
 
         end_time = datetime.now().isoformat()
