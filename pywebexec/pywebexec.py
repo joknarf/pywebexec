@@ -19,6 +19,7 @@ import re
 import pwd
 import platform
 from secrets import token_urlsafe
+import pty
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
@@ -328,12 +329,7 @@ def parseargs():
         user = pwd.getpwuid(os.getuid())[0]
         update_command_status(command_id, 'running', command="term", params=[user,os.ttyname(sys.stdout.fileno())], start_time=start_time, user=user)
         output_file_path = get_output_file_path(command_id)
-        if platform.system() == 'Darwin':
-            script_opt = '-qF'
-        else:
-            script_opt = '-qf'
-        res = os.system(f"script {script_opt} {output_file_path}")
-
+        res = script(output_file_path)
         end_time = datetime.now().isoformat()
         update_command_status(command_id, status="success", end_time=end_time, exit_code=res)
         sys.exit(res)
@@ -434,6 +430,18 @@ def read_command_status(command_id):
 # Dictionary to store the process objects
 processes = {}
 
+
+def script(filename):
+    shell = os.environ.get('SHELL', 'sh')
+    with open(filename, 'wb') as s:
+        def read(fd):
+            data = os.read(fd, 1024)
+            s.write(data)
+            s.flush()
+            return data
+        return pty.spawn(shell, read)
+
+
 def run_command(command, params, command_id, user):
     start_time = datetime.now().isoformat()
     update_command_status(command_id, 'running', command=command, params=params, start_time=start_time, user=user)
@@ -441,7 +449,9 @@ def run_command(command, params, command_id, user):
         output_file_path = get_output_file_path(command_id)
         with open(output_file_path, 'w') as output_file:
             # Run the command with parameters and redirect stdout and stderr to the file
+
             process = subprocess.Popen([command] + params, stdout=output_file, stderr=output_file, bufsize=0) #text=True)
+
             update_command_status(command_id, 'running', pid=process.pid, user=user)
             processes[command_id] = process
             process.wait()
