@@ -448,52 +448,38 @@ def script(output_file):
         signal.signal(signal.SIGWINCH, sigwinch_passthrough)
         p.interact()
 
+    
 
 def run_command(command, params, command_id, user):
     start_time = datetime.now().isoformat()
     update_command_status(command_id, 'running', command=command, params=params, start_time=start_time, user=user)
+    output_file_path = get_output_file_path(command_id)
     try:
-        output_file_path = get_output_file_path(command_id)
-        with open(output_file_path, 'wb') as output_file:
-            def read(fd):
-                data = os.read(fd, 1024)
-                if not data:  # Check for EOF
-                    raise OSError("EOF reached")
-                output_file.write(data)
-                output_file.flush()
-                return data
-
-            def spawn_pty():
-                pid, fd = pty.fork()
-                fcntl.ioctl(sys.stdout.fileno(), termios.TIOCSWINSZ, struct.pack('hhhh', 24, 120, 0, 0))
-                if pid == 0:  # Child process
+        def spawn_tty():
+            with open(output_file_path, 'wb') as fd:
+                p = pexpect.spawn(command, params, echo=True, use_poll=True, timeout=None, maxread=1, ignore_sighup=True)
+                update_command_status(command_id, 'running', pid=p.pid, user=user)
+                p.setwinsize(24, 120)
+                p.logfile = fd
+                while True:
                     try:
-                        os.setsid()
-                    except:
+                        p.expect(pexpect.EOF)
+                        break
+                    except pexpect.TIMEOUT:
                         pass
-                    os.execvp(command, [command] + params)
-                else:  # Parent process
-                    update_command_status(command_id, 'running', pid=pid, user=user)
-                    while True:
-                        try:
-                            read(fd)
-                        except OSError:
-                            break
-                    (pid, status) = os.waitpid(pid, 0)
-                    return status
-
-            status = spawn_pty()
-        end_time = datetime.now().isoformat()
-        # Update the status based on the result
-        if os.WIFSIGNALED(status):
-            exit_code = -os.WTERMSIG(status)
-            update_command_status(command_id, 'aborted', end_time=end_time, exit_code=exit_code, user=user)
-        else:
-            exit_code = os.WEXITSTATUS(status)
-            if exit_code == 0:
-                update_command_status(command_id, 'success', end_time=end_time, exit_code=exit_code, user=user)
-            else:
-                update_command_status(command_id, 'failed', end_time=end_time, exit_code=exit_code, user=user)
+                status = p.wait()
+                end_time = datetime.now().isoformat()
+                # Update the status based on the result
+                if os.WIFSIGNALED(status):
+                    exit_code = -os.WTERMSIG(status)
+                    update_command_status(command_id, 'aborted', end_time=end_time, exit_code=exit_code, user=user)
+                else:
+                    exit_code = os.WEXITSTATUS(status)
+                    if exit_code == 0:
+                        update_command_status(command_id, 'success', end_time=end_time, exit_code=exit_code, user=user)
+                    else:
+                        update_command_status(command_id, 'failed', end_time=end_time, exit_code=exit_code, user=user)
+        spawn_tty()
     except Exception as e:
         end_time = datetime.now().isoformat()
         update_command_status(command_id, 'failed', end_time=end_time, exit_code=1, user=user)
