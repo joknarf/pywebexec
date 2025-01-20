@@ -447,19 +447,21 @@ def run_command(command, params, command_id, user):
         with open(output_file_path, 'wb') as output_file:
             def read(fd):
                 data = os.read(fd, 1024)
+                if not data:  # Check for EOF
+                    raise OSError("EOF reached")
                 output_file.write(data)
                 output_file.flush()
                 return data
 
             def spawn_pty():
                 pid, fd = pty.fork()
-                if pid == 0: # children
+                if pid == 0:  # Child process
                     try:
                         os.setsid()
                     except:
                         pass
                     os.execvp(command, [command] + params)
-                else:
+                else:  # Parent process
                     update_command_status(command_id, 'running', pid=pid, user=user)
                     while True:
                         try:
@@ -467,8 +469,8 @@ def run_command(command, params, command_id, user):
                         except OSError:
                             break
                     (pid, status) = os.waitpid(pid, 0)
-                    print(status)
                     return status
+
             status = spawn_pty()
         end_time = datetime.now().isoformat()
         # Update the status based on the result
