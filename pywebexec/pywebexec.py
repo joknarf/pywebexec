@@ -437,9 +437,7 @@ def script(filename):
             s.flush()
             return data
         return pty.spawn(shell, read)
-
-
-import fcntl
+        
 
 def run_command(command, params, command_id, user):
     start_time = datetime.now().isoformat()
@@ -465,26 +463,24 @@ def run_command(command, params, command_id, user):
                     os.execvp(command, [command] + params)
                 else:  # Parent process
                     update_command_status(command_id, 'running', pid=pid, user=user)
-                    fcntl.fcntl(fd, fcntl.F_SETFL, os.O_NONBLOCK)  # Set the file descriptor to non-blocking mode
                     while True:
-                        r, _, _ = select.select([fd], [], [], 1.0)  # Use select to monitor the file descriptor
-                        if fd in r:
-                            try:
-                                read(fd)
-                            except OSError:
-                                break
+                        try:
+                            read(fd)
+                        except OSError:
+                            break
                     (pid, status) = os.waitpid(pid, 0)
                     return status
 
             status = spawn_pty()
         end_time = datetime.now().isoformat()
         # Update the status based on the result
-        if os.WIFEXITED(status):
+        if os.WIFSIGNALED(status):
+            exit_code = -os.WTERMSIG(status)
+            update_command_status(command_id, 'aborted', end_time=end_time, exit_code=exit_code, user=user)
+        else:
             exit_code = os.WEXITSTATUS(status)
             if exit_code == 0:
                 update_command_status(command_id, 'success', end_time=end_time, exit_code=exit_code, user=user)
-            elif exit_code == -15:
-                update_command_status(command_id, 'aborted', end_time=end_time, exit_code=exit_code, user=user)
             else:
                 update_command_status(command_id, 'failed', end_time=end_time, exit_code=exit_code, user=user)
     except Exception as e:
