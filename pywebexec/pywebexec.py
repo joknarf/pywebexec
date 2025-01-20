@@ -17,7 +17,6 @@ import ssl
 import re
 import pwd
 from secrets import token_urlsafe
-import pty
 import pexpect
 import signal
 import fcntl
@@ -457,7 +456,7 @@ def run_command(command, params, command_id, user):
     try:
         def spawn_tty():
             with open(output_file_path, 'wb') as fd:
-                p = pexpect.spawn(command, params, ignore_sighup=True)
+                p = pexpect.spawn(command, params, ignore_sighup=True, timeout=None)
                 update_command_status(command_id, 'running', pid=p.pid, user=user)
                 p.setwinsize(24, 120)
                 p.logfile = fd
@@ -466,11 +465,11 @@ def run_command(command, params, command_id, user):
                 status = p.wait()
                 end_time = datetime.now().isoformat()
                 # Update the status based on the result
-                if os.WIFSIGNALED(status):
-                    exit_code = -os.WTERMSIG(status)
+                if status is None:
+                    exit_code = -15
                     update_command_status(command_id, 'aborted', end_time=end_time, exit_code=exit_code, user=user)
                 else:
-                    exit_code = os.WEXITSTATUS(status)
+                    exit_code = status
                     if exit_code == 0:
                         update_command_status(command_id, 'success', end_time=end_time, exit_code=exit_code, user=user)
                     else:
@@ -491,7 +490,7 @@ def stop_command(command_id):
     pid = status['pid']
     end_time = datetime.now().isoformat()
     try:
-        update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
+        #update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
         os.killpg(os.getpgid(pid), 15)  # Send SIGTERM to the process group
         return jsonify({'message': 'Command aborted'})
     except Exception as e:
