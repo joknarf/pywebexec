@@ -222,7 +222,7 @@ def start_gunicorn(daemonized=False, baselog=None):
             sys.exit(1)
     else:
         errorlog = "-"
-        accesslog = "-"
+        accesslog = None #"-"
         pidfile = None
     options = {
         'bind': '%s:%s' % (args.listen, args.port),
@@ -439,6 +439,8 @@ def script(filename):
         return pty.spawn(shell, read)
 
 
+import fcntl
+
 def run_command(command, params, command_id, user):
     start_time = datetime.now().isoformat()
     update_command_status(command_id, 'running', command=command, params=params, start_time=start_time, user=user)
@@ -463,11 +465,14 @@ def run_command(command, params, command_id, user):
                     os.execvp(command, [command] + params)
                 else:  # Parent process
                     update_command_status(command_id, 'running', pid=pid, user=user)
+                    fcntl.fcntl(fd, fcntl.F_SETFL, os.O_NONBLOCK)  # Set the file descriptor to non-blocking mode
                     while True:
-                        try:
-                            read(fd)
-                        except OSError:
-                            break
+                        r, _, _ = select.select([fd], [], [], 1.0)  # Use select to monitor the file descriptor
+                        if fd in r:
+                            try:
+                                read(fd)
+                            except OSError:
+                                break
                     (pid, status) = os.waitpid(pid, 0)
                     return status
 
@@ -497,9 +502,12 @@ def stop_command(command_id):
     pid = status['pid']
     end_time = datetime.now().isoformat()
     try:
+        update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
         os.killpg(os.getpgid(pid), 15)  # Send SIGTERM to the process group
-        #os.waitpid(pid, 0)  # Wait for the process to terminate
-        #update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
+        try:
+            os.waitpid(pid, 0)  # Wait for the process to terminate
+        except ChildProcessError:
+            pass  # Ignore if the process has already been reaped
         return jsonify({'message': 'Command aborted'})
     except Exception as e:
         status_data = read_command_status(command_id) or {}
