@@ -1,7 +1,6 @@
 import sys
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from flask_httpauth import HTTPBasicAuth
-import subprocess
 import threading
 import os
 import json
@@ -18,8 +17,12 @@ import ssl
 import re
 import pwd
 from secrets import token_urlsafe
-import pty
-import select
+import pexpect
+import signal
+import fcntl
+import termios
+import struct
+
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
@@ -239,7 +242,6 @@ def start_gunicorn(daemonized=False, baselog=None):
 
 def daemon_d(action, pidfilepath, silent=False, hostname=None, args=None):
     """start/stop daemon"""
-    import signal
     import daemon, daemon.pidfile
 
     pidfile = daemon.pidfile.TimeoutPIDLockFile(pidfilepath+".pid", acquire_timeout=30)
@@ -427,62 +429,52 @@ def read_command_status(command_id):
     
     return status_data
 
+def sigwinch_passthrough(sig, data):
+    s = struct.pack("HHHH", 0, 0, 0, 0)
+    a = struct.unpack('hhhh', fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, s))
+    global p
+    p.setwinsize(a[0], a[1])
 
-def script(filename):
+
+def script(output_file):
+    global p
     shell = os.environ.get('SHELL', 'sh')
-    with open(filename, 'wb') as s:
-        def read(fd):
-            data = os.read(fd, 1024)
-            s.write(data)
-            s.flush()
-            return data
-        return pty.spawn(shell, read)
-        
+    with open(output_file, 'wb') as fd:
+        p = pexpect.spawn(shell, echo=True)
+        p.logfile_read = fd
+        # Set the window size
+        sigwinch_passthrough(None, None)
+        signal.signal(signal.SIGWINCH, sigwinch_passthrough)
+        p.interact()
+
+    
 
 def run_command(command, params, command_id, user):
     start_time = datetime.now().isoformat()
     update_command_status(command_id, 'running', command=command, params=params, start_time=start_time, user=user)
+    output_file_path = get_output_file_path(command_id)
     try:
-        output_file_path = get_output_file_path(command_id)
-        with open(output_file_path, 'wb') as output_file:
-            def read(fd):
-                data = os.read(fd, 1024)
-                if not data:  # Check for EOF
-                    raise OSError("EOF reached")
-                output_file.write(data)
-                output_file.flush()
-                return data
-
-            def spawn_pty():
-                pid, fd = pty.fork()
-                if pid == 0:  # Child process
-                    try:
-                        os.setsid()
-                    except:
-                        pass
-                    os.execvp(command, [command] + params)
-                else:  # Parent process
-                    update_command_status(command_id, 'running', pid=pid, user=user)
-                    while True:
-                        try:
-                            read(fd)
-                        except OSError:
-                            break
-                    (pid, status) = os.waitpid(pid, 0)
-                    return status
-
-            status = spawn_pty()
-        end_time = datetime.now().isoformat()
-        # Update the status based on the result
-        if os.WIFSIGNALED(status):
-            exit_code = -os.WTERMSIG(status)
-            update_command_status(command_id, 'aborted', end_time=end_time, exit_code=exit_code, user=user)
-        else:
-            exit_code = os.WEXITSTATUS(status)
-            if exit_code == 0:
-                update_command_status(command_id, 'success', end_time=end_time, exit_code=exit_code, user=user)
-            else:
-                update_command_status(command_id, 'failed', end_time=end_time, exit_code=exit_code, user=user)
+        def spawn_tty():
+            with open(output_file_path, 'wb') as fd:
+                p = pexpect.spawn(command, params, ignore_sighup=True, timeout=None)
+                update_command_status(command_id, 'running', pid=p.pid, user=user)
+                p.setwinsize(24, 120)
+                p.logfile = fd
+                p.expect(pexpect.EOF)
+                fd.flush()
+                status = p.wait()
+                end_time = datetime.now().isoformat()
+                # Update the status based on the result
+                if status is None:
+                    exit_code = -15
+                    update_command_status(command_id, 'aborted', end_time=end_time, exit_code=exit_code, user=user)
+                else:
+                    exit_code = status
+                    if exit_code == 0:
+                        update_command_status(command_id, 'success', end_time=end_time, exit_code=exit_code, user=user)
+                    else:
+                        update_command_status(command_id, 'failed', end_time=end_time, exit_code=exit_code, user=user)
+        spawn_tty()
     except Exception as e:
         end_time = datetime.now().isoformat()
         update_command_status(command_id, 'failed', end_time=end_time, exit_code=1, user=user)
@@ -498,12 +490,8 @@ def stop_command(command_id):
     pid = status['pid']
     end_time = datetime.now().isoformat()
     try:
-        update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
+        #update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
         os.killpg(os.getpgid(pid), 15)  # Send SIGTERM to the process group
-        try:
-            os.waitpid(pid, 0)  # Wait for the process to terminate
-        except ChildProcessError:
-            pass  # Ignore if the process has already been reaped
         return jsonify({'message': 'Command aborted'})
     except Exception as e:
         status_data = read_command_status(command_id) or {}

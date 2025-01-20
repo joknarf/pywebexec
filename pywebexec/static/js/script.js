@@ -128,8 +128,18 @@ async function fetchOutput(url) {
             terminal.write(data.error);
             clearInterval(outputInterval);
         } else {
+            slider = document.getElementById('outputSlider')
+            percentage = slider.value;
+            if (percentage == 100)
+                terminal.write(data.output);
+            else {
+                length = Math.floor((fullOutput.length * percentage) / 100);
+                newlength = fullOutput.length + data.output.length;
+                percentage = Math.floor(length/newlength * 100);
+                slider.value = percentage;
+                document.getElementById('outputPercentage').innerText = `${percentage}%`;
+            }
             fullOutput += data.output;
-            updateTerminalOutput();
             nextOutputLink = data.links.next;
             if (data.status != 'running') {
                 clearInterval(outputInterval);
@@ -284,7 +294,8 @@ function initResizer() {
     }
 }
 
-function updateTerminalOutput() {
+function sliderUpdateOutput()
+{
     const slider = document.getElementById('outputSlider');
     const percentage = slider.value;
     const outputLength = Math.floor((fullOutput.length * percentage) / 100);
@@ -295,7 +306,7 @@ function updateTerminalOutput() {
     document.getElementById('outputPercentage').innerText = `${percentage}%`;
 }
 
-document.getElementById('outputSlider').addEventListener('input', updateTerminalOutput);
+document.getElementById('outputSlider').addEventListener('input', sliderUpdateOutput);
 
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', initResizer);
