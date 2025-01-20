@@ -1,7 +1,6 @@
 import sys
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from flask_httpauth import HTTPBasicAuth
-import subprocess
 import threading
 import os
 import json
@@ -19,7 +18,12 @@ import re
 import pwd
 from secrets import token_urlsafe
 import pty
-import select
+import pexpect
+import signal
+import fcntl
+import termios
+import struct
+
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
@@ -239,7 +243,6 @@ def start_gunicorn(daemonized=False, baselog=None):
 
 def daemon_d(action, pidfilepath, silent=False, hostname=None, args=None):
     """start/stop daemon"""
-    import signal
     import daemon, daemon.pidfile
 
     pidfile = daemon.pidfile.TimeoutPIDLockFile(pidfilepath+".pid", acquire_timeout=30)
@@ -427,17 +430,24 @@ def read_command_status(command_id):
     
     return status_data
 
+def sigwinch_passthrough(sig, data):
+    s = struct.pack("HHHH", 0, 0, 0, 0)
+    a = struct.unpack('hhhh', fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, s))
+    global p
+    p.setwinsize(a[0], a[1])
 
-def script(filename):
+
+def script(output_file):
+    global p
     shell = os.environ.get('SHELL', 'sh')
-    with open(filename, 'wb') as s:
-        def read(fd):
-            data = os.read(fd, 1024)
-            s.write(data)
-            s.flush()
-            return data
-        return pty.spawn(shell, read)
-        
+    with open(output_file, 'wb') as fd:
+        p = pexpect.spawn(shell, echo=True)
+        p.logfile_read = fd
+        # Set the window size
+        sigwinch_passthrough(None, None)
+        signal.signal(signal.SIGWINCH, sigwinch_passthrough)
+        p.interact()
+
 
 def run_command(command, params, command_id, user):
     start_time = datetime.now().isoformat()
@@ -454,7 +464,6 @@ def run_command(command, params, command_id, user):
                 return data
 
             def spawn_pty():
-                import fcntl, termios, struct
                 pid, fd = pty.fork()
                 fcntl.ioctl(sys.stdout.fileno(), termios.TIOCSWINSZ, struct.pack('hhhh', 24, 120, 0, 0))
                 if pid == 0:  # Child process
