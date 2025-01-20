@@ -457,16 +457,12 @@ def run_command(command, params, command_id, user):
     try:
         def spawn_tty():
             with open(output_file_path, 'wb') as fd:
-                p = pexpect.spawn(command, params, echo=True, use_poll=True, timeout=None, maxread=1, ignore_sighup=True)
+                p = pexpect.spawn(command, params, ignore_sighup=True)
                 update_command_status(command_id, 'running', pid=p.pid, user=user)
                 p.setwinsize(24, 120)
                 p.logfile = fd
-                while True:
-                    try:
-                        p.expect(pexpect.EOF)
-                        break
-                    except pexpect.TIMEOUT:
-                        pass
+                p.expect(pexpect.EOF)
+                fd.flush()
                 status = p.wait()
                 end_time = datetime.now().isoformat()
                 # Update the status based on the result
@@ -497,10 +493,6 @@ def stop_command(command_id):
     try:
         update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
         os.killpg(os.getpgid(pid), 15)  # Send SIGTERM to the process group
-        try:
-            os.waitpid(pid, 0)  # Wait for the process to terminate
-        except ChildProcessError:
-            pass  # Ignore if the process has already been reaped
         return jsonify({'message': 'Command aborted'})
     except Exception as e:
         status_data = read_command_status(command_id) or {}
