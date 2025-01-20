@@ -33,6 +33,7 @@ all commands output / statuses are available in the executables directory in sub
 * Launch commands with params from web browser or API call
 * multiple share terminal output
 * Follow live output
+* Replay terminal history
 * Stop command
 * Relaunch command
 * HTTPS support
