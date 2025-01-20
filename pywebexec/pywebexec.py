@@ -454,7 +454,9 @@ def run_command(command, params, command_id, user):
                 return data
 
             def spawn_pty():
+                import fcntl, termios, struct
                 pid, fd = pty.fork()
+                fcntl.ioctl(sys.stdout.fileno(), termios.TIOCSWINSZ, struct.pack('hhhh', 24, 120, 0, 0))
                 if pid == 0:  # Child process
                     try:
                         os.setsid()
