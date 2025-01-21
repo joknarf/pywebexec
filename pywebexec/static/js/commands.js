@@ -90,9 +90,11 @@ commandInput.addEventListener('keydown', (event) => {
     } else if (event.key === 'ArrowDown') {
         /*setCommandListPosition();*/
         unfilterCommands();
-        commandListSelect.style.display = 'block';
-        commandListSelect.focus();
-        commandListSelect.selectedIndex = 0;
+        if (commandListSelect.options.length > 1) {
+            commandListSelect.style.display = 'block';
+            commandListSelect.focus();
+            commandListSelect.selectedIndex = 0;
+        }
         event.preventDefault();
     }
 });
@@ -161,11 +163,11 @@ commandInput.addEventListener('blur', (event) => {
 showCommandListButton.addEventListener('click', (event) => {
     event.preventDefault();
     setCommandListPosition();
+    unfilterCommands();
     if (commandListSelect.style.display == 'none')
         commandListSelect.style.display = 'block';
     else
         commandListSelect.style.display = 'none';
-    unfilterCommands();
 });
 
 window.addEventListener('click', (event) => {
@@ -211,8 +213,10 @@ async function fetchExecutables() {
         alert("Failed to fetch executables");
     }
     commandListSelect.size = Math.min(20, commandListSelect.options.length);
-    if (commandListSelect.options.length == 1)
+    if (commandListSelect.options.length == 1) {
         commandInput.value = commandListSelect.options[0].text;
+        showCommandListButton.style.display = 'none';
+    }
     if (commandListSelect.options.length == 0)
         document.getElementById('launchForm').style.display = 'none';
 
