@@ -133,7 +133,7 @@ async function fetchOutput(url) {
             percentage = slider.value;
             fullOutput += data.output;
             if (percentage == 100)
-                terminal.write(data.output.replace(/ \r/g, "\r\n"));
+                terminal.write(data.output); //.replace(/ \r/g, "\r\n")); tty size mismatch
             else {
                 percentage = Math.round((outputLength * 100)/fullOutput.length);
                 slider.value = percentage;
