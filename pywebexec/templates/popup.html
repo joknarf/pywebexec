@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
+    <title>Command Output</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/xterm.css">
+</head>
+<body>
+    <div id="output" class="output"></div>
+    <div class="slider-container">
+        <input type="range" id="outputSlider" min="0" max="100" value="100">
+        <label for="outputSlider"><span id="outputPercentage">100%</span></label>
+    </div>
+    <script src="/static/js/xterm/ansi_up.min.js"></script>
+    <script src="/static/js/xterm/xterm.js"></script>
+    <script src="/static/js/xterm/xterm-addon-fit.js"></script>
+    <script type="text/javascript" src="/static/js/popup.js"></script>
+</body>
+</html>

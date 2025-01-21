@@ -106,6 +106,7 @@ async function fetchCommands() {
                 <td><span class="status-icon status-${command.status}"></span>${command.status}${command.status === 'failed' ? ` (${command.exit_code})` : ''}</td>
                 <td>
                     ${command.command.startsWith('term') ? '' : command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}', event)">Stop</button>` : `<button onclick="relaunchCommand('${command.command_id}', event)">Run</button>`}
+                    <button onclick="openPopup('${command.command_id}', event)">Popup</button>
                 </td>
                 <td class="monospace outcol">${command.last_output_line || ''}</td>
             `;
@@ -178,6 +179,11 @@ async function viewOutput(command_id) {
     } catch (error) {
         console.log('Error viewing output:', error);
     }
+}
+
+async function openPopup(command_id) {
+    const popupUrl = `/popup/${command_id}${urlToken}`;
+    window.open(popupUrl, '_blank', 'width=800,height=600');
 }
 
 async function relaunchCommand(command_id, event) {
