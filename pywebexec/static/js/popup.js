@@ -123,10 +123,7 @@ document.getElementById('outputSlider').addEventListener('input', sliderUpdateOu
 
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const commandId = urlParams.get('command_id');
-    if (commandId) {
-        viewOutput(commandId);
-    }
+    const commandId = window.location.pathname.split('/').slice(-1)[0];
+    viewOutput(commandId);
 });
 
