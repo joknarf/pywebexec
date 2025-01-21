@@ -2,7 +2,7 @@ let currentCommandId = null;
 let outputInterval = null;
 let nextOutputLink = null;
 let fullOutput = '';
-
+let outputLength = 0;
 
 function initTerminal()
 {
@@ -130,16 +130,14 @@ async function fetchOutput(url) {
         } else {
             slider = document.getElementById('outputSlider')
             percentage = slider.value;
+            fullOutput += data.output;
             if (percentage == 100)
-                terminal.write(data.output);
+                terminal.write(data.output.replace(/ \r/g, "\r\n"));
             else {
-                length = Math.floor((fullOutput.length * percentage) / 100);
-                newlength = fullOutput.length + data.output.length;
-                percentage = Math.floor(length/newlength * 100);
+                percentage = Math.round((outputLength * 100)/fullOutput.length);
                 slider.value = percentage;
                 document.getElementById('outputPercentage').innerText = `${percentage}%`;
             }
-            fullOutput += data.output;
             nextOutputLink = data.links.next;
             if (data.status != 'running') {
                 clearInterval(outputInterval);
@@ -298,7 +296,7 @@ function sliderUpdateOutput()
 {
     const slider = document.getElementById('outputSlider');
     const percentage = slider.value;
-    const outputLength = Math.floor((fullOutput.length * percentage) / 100);
+    outputLength = Math.floor((fullOutput.length * percentage) / 100);
     const limitedOutput = fullOutput.slice(0, outputLength);
     terminal.clear();
     terminal.reset();
