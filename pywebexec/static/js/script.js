@@ -8,7 +8,7 @@ function initTerminal()
 {
     return new Terminal({
         cursorBlink: false,
-        cursorHidden: true,
+        cursorInactiveStyle: 'none',
         disableStdin: true,
         convertEol: true,
         fontFamily: 'Consolas NF, monospace, courier-new, courier',
@@ -25,6 +25,7 @@ function initTerminal()
             brightBlack: "#243C4F",
             brightBlue: "#5584b1",
         },
+        customGlyphs: false,
         rescaleOverlappingGlyphs: true,
     });
 }
@@ -163,6 +164,10 @@ async function viewOutput(command_id) {
             return;
         }
         const data = await response.json();
+        if (data.command == 'term')
+            terminal.options.cursorInactiveStyle = 'outline';
+        else
+            terminal.options.cursorInactiveStyle = 'none';
         if (data.status === 'running') {
             fetchOutput(nextOutputLink);
             outputInterval = setInterval(() => fetchOutput(nextOutputLink), 1000);

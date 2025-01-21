@@ -253,11 +253,6 @@ body.dimmed * {
     left: 50%;
     transform: translate(-50%, -50%);
 }
-.xterm-cursor {
-    display: none;
-    visibility: hidden;
-    height: 0px;
-}
 /* allow wide chars in terminal */
 span {
     letter-spacing: -0.03px !important;
