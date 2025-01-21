@@ -25,7 +25,7 @@ function filterCommands() {
             options[i].style.display = 'none';
         }
     }
-    if (nbVisibleItems>1) {
+    if (nbVisibleItems > 1) {
         commandListSelect.size = Math.min(20, nbVisibleItems);
         commandListSelect.style.display = 'block';
     } else {
@@ -211,6 +211,8 @@ async function fetchExecutables() {
         alert("Failed to fetch executables");
     }
     commandListSelect.size = Math.min(20, commandListSelect.options.length);
+    if (commandListSelect.options.length == 1)
+        commandInput.value = commandListSelect.options[0].text;
     if (commandListSelect.options.length == 0)
         document.getElementById('launchForm').style.display = 'none';
 

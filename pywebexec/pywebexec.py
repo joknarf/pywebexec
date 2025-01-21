@@ -454,27 +454,25 @@ def run_command(command, params, command_id, user):
     update_command_status(command_id, 'running', command=command, params=params, start_time=start_time, user=user)
     output_file_path = get_output_file_path(command_id)
     try:
-        def spawn_tty():
-            with open(output_file_path, 'wb') as fd:
-                p = pexpect.spawn(command, params, ignore_sighup=True, timeout=None)
-                update_command_status(command_id, 'running', pid=p.pid, user=user)
-                p.setwinsize(24, 120)
-                p.logfile = fd
-                p.expect(pexpect.EOF)
-                fd.flush()
-                status = p.wait()
-                end_time = datetime.now().isoformat()
-                # Update the status based on the result
-                if status is None:
-                    exit_code = -15
-                    update_command_status(command_id, 'aborted', end_time=end_time, exit_code=exit_code, user=user)
+        with open(output_file_path, 'wb') as fd:
+            p = pexpect.spawn(command, params, ignore_sighup=True, timeout=None)
+            update_command_status(command_id, 'running', pid=p.pid, user=user)
+            p.setwinsize(24, 125)
+            p.logfile = fd
+            p.expect(pexpect.EOF)
+            fd.flush()
+            status = p.wait()
+            end_time = datetime.now().isoformat()
+            # Update the status based on the result
+            if status is None:
+                exit_code = -15
+                update_command_status(command_id, 'aborted', end_time=end_time, exit_code=exit_code, user=user)
+            else:
+                exit_code = status
+                if exit_code == 0:
+                    update_command_status(command_id, 'success', end_time=end_time, exit_code=exit_code, user=user)
                 else:
-                    exit_code = status
-                    if exit_code == 0:
-                        update_command_status(command_id, 'success', end_time=end_time, exit_code=exit_code, user=user)
-                    else:
-                        update_command_status(command_id, 'failed', end_time=end_time, exit_code=exit_code, user=user)
-        spawn_tty()
+                    update_command_status(command_id, 'failed', end_time=end_time, exit_code=exit_code, user=user)
     except Exception as e:
         end_time = datetime.now().isoformat()
         update_command_status(command_id, 'failed', end_time=end_time, exit_code=1, user=user)
