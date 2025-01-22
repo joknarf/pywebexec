@@ -266,4 +266,16 @@ span {
 #outputSlider {
     width: 100%;
 }
+.popup-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+.popup-button img {
+    width: 16px;
+    height: 16px;
+}
 

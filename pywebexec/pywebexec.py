@@ -682,6 +682,10 @@ def list_executables():
     executables.sort()  # Sort the list of executables alphabetically
     return jsonify(executables)
 
+@app.route('/popup/<command_id>')
+def popup(command_id):
+    return render_template('popup.html', command_id=command_id)
+
 def main():
     basef = f"{CONFDIR}/pywebexec_{args.listen}:{args.port}"
     if args.action == "start":

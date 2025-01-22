@@ -107,7 +107,12 @@ async function fetchCommands() {
                 <td>
                     ${command.command.startsWith('term') ? '' : command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}', event)">Stop</button>` : `<button onclick="relaunchCommand('${command.command_id}', event)">Run</button>`}
                 </td>
-                <td class="monospace outcol">${command.last_output_line || ''}</td>
+                <td class="monospace outcol">
+                    <button class="popup-button" onclick="openPopup('${command.command_id}', event)">
+                        <img src="/static/images/popup.svg" alt="Popup">
+                    </button>
+                    ${command.last_output_line || ''}
+                </td>
             `;
             commandsTbody.appendChild(commandRow);
         });
@@ -178,6 +183,11 @@ async function viewOutput(command_id) {
     } catch (error) {
         console.log('Error viewing output:', error);
     }
+}
+
+async function openPopup(command_id) {
+    const popupUrl = `/popup/${command_id}${urlToken}`;
+    window.open(popupUrl, '_blank', 'width=800,height=600');
 }
 
 async function relaunchCommand(command_id, event) {
