@@ -84,6 +84,7 @@ async function viewOutput(command_id) {
             return;
         }
         const data = await response.json();
+        document.getElementsByTagName('title')[0].innerText = `${data.command} ${data.status}`;
         if (data.command == 'term')
             terminal.options.cursorInactiveStyle = 'outline';
         else
