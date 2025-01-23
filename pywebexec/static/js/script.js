@@ -3,6 +3,8 @@ let outputInterval = null;
 let nextOutputLink = null;
 let fullOutput = '';
 let outputLength = 0;
+const maxScrollback = 99999;
+const maxSize = 10485760; // 10MB
 
 function initTerminal()
 {
@@ -12,7 +14,7 @@ function initTerminal()
         disableStdin: true,
         convertEol: true,
         fontFamily: 'Consolas NF, monospace, courier-new, courier',
-        scrollback: 999999,
+        scrollback: maxScrollback,
         theme: {
             background: '#111412',
             black: '#111412',
@@ -24,6 +26,7 @@ function initTerminal()
             cyan: "#00a7aa",
             brightBlack: "#243C4F",
             brightBlue: "#5584b1",
+            brightGreen: "#18Ed93",
         },
         customGlyphs: false,
         rescaleOverlappingGlyphs: true,
@@ -137,6 +140,8 @@ async function fetchOutput(url) {
             slider = document.getElementById('outputSlider')
             percentage = slider.value;
             fullOutput += data.output;
+            if (fullOutput.length > maxSize)
+                fullOutput = fullOutput.slice(-maxSize);
             if (percentage == 100)
                 terminal.write(data.output); //.replace(/ \r/g, "\r\n")); tty size mismatch
             else {

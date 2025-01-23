@@ -1,10 +1,12 @@
+const maxScrollback = 99999;
+const maxSize = 10485760; // 10MB
 let terminal = new Terminal({
     cursorBlink: false,
     cursorInactiveStyle: 'none',
     disableStdin: true,
     convertEol: true,
     fontFamily: 'Consolas NF, monospace, courier-new, courier',
-    scrollback: 999999,
+    scrollback: maxScrollback,
     theme: {
         background: '#111412',
         black: '#111412',
@@ -16,6 +18,7 @@ let terminal = new Terminal({
         cyan: "#00a7aa",
         brightBlack: "#243C4F",
         brightBlue: "#5584b1",
+        brightGreen: "#18Ed93",
     },
     customGlyphs: false,
     rescaleOverlappingGlyphs: true,
@@ -32,6 +35,7 @@ let nextOutputLink = null;
 let fullOutput = '';
 let outputLength = 0;
 let title = null;
+let slider = null;
 
 function getTokenParam() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -50,9 +54,10 @@ async function fetchOutput(url) {
             terminal.write(data.error);
             clearInterval(outputInterval);
         } else {
-            slider = document.getElementById('outputSlider')
             percentage = slider.value;
             fullOutput += data.output;
+            if (fullOutput.length > maxSize)
+                fullOutput = fullOutput.slice(-maxSize);
             if (percentage == 100)
                 terminal.write(data.output);
             else {
@@ -72,7 +77,7 @@ async function fetchOutput(url) {
 }
 
 async function viewOutput(command_id) {
-    document.getElementById('outputSlider').value = 100;
+    slider.value = 100;
     adjustOutputHeight();
     currentCommandId = command_id;
     nextOutputLink = `/command_output/${command_id}${urlToken}`;
@@ -109,10 +114,10 @@ function adjustOutputHeight() {
     const maxHeight = windowHeight - outputTop - 60; // Adjusted for slider height
     outputDiv.style.height = `${maxHeight}px`;
     fitAddon.fit();
+    sliderUpdateOutput();
 }
 
 function sliderUpdateOutput() {
-    const slider = document.getElementById('outputSlider');
     const percentage = slider.value;
     outputLength = Math.floor((fullOutput.length * percentage) / 100);
     const limitedOutput = fullOutput.slice(0, outputLength);
@@ -122,11 +127,12 @@ function sliderUpdateOutput() {
     document.getElementById('outputPercentage').innerText = `${percentage}%`;
 }
 
-document.getElementById('outputSlider').addEventListener('input', sliderUpdateOutput);
 
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', () => {
     title = document.getElementById('outputTitle');
+    slider = document.getElementById('outputSlider');
+    slider.addEventListener('input', sliderUpdateOutput);
     const commandId = window.location.pathname.split('/').slice(-1)[0];
     viewOutput(commandId);
 });

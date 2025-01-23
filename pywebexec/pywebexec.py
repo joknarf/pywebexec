@@ -655,6 +655,7 @@ def list_commands():
 @app.route('/command_output/<command_id>', methods=['GET'])
 def get_command_output(command_id):
     offset = int(request.args.get('offset', 0))
+    maxsize = int(request.args.get('maxsize', 10485760))
     output_file_path = get_output_file_path(command_id)
     if os.path.exists(output_file_path):
         with open(output_file_path, 'rb') as output_file:
@@ -665,10 +666,10 @@ def get_command_output(command_id):
         token = app.config.get("TOKEN_URL")
         token_param = f"&token={token}" if token else ""
         response = {
-            'output': output,
+            'output': output[-maxsize:],
             'status': status_data.get("status"),
             'links': {
-                'next': f'{request.url_root}command_output/{command_id}?offset={new_offset}{token_param}'
+                'next': f'{request.url_root}command_output/{command_id}?offset={new_offset}&maxsize={maxsize}{token_param}'
             }
         }
         if request.headers.get('Accept') == 'text/plain':
