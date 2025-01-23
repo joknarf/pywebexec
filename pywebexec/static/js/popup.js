@@ -31,6 +31,7 @@ let outputInterval = null;
 let nextOutputLink = null;
 let fullOutput = '';
 let outputLength = 0;
+let title = null;
 
 function getTokenParam() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -61,6 +62,7 @@ async function fetchOutput(url) {
             }
             nextOutputLink = data.links.next;
             if (data.status != 'running') {
+                title.innerText = `${data.status} ${title.innerText.split(' ').slice(1).join(' ')}`;
                 clearInterval(outputInterval);
             }
         }
@@ -84,7 +86,7 @@ async function viewOutput(command_id) {
             return;
         }
         const data = await response.json();
-        document.getElementsByTagName('title')[0].innerText = `${data.command} ${data.status}`;
+        title.innerText = `${data.status} ${data.command} ${data.params.join(' ')}`;
         if (data.command == 'term')
             terminal.options.cursorInactiveStyle = 'outline';
         else
@@ -124,6 +126,7 @@ document.getElementById('outputSlider').addEventListener('input', sliderUpdateOu
 
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', () => {
+    title = document.getElementById('outputTitle');
     const commandId = window.location.pathname.split('/').slice(-1)[0];
     viewOutput(commandId);
 });

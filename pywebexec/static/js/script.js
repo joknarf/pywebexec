@@ -187,7 +187,7 @@ async function viewOutput(command_id) {
 
 async function openPopup(command_id) {
     const popupUrl = `/popup/${command_id}${urlToken}`;
-    window.open(popupUrl, '_blank', 'width=800,height=600');
+    window.open(popupUrl, '_blank', 'width=1000,height=600');
 }
 
 async function relaunchCommand(command_id, event) {
