@@ -190,7 +190,9 @@ async function viewOutput(command_id) {
     }
 }
 
-async function openPopup(command_id) {
+async function openPopup(command_id, event) {
+    event.stopPropagation();
+    event.stopImmediatePropagation();
     const popupUrl = `/popup/${command_id}${urlToken}`;
     window.open(popupUrl, '_blank', 'width=1000,height=600');
 }
