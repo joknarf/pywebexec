@@ -9,6 +9,7 @@ import argparse
 import random
 import string
 from datetime import datetime, timezone, timedelta
+import time
 import shlex
 from gunicorn.app.base import Application
 import ipaddress
@@ -703,6 +704,7 @@ def main():
         with open(basef + ".log", "ab+") as log:
             pywebexec = subprocess.Popen([sys.executable] + sys.argv[:-1], stdout=log, stderr=log)
             start_term()
+            time.sleep(1)
             pywebexec.terminate()
         sys.exit()
 

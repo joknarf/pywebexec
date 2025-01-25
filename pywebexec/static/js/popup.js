@@ -47,6 +47,7 @@ async function fetchOutput(url) {
     try {
         const response = await fetch(url);
         if (!response.ok) {
+            document.getElementById('dimmer').style.display = 'none';
             return;
         }
         const data = await response.json();
@@ -72,6 +73,7 @@ async function fetchOutput(url) {
             }
         }
     } catch (error) {
+        document.getElementById('dimmer').style.display = 'block';
         console.log('Error fetching output:', error);
     }
 }
