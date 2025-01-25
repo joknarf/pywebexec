@@ -51,6 +51,18 @@ $ pywebexec --dir ~/myscripts --listen 0.0.0.0 --port 8080 --title myscripts
 $ pywebexec -d ~/myscripts -l 0.0.0.0 -p 8080 -t myscripts
 ```
 
+## Sharing terminals
+
+* start server and share tty in one command
+```shell
+$ pywebexec -d ~/webshare shareterm
+```
+* share tty with an already pywebexec server started
+```shell
+$ pywebexec -d ~/webshare term
+```
+if another user need to share his terminal, he need to have write permission on `<dir>/.web_status` directory.
+
 ## Safe url token
 
 * generate safe url, use the url to access the server

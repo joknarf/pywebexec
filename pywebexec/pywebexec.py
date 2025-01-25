@@ -22,6 +22,7 @@ import signal
 import fcntl
 import termios
 import struct
+import subprocess
 
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
@@ -40,6 +41,7 @@ app.config['LDAP_BIND_DN'] = os.environ.get('PYWEBEXEC_LDAP_BIND_DN')
 app.config['LDAP_BIND_PASSWORD'] = os.environ.get('PYWEBEXEC_LDAP_BIND_PASSWORD')
 
 # Directory to store the command status and output
+CWD = os.getcwd()
 COMMAND_STATUS_DIR = '.web_status'
 CONFDIR = os.path.expanduser("~/")
 if os.path.isdir(f"{CONFDIR}/.config"):
@@ -216,17 +218,19 @@ def get_last_non_empty_line_of_file(file_path):
     
 
 def start_gunicorn(daemonized=False, baselog=None):
+    pidfile = f"{baselog}.pid"
     if daemonized:
-        errorlog = f"{baselog}.log"
-        accesslog = None # f"{baselog}.access.log"
-        pidfile = f"{baselog}.pid"
         if daemon_d('status', pidfilepath=baselog, silent=True):
             print(f"Error: pywebexec already running on {args.listen}:{args.port}", file=sys.stderr)
             sys.exit(1)
-    else:
+
+    if sys.stdout.isatty():
         errorlog = "-"
         accesslog = None #"-"
-        pidfile = None
+    else:
+        errorlog = f"{baselog}.log"
+        accesslog = None # f"{baselog}.access.log"
+
     options = {
         'bind': '%s:%s' % (args.listen, args.port),
         'workers': 4,
@@ -280,6 +284,18 @@ def daemon_d(action, pidfilepath, silent=False, hostname=None, args=None):
             except Exception as e:
                 print(e)
 
+def start_term():
+    os.chdir(CWD)
+    command_id = str(uuid.uuid4())
+    start_time = datetime.now().isoformat()
+    user = pwd.getpwuid(os.getuid())[0]
+    update_command_status(command_id, 'running', command="term", params=[user,os.ttyname(sys.stdout.fileno())], start_time=start_time, user=user)
+    output_file_path = get_output_file_path(command_id)
+    res = script(output_file_path)
+    end_time = datetime.now().isoformat()
+    update_command_status(command_id, status="success", end_time=end_time, exit_code=res)
+    return res
+
 def parseargs():
     global app, args, COMMAND_STATUS_DIR
 
@@ -306,10 +322,10 @@ def parseargs():
     parser.add_argument("-k", "--key", type=str, help="Path to https certificate key")
     parser.add_argument("-g", "--gencert", action="store_true", help="https server self signed cert")
     parser.add_argument("-T", "--tokenurl", action="store_true", help="generate safe url to access")
-    parser.add_argument("action", nargs="?", help="daemon action start/stop/restart/status/term", choices=["start","stop","restart","status","term"])
+    parser.add_argument("action", nargs="?", help="daemon action start/stop/restart/status/shareterm/term",
+                        choices=["start","stop","restart","status","shareterm", "term"])
 
     args = parser.parse_args()
-    cwd = os.getcwd()
     if os.path.isdir(args.dir):
         try:
             os.chdir(args.dir)
@@ -325,21 +341,13 @@ def parseargs():
         os.mkdir(CONFDIR, mode=0o700)
     if args.action == "term":
         COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
-        os.chdir(cwd)
-        command_id = str(uuid.uuid4())
-        start_time = datetime.now().isoformat()
-        user = pwd.getpwuid(os.getuid())[0]
-        update_command_status(command_id, 'running', command="term", params=[user,os.ttyname(sys.stdout.fileno())], start_time=start_time, user=user)
-        output_file_path = get_output_file_path(command_id)
-        res = script(output_file_path)
-        end_time = datetime.now().isoformat()
-        update_command_status(command_id, status="success", end_time=end_time, exit_code=res)
-        sys.exit(res)
+        sys.exit(start_term())
     (hostname, ip) = resolve(gethostname()) if args.listen == '0.0.0.0' else resolve(args.listen)
     url_params = ""
 
     if args.tokenurl:
-        token = token_urlsafe()
+        token = os.environ.get("PYWEBEXEC_TOKEN", token_urlsafe())
+        os.environ["PYWEBEXEC_TOKEN"] = token
         app.config["TOKEN_URL"] = token
         url_params = f"?token={token}"
 
@@ -688,12 +696,25 @@ def popup(command_id):
     return render_template('popup.html', command_id=command_id)
 
 def main():
+    global COMMAND_STATUS_DIR
     basef = f"{CONFDIR}/pywebexec_{args.listen}:{args.port}"
+    if args.action == "shareterm":
+        COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
+        with open(basef + ".log", "ab+") as log:
+            pywebexec = subprocess.Popen([sys.executable] + sys.argv[:-1], stdout=log, stderr=log)
+            start_term()
+            pywebexec.terminate()
+        sys.exit()
+
+    if args.action == "restart":
+        daemon_d('stop', pidfilepath=basef)
+        args.action = "start"
     if args.action == "start":
         return start_gunicorn(daemonized=True, baselog=basef)
     if args.action:
         return daemon_d(args.action, pidfilepath=basef)
-    return start_gunicorn()
+    return start_gunicorn(baselog=basef)
+
 
 if __name__ == '__main__':
     main()
