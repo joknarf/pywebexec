@@ -285,6 +285,7 @@ def daemon_d(action, pidfilepath, silent=False, hostname=None, args=None):
                 print(e)
 
 def start_term():
+    os.environ["PYWEBEXEC"] = " (shared)"
     os.chdir(CWD)
     command_id = str(uuid.uuid4())
     start_time = datetime.now().isoformat()
@@ -454,7 +455,6 @@ def script(output_file):
         sigwinch_passthrough(None, None)
         signal.signal(signal.SIGWINCH, sigwinch_passthrough)
         p.interact()
-
     
 
 def run_command(command, params, command_id, user):
