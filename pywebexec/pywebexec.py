@@ -732,8 +732,9 @@ def main():
         return 1
     if args.action == "shareterm":
         COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
+        sys.argv.remove("shareterm")
         with open(basef + ".log", "ab+") as log:
-            pywebexec = subprocess.Popen([sys.executable] + sys.argv[:-1], stdout=log, stderr=log)
+            pywebexec = subprocess.Popen([sys.executable] + sys.argv, stdout=log, stderr=log)
             command_id = str(uuid.uuid4())
             print_urls(command_id)
             res = start_term(command_id)
