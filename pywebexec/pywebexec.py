@@ -223,7 +223,7 @@ def start_gunicorn(daemonized=False, baselog=None):
     if daemonized:
         if daemon_d('status', pidfilepath=baselog, silent=True):
             print(f"Error: pywebexec already running on {args.listen}:{args.port}", file=sys.stderr)
-            sys.exit(1)
+            return 1
 
     if sys.stdout.isatty():
         errorlog = "-"
@@ -244,6 +244,7 @@ def start_gunicorn(daemonized=False, baselog=None):
         'pidfile': pidfile,
     }
     PyWebExec(app, options=options).run()
+    return 0
 
 def daemon_d(action, pidfilepath, silent=False, hostname=None, args=None):
     """start/stop daemon"""
@@ -285,10 +286,9 @@ def daemon_d(action, pidfilepath, silent=False, hostname=None, args=None):
             except Exception as e:
                 print(e)
 
-def start_term():
+def start_term(command_id):
     os.environ["PYWEBEXEC"] = " (shared)"
     os.chdir(CWD)
-    command_id = str(uuid.uuid4())
     start_time = datetime.now().isoformat()
     user = pwd.getpwuid(os.getuid())[0]
     update_command_status(command_id, 'running', command="term", params=[user,os.ttyname(sys.stdout.fileno())], start_time=start_time, user=user)
@@ -296,10 +296,25 @@ def start_term():
     res = script(output_file_path)
     end_time = datetime.now().isoformat()
     update_command_status(command_id, status="success", end_time=end_time, exit_code=res)
-    return res
+    return command_id
+
+
+def print_urls(command_id=None):
+    protocol = 'https' if args.cert else 'http'
+    url_params = ""
+    token = os.environ.get("PYWEBEXEC_TOKEN")
+    if token:
+        url_params = f"?token={token}"
+    if command_id:
+        print(f"{protocol}://{hostname}:{args.port}/popup/{command_id}{url_params}")
+        print(f"{protocol}://{ip}:{args.port}/popup/{command_id}{url_params}")
+    else:
+        print(f"{protocol}://{hostname}:{args.port}{url_params}")
+        print(f"{protocol}://{ip}:{args.port}{url_params}")
+
 
 def parseargs():
-    global app, args, COMMAND_STATUS_DIR
+    global app, args, COMMAND_STATUS_DIR, hostname, ip
 
     parser = argparse.ArgumentParser(description='Run the command execution server.')
     parser.add_argument('-u', '--user', help='Username for basic auth')
@@ -344,15 +359,14 @@ def parseargs():
         os.mkdir(COMMAND_STATUS_DIR, mode=0o700)
     if args.action == "term":
         COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
-        sys.exit(start_term())
+        start_term(str(uuid.uuid4()))
+        sys.exit(0)
     (hostname, ip) = resolve(gethostname()) if args.listen == '0.0.0.0' else resolve(args.listen)
-    url_params = ""
 
     if args.tokenurl:
         token = os.environ.get("PYWEBEXEC_TOKEN", token_urlsafe())
         os.environ["PYWEBEXEC_TOKEN"] = token
         app.config["TOKEN_URL"] = token
-        url_params = f"?token={token}"
 
     if args.gencert:
         args.cert = args.cert or f"{CONFDIR}/pywebexec.crt"
@@ -377,10 +391,7 @@ def parseargs():
 
     if args.action != 'stop':
         print("Starting server:")
-        protocol = 'https' if args.cert else 'http'
-        print(f"{protocol}://{hostname}:{args.port}{url_params}")
-        print(f"{protocol}://{ip}:{args.port}{url_params}")
-
+        print_urls()
     return args
 
 def get_status_file_path(command_id):
@@ -704,7 +715,9 @@ def main():
         COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
         with open(basef + ".log", "ab+") as log:
             pywebexec = subprocess.Popen([sys.executable] + sys.argv[:-1], stdout=log, stderr=log)
-            start_term()
+            command_id = str(uuid.uuid4())
+            print_urls(command_id)
+            res = start_term(command_id)
             time.sleep(1)
             pywebexec.terminate()
         sys.exit()
@@ -720,5 +733,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
     # app.run(host='0.0.0.0', port=5000)
