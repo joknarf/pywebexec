@@ -267,14 +267,12 @@ span {
     width: 100%;
 }
 .popup-button {
-    background: none;
-    border: none;
+    background-color: transparent;
+    background-image: url("/static/images/popup.svg");
     cursor: pointer;
+    border: none;
     padding: 0;
-    margin-left: 5px;
     vertical-align: middle;
-}
-.popup-button img {
     width: 16px;
     height: 16px;
 }

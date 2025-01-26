@@ -111,9 +111,7 @@ async function fetchCommands() {
                     ${command.command.startsWith('term') ? '' : command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}', event)">Stop</button>` : `<button onclick="relaunchCommand('${command.command_id}', event)">Run</button>`}
                 </td>
                 <td class="monospace outcol">
-                    <button class="popup-button" onclick="openPopup('${command.command_id}', event)">
-                        <img src="/static/images/popup.svg" alt="Popup">
-                    </button>
+                    <button class="popup-button" onclick="openPopup('${command.command_id}', event)"></button>
                     ${command.last_output_line || ''}
                 </td>
             `;
