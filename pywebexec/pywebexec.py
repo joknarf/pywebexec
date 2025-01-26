@@ -13,7 +13,7 @@ import time
 import shlex
 from gunicorn.app.base import Application
 import ipaddress
-from socket import gethostname, gethostbyname_ex, gethostbyaddr, inet_aton, inet_ntoa
+from socket import socket, gethostname, gethostbyname_ex, gethostbyaddr, inet_aton, inet_ntoa, AF_INET, SOCK_STREAM
 import ssl
 import re
 import pwd
@@ -255,10 +255,15 @@ def daemon_d(action, pidfilepath, silent=False, hostname=None, args=None):
         if pidfile.is_locked():
             pid = pidfile.read_pid()
             print(f"Stopping server pid {pid}")
-            try:
-                os.kill(pid, signal.SIGINT)
-            except:
-                return False
+            n = 20
+            while n > 0:
+                try:
+                    os.kill(pid, signal.SIGINT)
+                    time.sleep(0.25)
+                    n -= 1
+                except ProcessLookupError:
+                    return True
+            print("Failed to stop server", file=sys.stderr)    
             return True
     elif action == "status":
         status = pidfile.is_locked()
@@ -291,12 +296,14 @@ def start_term(command_id):
     os.chdir(CWD)
     start_time = datetime.now().isoformat()
     user = pwd.getpwuid(os.getuid())[0]
+    print(f"Starting terminal session for {user} : {command_id}")
     update_command_status(command_id, 'running', command="term", params=[user,os.ttyname(sys.stdout.fileno())], start_time=start_time, user=user)
     output_file_path = get_output_file_path(command_id)
     res = script(output_file_path)
     end_time = datetime.now().isoformat()
     update_command_status(command_id, status="success", end_time=end_time, exit_code=res)
-    return command_id
+    print("Terminal session ended")
+    return res
 
 
 def print_urls(command_id=None):
@@ -311,6 +318,11 @@ def print_urls(command_id=None):
     else:
         print(f"{protocol}://{hostname}:{args.port}{url_params}")
         print(f"{protocol}://{ip}:{args.port}{url_params}")
+
+
+def is_port_in_use(address, port):
+    with socket(AF_INET, SOCK_STREAM) as s:
+        return s.connect_ex((address, port)) == 0
 
 
 def parseargs():
@@ -359,8 +371,8 @@ def parseargs():
         os.mkdir(COMMAND_STATUS_DIR, mode=0o700)
     if args.action == "term":
         COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
-        start_term(str(uuid.uuid4()))
-        sys.exit(0)
+        sys.exit(start_term(str(uuid.uuid4())))
+
     (hostname, ip) = resolve(gethostname()) if args.listen == '0.0.0.0' else resolve(args.listen)
 
     if args.tokenurl:
@@ -389,9 +401,6 @@ def parseargs():
         app.config['USER'] = None
         app.config['PASSWORD'] = None
 
-    if args.action != 'stop':
-        print("Starting server:")
-        print_urls()
     return args
 
 def get_status_file_path(command_id):
@@ -711,6 +720,16 @@ def popup(command_id):
 def main():
     global COMMAND_STATUS_DIR
     basef = f"{CONFDIR}/pywebexec_{args.listen}:{args.port}"
+    if args.action == "restart":
+        daemon_d('stop', pidfilepath=basef)
+        args.action = "start"
+    port_used = is_port_in_use(args.listen, args.port)
+    if args.action != "stop":
+        print("Starting server:")
+        print_urls()
+    if args.action != "stop" and port_used:
+        print(f"Error: port {args.port} already in use", file=sys.stderr)
+        return 1
     if args.action == "shareterm":
         COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
         with open(basef + ".log", "ab+") as log:
@@ -718,13 +737,11 @@ def main():
             command_id = str(uuid.uuid4())
             print_urls(command_id)
             res = start_term(command_id)
+            print("Stopping server")
             time.sleep(1)
             pywebexec.terminate()
-        sys.exit()
+        sys.exit(res)
 
-    if args.action == "restart":
-        daemon_d('stop', pidfilepath=basef)
-        args.action = "start"
     if args.action == "start":
         return start_gunicorn(daemonized=True, baselog=basef)
     if args.action:
