@@ -55,6 +55,9 @@ async function fetchOutput(url) {
             terminal.write(data.error);
             clearInterval(outputInterval);
         } else {
+            if (data.cols) {
+                terminal.resize(data.cols, terminal.rows);
+            } else fitAddon.fit();
             percentage = slider.value;
             fullOutput += data.output;
             if (fullOutput.length > maxSize)
