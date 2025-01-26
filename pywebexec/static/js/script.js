@@ -32,6 +32,10 @@ function initTerminal()
         },
         customGlyphs: false,
         rescaleOverlappingGlyphs: true,
+        // windowsPty: {
+        //     backend: 'conpty',
+        //     buildnumber: 21376,
+        // }
     });
 }
 let terminal = initTerminal()
@@ -137,6 +141,9 @@ async function fetchOutput(url) {
             terminal.write(data.error);
             clearInterval(outputInterval);
         } else {
+            if (data.cols) {
+                terminal.resize(data.cols, terminal.rows);
+            } else fitAddon.fit();
             fullOutput += data.output;
             if (fullOutput.length > maxSize)
                 fullOutput = fullOutput.slice(-maxSize);

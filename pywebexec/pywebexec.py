@@ -48,7 +48,7 @@ CONFDIR = os.path.expanduser("~/").rstrip('/')
 if os.path.isdir(f"{CONFDIR}/.config"):
     CONFDIR += '/.config'
 CONFDIR += "/.pywebexec"
-
+COMMAND_ID = str(uuid.uuid4())
 
 # In-memory cache for command statuses
 command_status_cache = {}
@@ -291,17 +291,27 @@ def daemon_d(action, pidfilepath, silent=False, hostname=None, args=None):
             except Exception as e:
                 print(e)
 
-def start_term(command_id):
+def start_term():
     os.environ["PYWEBEXEC"] = " (shared)"
     os.chdir(CWD)
     start_time = datetime.now().isoformat()
     user = pwd.getpwuid(os.getuid())[0]
-    print(f"Starting terminal session for {user} : {command_id}")
-    update_command_status(command_id, 'running', command="term", params=[user,os.ttyname(sys.stdout.fileno())], start_time=start_time, user=user)
-    output_file_path = get_output_file_path(command_id)
+    print(f"Starting terminal session for {user} : {COMMAND_ID}")
+    update_command_status(COMMAND_ID, {
+        'status': 'running',
+        'command': 'term',
+        'params': [user, os.ttyname(sys.stdout.fileno())],
+        'start_time': start_time,
+        'user': user
+    })
+    output_file_path = get_output_file_path(COMMAND_ID)
     res = script(output_file_path)
     end_time = datetime.now().isoformat()
-    update_command_status(command_id, status="success", end_time=end_time, exit_code=res)
+    update_command_status(COMMAND_ID, {
+        'status': 'success',
+        'end_time': end_time,
+        'exit_code': res
+    })
     print("Terminal session ended")
     return res
 
@@ -371,7 +381,7 @@ def parseargs():
         os.mkdir(COMMAND_STATUS_DIR, mode=0o700)
     if args.action == "term":
         COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
-        sys.exit(start_term(str(uuid.uuid4())))
+        sys.exit(start_term())
 
     (hostname, ip) = resolve(gethostname()) if args.listen == '0.0.0.0' else resolve(args.listen)
 
@@ -409,25 +419,11 @@ def get_status_file_path(command_id):
 def get_output_file_path(command_id):
     return os.path.join(COMMAND_STATUS_DIR, f'{command_id}_output.txt')
 
-def update_command_status(command_id, status, command=None, params=None, start_time=None, end_time=None, exit_code=None, pid=None, user=None):
+def update_command_status(command_id, updates):
     status_file_path = get_status_file_path(command_id)
     status_data = read_command_status(command_id) or {}
-    status_data['status'] = status
-    if command is not None:
-        status_data['command'] = command
-    if params is not None:
-        status_data['params'] = params
-    if start_time is not None:
-        status_data['start_time'] = start_time
-    if end_time is not None:
-        status_data['end_time'] = end_time
-    if exit_code is not None:
-        status_data['exit_code'] = exit_code
-    if pid is not None:
-        status_data['pid'] = pid
-    if user is not None:
-        status_data['user'] = user
-    if status != 'running':
+    status_data.update(updates)
+    if status_data['status'] != 'running':
         output_file_path = get_output_file_path(command_id)
         if os.path.exists(output_file_path):
             status_data['last_output_line'] = get_last_non_empty_line_of_file(output_file_path)
@@ -435,7 +431,7 @@ def update_command_status(command_id, status, command=None, params=None, start_t
         json.dump(status_data, f)
     
     # Update cache if status is not "running"
-    if status != 'running':
+    if status_data['status'] != 'running':
         command_status_cache[command_id] = status_data
     elif command_id in command_status_cache:
         del command_status_cache[command_id]
@@ -463,8 +459,12 @@ def read_command_status(command_id):
 def sigwinch_passthrough(sig, data):
     s = struct.pack("HHHH", 0, 0, 0, 0)
     a = struct.unpack('hhhh', fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, s))
-    global p
+    global p, COMMAND_ID
     p.setwinsize(a[0], a[1])
+    update_command_status(COMMAND_ID, {
+        'rows': a[0],
+        'cols': a[1],
+    })
 
 
 def script(output_file):
@@ -481,12 +481,22 @@ def script(output_file):
 
 def run_command(command, params, command_id, user):
     start_time = datetime.now().isoformat()
-    update_command_status(command_id, 'running', command=command, params=params, start_time=start_time, user=user)
+    update_command_status(command_id, {
+        'status': 'running',
+        'command': command,
+        'params': params,
+        'start_time': start_time,
+        'user': user
+    })
     output_file_path = get_output_file_path(command_id)
     try:
         with open(output_file_path, 'wb') as fd:
             p = pexpect.spawn(command, params, ignore_sighup=True, timeout=None)
-            update_command_status(command_id, 'running', pid=p.pid, user=user)
+            update_command_status(command_id, {
+                'status': 'running',
+                'pid': p.pid,
+                'user': user
+            })
             p.setwinsize(24, 125)
             p.logfile = fd
             p.expect(pexpect.EOF)
@@ -496,16 +506,36 @@ def run_command(command, params, command_id, user):
             # Update the status based on the result
             if status is None:
                 exit_code = -15
-                update_command_status(command_id, 'aborted', end_time=end_time, exit_code=exit_code, user=user)
+                update_command_status(command_id, {
+                    'status': 'aborted',
+                    'end_time': end_time,
+                    'exit_code': exit_code,
+                    'user': user
+                })
             else:
                 exit_code = status
                 if exit_code == 0:
-                    update_command_status(command_id, 'success', end_time=end_time, exit_code=exit_code, user=user)
+                    update_command_status(command_id, {
+                        'status': 'success',
+                        'end_time': end_time,
+                        'exit_code': exit_code,
+                        'user': user
+                    })
                 else:
-                    update_command_status(command_id, 'failed', end_time=end_time, exit_code=exit_code, user=user)
+                    update_command_status(command_id, {
+                        'status': 'failed',
+                        'end_time': end_time,
+                        'exit_code': exit_code,
+                        'user': user
+                    })
     except Exception as e:
         end_time = datetime.now().isoformat()
-        update_command_status(command_id, 'failed', end_time=end_time, exit_code=1, user=user)
+        update_command_status(command_id, {
+            'status': 'failed',
+            'end_time': end_time,
+            'exit_code': 1,
+            'user': user
+        })
         with open(get_output_file_path(command_id), 'a') as output_file:
             output_file.write(str(e))
 
@@ -618,14 +648,16 @@ def run_command_endpoint():
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
 
-    # Generate a unique command_id
-    command_id = str(uuid.uuid4())
-
     # Get the user from the session
     user = session.get('username', '-')
-
+    command_id = str(uuid.uuid4())
     # Set the initial status to running and save command details
-    update_command_status(command_id, 'running', command, params, user=user)
+    update_command_status(command_id, {
+        'status': 'running',
+        'command': command,
+        'params': params,
+        'user': user
+    })
 
     # Run the command in a separate thread
     thread = threading.Thread(target=run_command, args=(command_path, params, command_id, user))
@@ -698,6 +730,7 @@ def get_command_output(command_id):
         response = {
             'output': output[-maxsize:],
             'status': status_data.get("status"),
+            'cols': status_data.get("cols"),
             'links': {
                 'next': f'{request.url_root}command_output/{command_id}?offset={new_offset}&maxsize={maxsize}{token_param}'
             }
@@ -735,9 +768,8 @@ def main():
         sys.argv.remove("shareterm")
         with open(basef + ".log", "ab+") as log:
             pywebexec = subprocess.Popen([sys.executable] + sys.argv, stdout=log, stderr=log)
-            command_id = str(uuid.uuid4())
-            print_urls(command_id)
-            res = start_term(command_id)
+            print_urls(COMMAND_ID)
+            res = start_term()
             print("Stopping server")
             time.sleep(1)
             pywebexec.terminate()
