@@ -14,8 +14,14 @@ $ pip install pywebexec
 
 ## Quick start
 
-* put in a directory the scripts/commands/links to commands you want to expose
-* start http server serving current directory executables listening on 0.0.0.0 port 8080
+* share terminal
+```shell
+$ pywebexec shareterm
+```
+
+* serve executables
+  * put in a directory the scripts/commands/links to commands you want to expose
+  * start http server serving current directory executables listening on 0.0.0.0 port 8080
 ```shell
 $ pywebexec -d <dir>
 ```
