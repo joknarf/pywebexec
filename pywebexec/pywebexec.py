@@ -44,7 +44,7 @@ app.config['LDAP_BIND_PASSWORD'] = os.environ.get('PYWEBEXEC_LDAP_BIND_PASSWORD'
 # Directory to store the command status and output
 CWD = os.getcwd()
 COMMAND_STATUS_DIR = '.web_status'
-CONFDIR = os.path.expanduser("~/")
+CONFDIR = os.path.expanduser("~/").rstrip('/')
 if os.path.isdir(f"{CONFDIR}/.config"):
     CONFDIR += '/.config'
 CONFDIR += "/.pywebexec"
@@ -311,7 +311,7 @@ def parseargs():
         "-p", "--port", type=int, default=8080, help="HTTP server listen port"
     )
     parser.add_argument(
-        "-d", "--dir", type=str, default=os.getcwd(), help="Serve target directory"
+        "-d", "--dir", type=str, help=f"Serve target directory. default {CONFDIR}"
     )
     parser.add_argument(
         "-t",
@@ -328,6 +328,9 @@ def parseargs():
                         choices=["start","stop","restart","status","shareterm", "term"])
 
     args = parser.parse_args()
+    if not os.path.exists(CONFDIR):
+        os.mkdir(CONFDIR, mode=0o700)
+    args.dir = args.dir or CONFDIR
     if os.path.isdir(args.dir):
         try:
             os.chdir(args.dir)
@@ -338,9 +341,7 @@ def parseargs():
         print(f"Error: {args.dir} not found", file=sys.stderr)
         sys.exit(1)
     if not os.path.exists(COMMAND_STATUS_DIR):
-        os.makedirs(COMMAND_STATUS_DIR)
-    if not os.path.exists(CONFDIR):
-        os.mkdir(CONFDIR, mode=0o700)
+        os.mkdir(COMMAND_STATUS_DIR, mode=0o700)
     if args.action == "term":
         COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
         sys.exit(start_term())
