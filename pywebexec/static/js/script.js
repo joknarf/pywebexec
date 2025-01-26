@@ -1,6 +1,8 @@
 let currentCommandId = null;
 let outputInterval = null;
 let nextOutputLink = null;
+let slider = document.getElementById('outputSlider');
+let outputPercentage = document.getElementById('outputPercentage');
 let fullOutput = '';
 let outputLength = 0;
 const maxScrollback = 99999;
@@ -135,17 +137,15 @@ async function fetchOutput(url) {
             terminal.write(data.error);
             clearInterval(outputInterval);
         } else {
-            slider = document.getElementById('outputSlider')
-            percentage = slider.value;
             fullOutput += data.output;
             if (fullOutput.length > maxSize)
                 fullOutput = fullOutput.slice(-maxSize);
-            if (percentage == 100)
+            if (slider.value == 100)
                 terminal.write(data.output); //.replace(/ \r/g, "\r\n")); tty size mismatch
             else {
                 percentage = Math.round((outputLength * 100)/fullOutput.length);
                 slider.value = percentage;
-                document.getElementById('outputPercentage').innerText = `${percentage}%`;
+                outputPercentage.innerText = `${percentage}%`;
             }
             nextOutputLink = data.links.next;
             if (data.status != 'running') {
@@ -158,7 +158,8 @@ async function fetchOutput(url) {
 }
 
 async function viewOutput(command_id) {
-    document.getElementById('outputSlider').value = 100;
+    slider.value = 100;
+    outputPercentage.innerText = '100%';
     adjustOutputHeight();
     currentCommandId = command_id;
     nextOutputLink = `/command_output/${command_id}${urlToken}`;
@@ -314,17 +315,16 @@ function initResizer() {
 
 function sliderUpdateOutput()
 {
-    const slider = document.getElementById('outputSlider');
     const percentage = slider.value;
     outputLength = Math.floor((fullOutput.length * percentage) / 100);
     const limitedOutput = fullOutput.slice(0, outputLength);
     terminal.clear();
     terminal.reset();
     terminal.write(limitedOutput);
-    document.getElementById('outputPercentage').innerText = `${percentage}%`;
+    outputPercentage.innerText = `${percentage}%`;
 }
 
-document.getElementById('outputSlider').addEventListener('input', sliderUpdateOutput);
+slider.addEventListener('input', sliderUpdateOutput);
 
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', initResizer);
