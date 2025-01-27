@@ -256,7 +256,7 @@ body.dimmed * {
 /* allow wide chars in terminal */
 span {
     letter-spacing: -0.1px !important;
-    margin-right: -0.48px !important;
+    margin-right: -0.48px;
 }
 .slider-container {
     display: flex;
