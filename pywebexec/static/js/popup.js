@@ -1,12 +1,13 @@
 const maxScrollback = 99999;
 const maxSize = 10485760; // 10MB
+let fontSize = 14;
 let terminal = new Terminal({
     cursorBlink: false,
     cursorInactiveStyle: 'none',
     disableStdin: true,
     convertEol: true,
     fontFamily: 'Consolas NF, monospace, courier-new, courier',
-    fontSize: 14,
+    fontSize: fontSize,
     scrollback: maxScrollback,
     theme: {
         background: '#111412',
@@ -141,4 +142,16 @@ window.addEventListener('load', () => {
     slider.addEventListener('input', sliderUpdateOutput);
     const commandId = window.location.pathname.split('/').slice(-1)[0];
     viewOutput(commandId);
+});
+
+document.getElementById('decreaseFontSize').addEventListener('click', () => {
+    fontSize = Math.max(8, fontSize - 1);
+    terminal.options.fontSize = fontSize;
+    fitAddon.fit();
+});
+
+document.getElementById('increaseFontSize').addEventListener('click', () => {
+    fontSize = Math.min(32, fontSize + 1);
+    terminal.options.fontSize = fontSize;
+    fitAddon.fit();
 });
