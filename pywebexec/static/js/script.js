@@ -188,7 +188,7 @@ async function viewOutput(command_id) {
             terminal.options.cursorInactiveStyle = 'none';
         if (data.status === 'running') {
             fetchOutput(nextOutputLink);
-            outputInterval = setInterval(() => fetchOutput(nextOutputLink), 1000);
+            outputInterval = setInterval(() => fetchOutput(nextOutputLink), 500);
         } else {
             fetchOutput(nextOutputLink);
         }
