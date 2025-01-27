@@ -6,6 +6,7 @@ let terminal = new Terminal({
     disableStdin: true,
     convertEol: true,
     fontFamily: 'Consolas NF, monospace, courier-new, courier',
+    fontSize: 14,
     scrollback: maxScrollback,
     theme: {
         background: '#111412',
@@ -141,4 +142,3 @@ window.addEventListener('load', () => {
     const commandId = window.location.pathname.split('/').slice(-1)[0];
     viewOutput(commandId);
 });
-
