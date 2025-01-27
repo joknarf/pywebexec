@@ -7,6 +7,7 @@ let fullOutput = '';
 let outputLength = 0;
 const maxScrollback = 99999;
 const maxSize = 10485760; // 10MB
+let fontSize = 14;
 
 function initTerminal()
 {
@@ -16,7 +17,7 @@ function initTerminal()
         disableStdin: true,
         convertEol: true,
         fontFamily: 'Consolas NF, monospace, courier-new, courier',
-	fontSize: 14,
+        fontSize: fontSize,
         scrollback: maxScrollback,
         theme: {
             background: '#111412',
@@ -334,8 +335,22 @@ function sliderUpdateOutput()
 
 slider.addEventListener('input', sliderUpdateOutput);
 
+document.getElementById('decreaseFontSize').addEventListener('click', () => {
+    fontSize = Math.max(8, fontSize - 1);
+    terminal.options.fontSize = fontSize;
+    fitAddon.fit();
+});
+
+document.getElementById('increaseFontSize').addEventListener('click', () => {
+    fontSize = Math.min(32, fontSize + 1);
+    terminal.options.fontSize = fontSize;
+    fitAddon.fit();
+});
+
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', initResizer);
 
 fetchCommands();
 setInterval(fetchCommands, 5000);
+
+

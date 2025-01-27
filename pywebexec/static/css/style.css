@@ -279,3 +279,17 @@ span {
     height: 16px;
 }
 
+.font-size-button {
+    background-color: #444;
+    color: #eee;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 45px;
+}
+
+.font-size-button:hover {
+    background-color: #666;
+}
+
