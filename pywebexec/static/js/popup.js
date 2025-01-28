@@ -38,6 +38,8 @@ let fullOutput = '';
 let outputLength = 0;
 let title = null;
 let slider = null;
+let isPaused = false;
+const toggleButton = document.getElementById('toggleFetch');
 
 function getTokenParam() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -46,6 +48,7 @@ function getTokenParam() {
 const urlToken = getTokenParam();
 
 async function fetchOutput(url) {
+    if (isPaused) return;
     try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -134,6 +137,24 @@ function sliderUpdateOutput() {
     document.getElementById('outputPercentage').innerText = `${percentage}%`;
 }
 
+function toggleFetchOutput() {
+    if (isPaused) {
+        slider.value = 100;
+        document.getElementById('outputPercentage').innerText = '100%';
+        terminal.clear();
+        terminal.reset();
+        terminal.write(fullOutput);
+        fetchOutput(nextOutputLink);
+        outputInterval = setInterval(() => fetchOutput(nextOutputLink), 500);
+        toggleButton.innerText = '||';
+    } else {
+        clearInterval(outputInterval);
+        toggleButton.innerText = '|>';
+    }
+    isPaused = !isPaused;
+}
+
+toggleButton.addEventListener('click', toggleFetchOutput);
 
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', () => {

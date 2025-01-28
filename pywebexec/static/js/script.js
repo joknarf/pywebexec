@@ -8,6 +8,7 @@ let outputLength = 0;
 const maxScrollback = 99999;
 const maxSize = 10485760; // 10MB
 let fontSize = 14;
+let isPaused = false;
 
 function initTerminal()
 {
@@ -133,6 +134,7 @@ async function fetchCommands() {
 }
 
 async function fetchOutput(url) {
+    if (isPaused) return;
     try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -346,6 +348,27 @@ document.getElementById('increaseFontSize').addEventListener('click', () => {
     terminal.options.fontSize = fontSize;
     fitAddon.fit();
 });
+
+const toggleButton = document.getElementById('toggleFetch');
+
+function toggleFetchOutput() {
+    if (isPaused) {
+        slider.value = 100;
+        outputPercentage.innerText = '100%';
+        terminal.clear();
+        terminal.reset();
+        terminal.write(fullOutput);
+        fetchOutput(nextOutputLink);
+        outputInterval = setInterval(() => fetchOutput(nextOutputLink), 500);
+        toggleButton.innerText = '||';
+    } else {
+        clearInterval(outputInterval);
+        toggleButton.innerText = '|>';
+    }
+    isPaused = !isPaused;
+}
+
+toggleButton.addEventListener('click', toggleFetchOutput);
 
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', initResizer);
