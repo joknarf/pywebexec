@@ -278,20 +278,58 @@ span {
     width: 16px;
     height: 16px;
 }
-
+.font-increase {
+    background-image: url("/static/images/font-increase.svg");
+    /*background-size: contain;*/
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 14px 14px;
+}
+.font-decrease {
+    background-image: url("/static/images/font-decrease.svg");
+    /*background-size: contain;*/
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 14px 14px;
+}
 .font-size-button {
     background-color: #444;
     color: #eee;
     border: none;
-    border-radius: 5px;
+    border-radius: 15px;
     cursor: pointer;
     font-size: 14px;
-    width: 50px;
+    width: 20px;
+    height: 20px;
 }
-
 .font-size-button:hover {
     background-color: #666;
 }
+
+.pause {
+    background-image: url("/static/images/pause.svg");
+    /*background-size: contain;*/
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 24px 24px;
+}
+.resume {
+    background-image: url("/static/images/resume.svg");
+    /*background-size: contain;*/
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 24px 24px;
+}
+
+.pause-resume-button {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+}
+
 
 .paused-message {
     display: none;

@@ -366,11 +366,11 @@ function toggleFetchOutput() {
         terminal.write(fullOutput);
         fetchOutput(nextOutputLink);
         outputInterval = setInterval(() => fetchOutput(nextOutputLink), 500);
-        toggleButton.innerText = '||';
+        toggleButton.classList.remove("resume");
         pausedMessage.style.display = 'none';
     } else {
         clearInterval(outputInterval);
-        toggleButton.innerText = '|>';
+        toggleButton.classList.add("resume");
         pausedMessage.style.display = 'block';
         const outputDiv = document.getElementById('output');
         const rect = outputDiv.getBoundingClientRect();
