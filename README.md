@@ -29,7 +29,7 @@ $ pywebexec -d <dir>
 * Launch commands with params/view live output/Status using browser
 * Share your terminal output using `pywebexec -d <dir> term`
 
-![pywebexecnew9](https://github.com/user-attachments/assets/a57864ab-c5ee-4301-addd-cc68abc90f15)
+![pywebexecnew11](https://github.com/user-attachments/assets/5acb15a7-92a4-4711-9de7-630721cbf47a)
 
 all commands output / statuses are available in the executables directory in subdirectory `.web_status`
 
