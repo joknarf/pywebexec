@@ -40,6 +40,7 @@ let title = null;
 let slider = null;
 let isPaused = false;
 const toggleButton = document.getElementById('toggleFetch');
+const pausedMessage = document.getElementById('pausedMessage');
 
 function getTokenParam() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -78,6 +79,9 @@ async function fetchOutput(url) {
             if (data.status != 'running') {
                 title.innerText = `${data.status} ${title.innerText.split(' ').slice(1).join(' ')}`;
                 clearInterval(outputInterval);
+                toggleButton.style.display = 'none';
+            } else {
+                toggleButton.style.display = 'block';
             }
         }
     } catch (error) {
@@ -109,8 +113,10 @@ async function viewOutput(command_id) {
         if (data.status === 'running') {
             fetchOutput(nextOutputLink);
             outputInterval = setInterval(() => fetchOutput(nextOutputLink), 500);
+            toggleButton.style.display = 'block';
         } else {
             fetchOutput(nextOutputLink);
+            toggleButton.style.display = 'none';
         }
     } catch (error) {
         console.log('Error viewing output:', error);
@@ -147,9 +153,15 @@ function toggleFetchOutput() {
         fetchOutput(nextOutputLink);
         outputInterval = setInterval(() => fetchOutput(nextOutputLink), 500);
         toggleButton.innerText = '||';
+        pausedMessage.style.display = 'none';
     } else {
         clearInterval(outputInterval);
         toggleButton.innerText = '|>';
+        pausedMessage.style.display = 'block';
+        const outputDiv = document.getElementById('output');
+        const rect = outputDiv.getBoundingClientRect();
+        pausedMessage.style.top = `${rect.top + 10}px`;
+        pausedMessage.style.right = `${window.innerWidth - rect.right + 10}px`;
     }
     isPaused = !isPaused;
 }

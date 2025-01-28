@@ -293,3 +293,17 @@ span {
     background-color: #666;
 }
 
+.paused-message {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(128, 128, 128, 0.7);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    z-index: 10;
+    pointer-events: none;
+}
+

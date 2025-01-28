@@ -161,6 +161,9 @@ async function fetchOutput(url) {
             nextOutputLink = data.links.next;
             if (data.status != 'running') {
                 clearInterval(outputInterval);
+                toggleButton.style.display = 'none';
+            } else {
+                toggleButton.style.display = 'block';
             }
         }
     } catch (error) {
@@ -191,8 +194,10 @@ async function viewOutput(command_id) {
         if (data.status === 'running') {
             fetchOutput(nextOutputLink);
             outputInterval = setInterval(() => fetchOutput(nextOutputLink), 500);
+            toggleButton.style.display = 'block';
         } else {
             fetchOutput(nextOutputLink);
+            toggleButton.style.display = 'none';
         }
         fetchCommands(); // Refresh the command list to highlight the current command
     } catch (error) {
@@ -350,6 +355,7 @@ document.getElementById('increaseFontSize').addEventListener('click', () => {
 });
 
 const toggleButton = document.getElementById('toggleFetch');
+const pausedMessage = document.getElementById('pausedMessage');
 
 function toggleFetchOutput() {
     if (isPaused) {
@@ -361,9 +367,15 @@ function toggleFetchOutput() {
         fetchOutput(nextOutputLink);
         outputInterval = setInterval(() => fetchOutput(nextOutputLink), 500);
         toggleButton.innerText = '||';
+        pausedMessage.style.display = 'none';
     } else {
         clearInterval(outputInterval);
         toggleButton.innerText = '|>';
+        pausedMessage.style.display = 'block';
+        const outputDiv = document.getElementById('output');
+        const rect = outputDiv.getBoundingClientRect();
+        pausedMessage.style.top = `${rect.top + 10}px`;
+        pausedMessage.style.right = `${window.innerWidth - rect.right + 10}px`;
     }
     isPaused = !isPaused;
 }
