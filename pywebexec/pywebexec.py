@@ -48,7 +48,7 @@ CONFDIR = os.path.expanduser("~/").rstrip('/')
 if os.path.isdir(f"{CONFDIR}/.config"):
     CONFDIR += '/.config'
 CONFDIR += "/.pywebexec"
-COMMAND_ID = str(uuid.uuid4())
+term_command_id = str(uuid.uuid4())
 
 # In-memory cache for command statuses
 command_status_cache = {}
@@ -263,7 +263,7 @@ def daemon_d(action, pidfilepath, silent=False, hostname=None, args=None):
                     n -= 1
                 except ProcessLookupError:
                     return True
-            print("Failed to stop server", file=sys.stderr)    
+            print("Failed to stop server", file=sys.stderr)
             return True
     elif action == "status":
         status = pidfile.is_locked()
@@ -296,18 +296,18 @@ def start_term():
     os.chdir(CWD)
     start_time = datetime.now().isoformat()
     user = pwd.getpwuid(os.getuid())[0]
-    print(f"Starting terminal session for {user} : {COMMAND_ID}")
-    update_command_status(COMMAND_ID, {
+    print(f"Starting terminal session for {user} : {term_command_id}")
+    update_command_status(term_command_id, {
         'status': 'running',
         'command': 'term',
         'params': [user, os.ttyname(sys.stdout.fileno())],
         'start_time': start_time,
         'user': user
     })
-    output_file_path = get_output_file_path(COMMAND_ID)
+    output_file_path = get_output_file_path(term_command_id)
     res = script(output_file_path)
     end_time = datetime.now().isoformat()
-    update_command_status(COMMAND_ID, {
+    update_command_status(term_command_id, {
         'status': 'success',
         'end_time': end_time,
         'exit_code': res
@@ -459,9 +459,9 @@ def read_command_status(command_id):
 def sigwinch_passthrough(sig, data):
     s = struct.pack("HHHH", 0, 0, 0, 0)
     a = struct.unpack('hhhh', fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, s))
-    global p, COMMAND_ID
+    global p, term_command_id
     p.setwinsize(a[0], a[1])
-    update_command_status(COMMAND_ID, {
+    update_command_status(term_command_id, {
         'rows': a[0],
         'cols': a[1],
     })
@@ -768,7 +768,7 @@ def main():
         sys.argv.remove("shareterm")
         with open(basef + ".log", "ab+") as log:
             pywebexec = subprocess.Popen([sys.executable] + sys.argv, stdout=log, stderr=log)
-            print_urls(COMMAND_ID)
+            print_urls(term_command_id)
             res = start_term()
             print("Stopping server")
             time.sleep(1)
