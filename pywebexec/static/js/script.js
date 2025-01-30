@@ -159,6 +159,14 @@ async function fetchCommands() {
     }
 }
 
+function extractTitle(output) {
+    const titleindex = output.lastIndexOf('\x1b]0;');
+    if (titleindex < 0) return null;
+    const endindex = output.slice(titleindex+4).indexOf('\x07');
+    if (endindex < 0) return null;
+    return output.slice(titleindex+4, titleindex+4+endindex);
+}
+
 async function fetchOutput(url) {
     if (isPaused) return;
     try {
@@ -190,6 +198,10 @@ async function fetchOutput(url) {
                 toggleButton.style.display = 'none';
             } else {
                 toggleButton.style.display = 'block';
+                /*const title = extractTitle(data.output);
+                if (title) {
+                    document.title = title;
+                }*/
             }
         }
     } catch (error) {

@@ -61,7 +61,6 @@ let outputInterval = null;
 let nextOutputLink = null;
 let fullOutput = '';
 let outputLength = 0;
-let title = null;
 let slider = null;
 let isPaused = false;
 const toggleButton = document.getElementById('toggleFetch');
@@ -72,6 +71,14 @@ function getTokenParam() {
     return urlParams.get('token') ? `?token=${urlParams.get('token')}` : '';
 }
 const urlToken = getTokenParam();
+
+function extractTitle(output) {
+    const titleindex = output.lastIndexOf('\x1b]0;');
+    if (titleindex < 0) return null;
+    const endindex = output.slice(titleindex+4).indexOf('\x07');
+    if (endindex < 0) return null;
+    return output.slice(titleindex+4, titleindex+4+endindex);
+}
 
 async function fetchOutput(url) {
     if (isPaused) return;
@@ -102,11 +109,15 @@ async function fetchOutput(url) {
             }
             nextOutputLink = data.links.next;
             if (data.status != 'running') {
-                title.innerText = `${data.status} ${title.innerText.split(' ').slice(1).join(' ')}`;
+                document.title = document.title.replace('[running]',`[${data.status}]`);
                 clearInterval(outputInterval);
                 toggleButton.style.display = 'none';
             } else {
                 toggleButton.style.display = 'block';
+                const title = extractTitle(data.output);
+                if (title) {
+                    document.title = `${title} - [running]`;
+                }
             }
         }
     } catch (error) {
@@ -130,7 +141,7 @@ async function viewOutput(command_id) {
             return;
         }
         const data = await response.json();
-        title.innerText = `${data.status} ${data.command} ${data.params.join(' ')}`;
+        document.title = `${data.command} ${data.params.join(' ')} - [${data.status}]`;
         if (data.command == 'term')
             terminal.options.cursorInactiveStyle = 'outline';
         else
@@ -195,7 +206,6 @@ toggleButton.addEventListener('click', toggleFetchOutput);
 
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', () => {
-    title = document.getElementById('outputTitle');
     slider = document.getElementById('outputSlider');
     slider.addEventListener('input', sliderUpdateOutput);
     const commandId = window.location.pathname.split('/').slice(-1)[0];
