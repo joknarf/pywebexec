@@ -323,8 +323,8 @@ def print_urls(command_id=None):
     if token:
         url_params = f"?token={token}"
     if command_id:
-        print(f"{protocol}://{hostname}:{args.port}/popup/{command_id}{url_params}")
-        print(f"{protocol}://{ip}:{args.port}/popup/{command_id}{url_params}")
+        print(f"{protocol}://{hostname}:{args.port}/dopopup/{command_id}{url_params}")
+        print(f"{protocol}://{ip}:{args.port}/dopopup/{command_id}{url_params}")
     else:
         print(f"{protocol}://{hostname}:{args.port}{url_params}")
         print(f"{protocol}://{ip}:{args.port}{url_params}")
@@ -749,6 +749,23 @@ def list_executables():
 @app.route('/popup/<command_id>')
 def popup(command_id):
     return render_template('popup.html', command_id=command_id)
+
+@app.route('/dopopup/<command_id>')
+def do_popup(command_id):
+    return f"""
+    <html>
+    <head>
+        <script type="text/javascript">
+            window.onload = function() {{
+                window.open('/popup/{command_id}', '_blank', 'width=1000,height=600');
+                window.close();
+            }};
+        </script>
+    </head>
+    <body>
+    </body>
+    </html>
+    """
 
 def main():
     global COMMAND_STATUS_DIR
