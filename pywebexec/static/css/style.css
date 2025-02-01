@@ -96,7 +96,7 @@ form {
     vertical-align: bottom;
 }
 .status-running { 
-    background-image: url("/static/images/running.gif")
+    background-image: url("/static/images/running.svg")
 }
 .status-success { 
     background-image: url("/static/images/success.svg")
