@@ -130,10 +130,12 @@ async function fetchCommands() {
             currentCommandId = commands[0].command_id;
             viewOutput(currentCommandId);
         }
+        runningCommands = [];
         commands.forEach(command => {
             const commandRow = document.createElement('tr');
             commandRow.className = `clickable-row ${command.command_id === currentCommandId ? 'currentcommand' : ''}`;
             commandRow.onclick = () => viewOutput(command.command_id);
+            if (command.status === 'running') runningCommands.push(command.command.replace(/^\.\//, ''));
             commandRow.innerHTML = `
                 <td class="monospace">
                     ${navigator.clipboard == undefined ? `${command.command_id.slice(0, 8)}` : `<span class="copy_clip" onclick="copyToClipboard('${command.command_id}', this, event)">${command.command_id.slice(0, 8)}</span>`}
@@ -152,6 +154,11 @@ async function fetchCommands() {
             `;
             commandsTbody.appendChild(commandRow);
         });
+        if (runningCommands.length) {
+            document.getElementById('thStatus').innerHTML=`<span class="status-icon status-running" title="${runningCommands.join("&#10;")}"></span>Running (${runningCommands.length})`;
+        } else {
+            document.getElementById('thStatus').innerHTML=`<span class="status-icon status-norun"></span>Status`;
+        }
         document.getElementById('dimmer').style.display = 'none';
     } catch (error) {
         console.log('Error fetching commands:', error);

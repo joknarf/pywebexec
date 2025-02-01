@@ -55,7 +55,9 @@ select { /* Safari bug */
     border-radius: 10px;
     overflow-y: hidden;
 }
-.copy-icon { cursor: pointer; }
+.copy-icon {
+    cursor: pointer;
+}
 .monospace {
     font-family: Consolas NF,monospace;
     font-size: 13px;
@@ -63,7 +65,10 @@ select { /* Safari bug */
 .system-font {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
-.copied { color: green; margin-left: 5px; }
+.copied {
+    color: green; 
+    margin-left: 5px;
+}
 button {
     -webkit-appearance: none;
     -webkit-border-radius: none;
@@ -101,17 +106,20 @@ form {
     background-image: url("/static/images/favicon.svg");
     vertical-align: bottom;
 }
+.status-norun {
+    background-image: url("/static/images/norun.svg");
+}
 .status-running { 
-    background-image: url("/static/images/running.svg")
+    background-image: url("/static/images/running.svg");
 }
 .status-success { 
-    background-image: url("/static/images/success.svg")
+    background-image: url("/static/images/success.svg");
 }
 .status-failed { 
-    background-image: url("/static/images/failed.svg")
+    background-image: url("/static/images/failed.svg");
 }
 .status-aborted { 
-    background-image: url("/static/images/aborted.svg")
+    background-image: url("/static/images/aborted.svg");
 }
 .copy_clip {
     padding-right: 20px;
