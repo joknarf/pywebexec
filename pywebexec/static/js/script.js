@@ -430,9 +430,10 @@ function toggleFetchOutput() {
 toggleButton.addEventListener('click', toggleFetchOutput);
 
 window.addEventListener('resize', adjustOutputHeight);
-window.addEventListener('load', initResizer);
-
-fetchCommands();
-setInterval(fetchCommands, 5000);
-
+window.addEventListener('load', () => {
+    initResizer();
+    fitAddon.fit();
+    fetchCommands();
+    setInterval(fetchCommands, 5000);
+});
 
