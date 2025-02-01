@@ -4,6 +4,7 @@ let paramsInput = document.getElementById('params');
 let commandListSelect = document.getElementById('commandList');
 let showCommandListButton = document.getElementById('showCommandListButton');
 let isHandlingKeydown = false;
+let firstVisibleItem = 0;
 
 function unfilterCommands() {
     const options = commandListSelect.options;
@@ -17,10 +18,14 @@ function filterCommands() {
     const value = commandInput.value.slice(0, commandInput.selectionStart);
     const options = commandListSelect.options;
     let nbVisibleItems = 0;
+    firstVisibleItem = -1;
     for (let i = 0; i < options.length; i++) {
         if (options[i].text.startsWith(value)) {
             options[i].style.display = 'block';
             nbVisibleItems += 1;
+            if (firstVisibleItem === -1) {
+                firstVisibleItem = i;
+            }
         } else {
             options[i].style.display = 'none';
         }
@@ -88,12 +93,12 @@ commandInput.addEventListener('keydown', (event) => {
         paramsInput.focus();
         paramsInput.setSelectionRange(0, paramsInput.value.length);
     } else if (event.key === 'ArrowDown') {
-        /*setCommandListPosition();*/
-        unfilterCommands();
         if (commandListSelect.options.length > 1) {
             commandListSelect.style.display = 'block';
+            commandListSelect.selectedIndex = firstVisibleItem;
             commandListSelect.focus();
-            commandListSelect.selectedIndex = 0;
+            commandListSelect.options[firstVisibleItem].scrollIntoView();
+            commandListSelect.options[firstVisibleItem].focus();
         }
         event.preventDefault();
     }
