@@ -200,7 +200,7 @@ async function fetchOutput(url) {
                 document.getElementById('commandStatus').classList.add(`status-${data.status}`);
                 const row = document.getElementsByClassName("currentcommand");
                 if (row.length > 0)
-                    row[0].cells[4].innerHTML = `<span class="status-icon status-${data.status}"></span>${data.status}${data.status === 'failed' ? ` (${data.exit_code})` : ''}`;
+                    row[0].cells[4].innerHTML = `<span class="status-icon status-${data.status}"></span>${data.status}`;
             } else {
                 toggleButton.style.display = 'block';
                 const title = extractTitle(data.output);
