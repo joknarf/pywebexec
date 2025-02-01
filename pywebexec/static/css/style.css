@@ -106,6 +106,9 @@ form {
     background-image: url("/static/images/favicon.svg");
     vertical-align: bottom;
 }
+#thStatus {
+    cursor: pointer;
+}
 .status-norun {
     background-image: url("/static/images/norun.svg");
 }

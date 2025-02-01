@@ -9,6 +9,8 @@ const maxScrollback = 99999;
 const maxSize = 10485760; // 10MB
 let fontSize = 14;
 let isPaused = false;
+let showRunningOnly = false;
+let hiddenCommandIds = [];
 
 function initTerminal()
 {
@@ -115,7 +117,7 @@ document.getElementById('launchForm').addEventListener('submit', async (event) =
     }
 });
 
-async function fetchCommands() {
+async function fetchCommands(hide=false) {
     try {
         const response = await fetch(`/commands${urlToken}`);
         if (!response.ok) {
@@ -132,6 +134,11 @@ async function fetchCommands() {
         }
         runningCommands = [];
         commands.forEach(command => {
+            if (hide && showRunningOnly && command.status !== 'running') {
+                hiddenCommandIds.push(command.command_id);
+                return;
+            }
+            if (hiddenCommandIds.includes(command.command_id)) return;
             const commandRow = document.createElement('tr');
             commandRow.className = `clickable-row ${command.command_id === currentCommandId ? 'currentcommand' : ''}`;
             commandRow.onclick = () => viewOutput(command.command_id);
@@ -142,11 +149,11 @@ async function fetchCommands() {
                 </td>
                 <td>${formatTime(command.start_time)}</td>
                 <td>${command.status === 'running' ? formatDuration(command.start_time, new Date().toISOString()) : formatDuration(command.start_time, command.end_time)}</td>
-                <td class="system-font">${command.command.replace(/^\.\//, '')}</td>
                 <td><span class="status-icon status-${command.status}"></span>${command.status}${command.status === 'failed' ? ` (${command.exit_code})` : ''}</td>
                 <td>
                     ${command.command.startsWith('term') ? '' : command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}', event)">Stop</button>` : `<button onclick="relaunchCommand('${command.command_id}', event)">Run</button>`}
                 </td>
+                <td class="system-font">${command.command.replace(/^\.\//, '')}</td>
                 <td class="monospace outcol">
                     <button class="popup-button" onclick="openPopup('${command.command_id}', event)"></button>
                     ${command.last_output_line || ''}
@@ -155,9 +162,11 @@ async function fetchCommands() {
             commandsTbody.appendChild(commandRow);
         });
         if (runningCommands.length) {
-            document.getElementById('thStatus').innerHTML=`<span class="status-icon status-running" title="${runningCommands.join("&#10;")}"></span>Running (${runningCommands.length})`;
+            document.getElementById('thStatus').innerHTML=`<span class="status-icon status-running"></span>Running (${runningCommands.length})`;
+            document.getElementById('thStatus').setAttribute('title', runningCommands.join("\n"));
         } else {
             document.getElementById('thStatus').innerHTML=`<span class="status-icon status-norun"></span>Status`;
+            document.getElementById('thStatus').setAttribute('title', "no command running");
         }
         document.getElementById('dimmer').style.display = 'none';
     } catch (error) {
@@ -205,9 +214,7 @@ async function fetchOutput(url) {
                 toggleButton.style.display = 'none';
                 document.getElementById('commandStatus').classList.remove('status-running');
                 document.getElementById('commandStatus').classList.add(`status-${data.status}`);
-                const row = document.getElementsByClassName("currentcommand");
-                if (row.length > 0)
-                    row[0].cells[4].innerHTML = `<span class="status-icon status-${data.status}"></span>${data.status}`;
+                fetchCommands();
             } else {
                 toggleButton.style.display = 'block';
                 const title = extractTitle(data.output);
@@ -435,6 +442,12 @@ function toggleFetchOutput() {
 }
 
 toggleButton.addEventListener('click', toggleFetchOutput);
+
+document.getElementById('thStatus').addEventListener('click', () => {
+    showRunningOnly = !showRunningOnly;
+    hiddenCommandIds = [];
+    fetchCommands(showRunningOnly);
+});
 
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', () => {
