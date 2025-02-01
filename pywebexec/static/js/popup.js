@@ -215,6 +215,7 @@ window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', () => {
     slider = document.getElementById('outputSlider');
     slider.addEventListener('input', sliderUpdateOutput);
+    adjustOutputHeight();
     const commandId = window.location.pathname.split('/').slice(-1)[0];
     viewOutput(commandId);
 });
