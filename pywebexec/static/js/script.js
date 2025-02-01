@@ -140,7 +140,7 @@ async function fetchCommands() {
                 </td>
                 <td>${formatTime(command.start_time)}</td>
                 <td>${command.status === 'running' ? formatDuration(command.start_time, new Date().toISOString()) : formatDuration(command.start_time, command.end_time)}</td>
-                <td>${command.command.replace(/^\.\//, '')}</td>
+                <td class="system-font">${command.command.replace(/^\.\//, '')}</td>
                 <td><span class="status-icon status-${command.status}"></span>${command.status}${command.status === 'failed' ? ` (${command.exit_code})` : ''}</td>
                 <td>
                     ${command.command.startsWith('term') ? '' : command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}', event)">Stop</button>` : `<button onclick="relaunchCommand('${command.command_id}', event)">Run</button>`}
@@ -312,7 +312,7 @@ async function stopCommand(command_id, event) {
         }
     } catch (error) {
         console.log('Error stopping command:', error);
-        alert('Failed to stop command. Please try again.');
+        alert('Failed to stop command. Process not found.');
     }
 }
 

@@ -552,14 +552,11 @@ def stop_command(command_id):
         os.killpg(os.getpgid(pid), 15)  # Send SIGTERM to the process group
         return jsonify({'message': 'Command aborted'})
     except Exception as e:
-        status_data = read_command_status(command_id) or {}
-        status_data['status'] = 'failed'
-        status_data['end_time'] = end_time
-        status_data['exit_code'] = 1
-        with open(get_status_file_path(command_id), 'w') as f:
-            json.dump(status_data, f)
-        with open(get_output_file_path(command_id), 'a') as output_file:
-            output_file.write(str(e))
+        update_command_status(command_id, {
+            'status': 'aborted',
+            'end_time': end_time,
+            'exit_code': -15,
+        })
         return jsonify({'error': 'Failed to terminate command'}), 500
 
 parseargs()
