@@ -162,7 +162,7 @@ async function fetchCommands(hide=false) {
             commandsTbody.appendChild(commandRow);
         });
         if (runningCommands.length) {
-            document.getElementById('thStatus').innerHTML=`<span class="status-icon status-running"></span>Running (${runningCommands.length})`;
+            document.getElementById('thStatus').innerHTML=`<span class="status-icon status-running"></span>Running <span class="system-font nbrunning">${runningCommands.length}</span>`;
             document.getElementById('thStatus').setAttribute('title', runningCommands.join("\n"));
         } else {
             document.getElementById('thStatus').innerHTML=`<span class="status-icon status-norun"></span>Status`;

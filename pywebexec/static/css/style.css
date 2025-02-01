@@ -381,3 +381,12 @@ span {
     font-size: 13px;
 }
 
+.nbrunning {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: normal;
+    border: 1px solid #aaa;
+    border-radius: 18px;
+    min-width: 18px;
+    text-align: center;
+}
