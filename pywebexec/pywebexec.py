@@ -752,12 +752,14 @@ def popup(command_id):
 
 @app.route('/dopopup/<command_id>')
 def do_popup(command_id):
+    token = request.args.get('token', '')
+    token_param = f'?token={token}' if token else ''
     return f"""
     <html>
     <head>
         <script type="text/javascript">
             window.onload = function() {{
-                window.open('/popup/{command_id}', '_blank', 'width=1000,height=600');
+                window.open('/popup/{command_id}{token_param}', '_blank', 'width=1000,height=600');
                 window.close();
             }};
         </script>
