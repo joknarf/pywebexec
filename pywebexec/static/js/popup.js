@@ -109,14 +109,17 @@ async function fetchOutput(url) {
             }
             nextOutputLink = data.links.next;
             if (data.status != 'running') {
-                document.title = document.title.replace('[running]',`[${data.status}]`);
                 clearInterval(outputInterval);
+                document.title = document.title.replace('[running]',`[${data.status}]`);
                 toggleButton.style.display = 'none';
+                document.getElementById('commandStatus').classList.remove('status-running');
+                document.getElementById('commandStatus').classList.add(`status-${data.status}`);
             } else {
                 toggleButton.style.display = 'block';
                 const title = extractTitle(data.output);
                 if (title) {
                     document.title = `${title} - [running]`;
+                    document.getElementById('commandInfo').innerHTML = `<span id="commandStatus" class="status-icon status-running"></span>${title}`;
                 }
             }
         }
@@ -141,6 +144,10 @@ async function viewOutput(command_id) {
             return;
         }
         const data = await response.json();
+        const commandInfo = document.getElementById('commandInfo');
+        const command = `${data.command.replace(/^\.\//, '')} ${data.params.join(' ')}`;
+        commandInfo.innerHTML = `<span id="commandStatus" class="status-icon status-${data.status}"></span>${command}`;
+        commandInfo.setAttribute('title', command);
         document.title = `${data.command} ${data.params.join(' ')} - [${data.status}]`;
         if (data.command == 'term')
             terminal.options.cursorInactiveStyle = 'outline';

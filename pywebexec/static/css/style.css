@@ -83,6 +83,7 @@ form {
     display: inline-block;
     width: 16px;
     height: 16px;
+    min-width: 16px;
     margin-right: 5px;
     background-size: contain;
     background-repeat: no-repeat;
@@ -254,16 +255,18 @@ body.dimmed * {
     transform: translate(-50%, -50%);
 }
 /* allow wide chars in terminal */
+/*
 span {
     letter-spacing: 0px !important;
     margin-right: -0.17px;
     margin-left: -0.09px
 }
+*/
 .slider-container {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 10px;
+    gap: 7px;
+    margin-top: 5px;
 }
 #outputSlider {
     width: 100%;
@@ -324,10 +327,11 @@ span {
 .pause-resume-button {
     background-color: transparent;
     border: none;
-    padding: 0;
-    width: 24px;
+    /*padding: 0;*/
+    min-width: 24px;
     height: 24px;
     cursor: pointer;
+    flex-shrink: 0;
 }
 
 
@@ -343,5 +347,19 @@ span {
     font-size: 14px;
     z-index: 10;
     pointer-events: none;
+}
+
+.command-info {
+    display: inline-block;
+    padding: 5px 10px 5px 10px;
+    background-color: #ddd;
+    max-width: 300px;
+    white-space: nowrap;
+    border-radius: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+    font-family: Consolas NF, monospace;
+    font-size: 13px;
 }
 

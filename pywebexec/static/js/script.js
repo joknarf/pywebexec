@@ -196,12 +196,14 @@ async function fetchOutput(url) {
             if (data.status != 'running') {
                 clearInterval(outputInterval);
                 toggleButton.style.display = 'none';
+                document.getElementById('commandStatus').classList.remove('status-running');
+                document.getElementById('commandStatus').classList.add(`status-${data.status}`);
             } else {
                 toggleButton.style.display = 'block';
-                /*const title = extractTitle(data.output);
+                const title = extractTitle(data.output);
                 if (title) {
-                    document.title = title;
-                }*/
+                    document.getElementById('commandInfo').innerHTML = `<span id="commandStatus" class="status-icon status-running"></span>${title}`;
+                }
             }
         }
     } catch (error) {
@@ -225,6 +227,10 @@ async function viewOutput(command_id) {
             return;
         }
         const data = await response.json();
+        const commandInfo = document.getElementById('commandInfo');
+        const command = `${data.command.replace(/^\.\//, '')} ${data.params.join(' ')}`;
+        commandInfo.innerHTML = `<span id="commandStatus" class="status-icon status-${data.status}"></span>${command}`;
+        commandInfo.setAttribute('title', command);
         if (data.command == 'term')
             terminal.options.cursorInactiveStyle = 'outline';
         else
