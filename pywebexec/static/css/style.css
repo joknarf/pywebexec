@@ -359,7 +359,7 @@ span {
     overflow: hidden;
     text-overflow: ellipsis;
     flex-shrink: 0;
-    font-family: "Segoe UI", "San Francisco", "Consolas NF", monospace;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     font-size: 13px;
 }
 
