@@ -9,7 +9,7 @@ body {
     overflow: hidden;
 }
 .table-container {
-    height: 270px;
+    height: 150px;
     overflow-y: auto;
     position: relative;
     border-radius: 10px;
@@ -359,7 +359,7 @@ span {
     overflow: hidden;
     text-overflow: ellipsis;
     flex-shrink: 0;
-    font-family: Consolas NF, monospace;
+    font-family: "Segoe UI", "San Francisco", "Consolas NF", monospace;
     font-size: 13px;
 }
 
