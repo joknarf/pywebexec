@@ -432,8 +432,8 @@ toggleButton.addEventListener('click', toggleFetchOutput);
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', () => {
     initResizer();
-    fitAddon.fit();
     fetchCommands();
+    adjustOutputHeight();
     setInterval(fetchCommands, 5000);
 });
 
