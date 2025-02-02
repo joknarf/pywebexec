@@ -14,7 +14,7 @@ body {
     position: relative;
     border-radius: 10px;
     border: 1px solid #aaa;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.30);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.40);
 }
 table {
     width: 100%;
@@ -54,6 +54,7 @@ select { /* Safari bug */
     border: 1px solid #ccc;
     border-radius: 10px;
     overflow-y: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.60);
 }
 .copy-icon {
     cursor: pointer;
