@@ -91,9 +91,6 @@ form {
     align-items: center;
     gap: 10px;
 }
-#commandStatus {
-    vertical-align: bottom;
-}
 .status-icon {
     display: inline-block;
     width: 16px;
@@ -371,8 +368,7 @@ span {
 }
 
 .command-info {
-    display: inline-block;
-    padding: 5px 10px 5px 10px;
+    padding: 5px 10px 7px 10px;
     background-color: #111;
     color: #eee;
     max-width: 300px;
