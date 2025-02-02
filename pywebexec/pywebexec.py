@@ -197,17 +197,17 @@ def decode_line(line: bytes) -> str:
         return ""
 
 
-def last_line(fd, maxline=1000):
+def last_line(fd, maxsize=500):
     """last non empty line of file"""
     line = "\n"
     fd.seek(0, os.SEEK_END)
     size = 0
     last_pos = 0
-    while line in ["", "\n", "\r"] and size < maxline:
+    while line in ["", "\n", "\r"] and size < maxsize:
         try:  # catch if file empty / only empty lines
             if last_pos:
                 fd.seek(last_pos-2, os.SEEK_SET)
-            while fd.read(1) not in [b"\n", b"\r"]:
+            while fd.read(1) not in [b"\n", b"\r"] and size < maxsize:
                 fd.seek(-2, os.SEEK_CUR)
                 size += 1
         except OSError:
