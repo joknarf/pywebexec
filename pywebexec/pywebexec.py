@@ -43,6 +43,7 @@ app.config['LDAP_BIND_PASSWORD'] = os.environ.get('PYWEBEXEC_LDAP_BIND_PASSWORD'
 
 # Directory to store the command status and output
 CWD = os.getcwd()
+PYWEBEXEC = os.path.abspath(__file__)
 COMMAND_STATUS_DIR = '.web_status'
 CONFDIR = os.path.expanduser("~/").rstrip('/')
 if os.path.isdir(f"{CONFDIR}/.config"):
@@ -219,19 +220,19 @@ def get_last_non_empty_line_of_file(file_path):
     
 
 def start_gunicorn(daemonized=False, baselog=None):
+    check_processes()
     pidfile = f"{baselog}.pid"
     if daemonized:
         if daemon_d('status', pidfilepath=baselog, silent=True):
             print(f"Error: pywebexec already running on {args.listen}:{args.port}", file=sys.stderr)
             return 1
 
-    if sys.stdout.isatty():
-        errorlog = "-"
-        accesslog = None #"-"
-    else:
+    if daemonized or not sys.stdout.isatty():
         errorlog = f"{baselog}.log"
         accesslog = None # f"{baselog}.access.log"
-
+    else:
+        errorlog = "-"
+        accesslog = None #"-"
     options = {
         'bind': '%s:%s' % (args.listen, args.port),
         'workers': 4,
@@ -323,11 +324,11 @@ def print_urls(command_id=None):
     if token:
         url_params = f"?token={token}"
     if command_id:
-        print(f"{protocol}://{hostname}:{args.port}/dopopup/{command_id}{url_params}")
-        print(f"{protocol}://{ip}:{args.port}/dopopup/{command_id}{url_params}")
+        print(f"{protocol}://{hostname}:{args.port}/dopopup/{command_id}{url_params}", flush=True)
+        print(f"{protocol}://{ip}:{args.port}/dopopup/{command_id}{url_params}", flush=True)
     else:
-        print(f"{protocol}://{hostname}:{args.port}{url_params}")
-        print(f"{protocol}://{ip}:{args.port}{url_params}")
+        print(f"{protocol}://{hostname}:{args.port}{url_params}", flush=True)
+        print(f"{protocol}://{ip}:{args.port}{url_params}", flush=True)
 
 
 def is_port_in_use(address, port):
@@ -473,6 +474,7 @@ def script(output_file):
     with open(output_file, 'wb') as fd:
         p = pexpect.spawn(shell, echo=True)
         p.logfile_read = fd
+        update_command_status(term_command_id, {"pid": p.pid})
         # Set the window size
         sigwinch_passthrough(None, None)
         signal.signal(signal.SIGWINCH, sigwinch_passthrough)
@@ -480,6 +482,7 @@ def script(output_file):
     
 
 def run_command(command, params, command_id, user):
+    #app.logger.error(f'run_command {command_id}: {command} {params} {user}')
     start_time = datetime.now().isoformat()
     update_command_status(command_id, {
         'status': 'running',
@@ -539,6 +542,59 @@ def run_command(command, params, command_id, user):
         with open(get_output_file_path(command_id), 'a') as output_file:
             output_file.write(str(e))
 
+def read_commands():
+    commands = []
+    for filename in os.listdir(COMMAND_STATUS_DIR):
+        if filename.endswith('.json'):
+            command_id = filename[:-5]
+            status = read_command_status(command_id)
+            if status:
+                try:
+                    params = shlex.join(status.get('params', []))
+                except AttributeError:
+                    params = " ".join([shlex.quote(p) if " " in p else p for p in status['params']])
+                command = status.get('command', '-') + ' ' + params
+                last_line = status.get('last_output_line')
+                if last_line is None:
+                    output_file_path = get_output_file_path(command_id)
+                    if os.path.exists(output_file_path):
+                        last_line = get_last_non_empty_line_of_file(output_file_path)
+                commands.append({
+                    'command_id': command_id,
+                    'status': status['status'],
+                    'start_time': status.get('start_time', 'N/A'),
+                    'end_time': status.get('end_time', 'N/A'),
+                    'command': command,
+                    'exit_code': status.get('exit_code', 'N/A'),
+                    'last_output_line': last_line,
+                })
+    return commands
+
+def is_process_alive(pid):
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+def check_processes():
+    for filename in os.listdir(COMMAND_STATUS_DIR):
+        if filename.endswith('.json'):
+            command_id = filename[:-5]
+            status = read_command_status(command_id)
+            if status.get('status') == 'running' and 'pid' in status:
+                if not is_process_alive(status['pid']):
+                    end_time = datetime.now().isoformat()
+                    update_command_status(command_id, {
+                        'status': 'aborted',
+                        'end_time': end_time,
+                        'exit_code': -1,
+                    })
+
+parseargs()
+
 @app.route('/stop_command/<command_id>', methods=['POST'])
 def stop_command(command_id):
     status = read_command_status(command_id)
@@ -558,8 +614,6 @@ def stop_command(command_id):
             'exit_code': -15,
         })
         return jsonify({'error': 'Failed to terminate command'}), 500
-
-parseargs()
 
 
 @app.before_request
@@ -682,32 +736,8 @@ def index():
 
 @app.route('/commands', methods=['GET'])
 def list_commands():
-    commands = []
-    for filename in os.listdir(COMMAND_STATUS_DIR):
-        if filename.endswith('.json'):
-            command_id = filename[:-5]
-            status = read_command_status(command_id)
-            if status:
-                try:
-                    params = shlex.join(status.get('params', []))
-                except AttributeError:
-                    params = " ".join([shlex.quote(p) if " " in p else p for p in status['params']])
-                command = status.get('command', '-') + ' ' + params
-                last_line = status.get('last_output_line')
-                if last_line is None:
-                    output_file_path = get_output_file_path(command_id)
-                    if os.path.exists(output_file_path):
-                        last_line = get_last_non_empty_line_of_file(output_file_path)
-                commands.append({
-                    'command_id': command_id,
-                    'status': status['status'],
-                    'start_time': status.get('start_time', 'N/A'),
-                    'end_time': status.get('end_time', 'N/A'),
-                    'command': command,
-                    'exit_code': status.get('exit_code', 'N/A'),
-                    'last_output_line': last_line,
-                })
     # Sort commands by start_time in descending order
+    commands = read_commands()
     commands.sort(key=lambda x: x['start_time'], reverse=True)
     return jsonify(commands)
 
@@ -735,6 +765,18 @@ def get_command_output(command_id):
         if request.headers.get('Accept') == 'text/plain':
             return f"{output}\nstatus: {status_data.get('status')}", 200, {'Content-Type': 'text/plain'}
         return jsonify(response)
+    return jsonify({'error': 'Invalid command_id'}), 404
+
+@app.route('/command_output_raw/<command_id>', methods=['GET'])
+def get_command_output_raw(command_id):
+    offset = int(request.args.get('offset', 0))
+    maxsize = int(request.args.get('maxsize', 10485760))
+    output_file_path = get_output_file_path(command_id)
+    if os.path.exists(output_file_path):
+        with open(output_file_path, 'rb') as output_file:
+            output_file.seek(offset)
+            output = output_file.read(maxsize)
+        return output, 200, {'Content-Type': 'text/plain'}
     return jsonify({'error': 'Invalid command_id'}), 404
 
 @app.route('/executables', methods=['GET'])
@@ -774,16 +816,18 @@ def main():
         args.action = "start"
     port_used = is_port_in_use(args.listen, args.port)
     if args.action != "stop":
-        print("Starting server:")
+        print("Starting server:", flush=True)
         print_urls()
     if args.action != "stop" and port_used:
         print(f"Error: port {args.port} already in use", file=sys.stderr)
         return 1
     if args.action == "shareterm":
         COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
+        check_processes()
         sys.argv.remove("shareterm")
-        with open(basef + ".log", "ab+") as log:
-            pywebexec = subprocess.Popen([sys.executable] + sys.argv, stdout=log, stderr=log)
+        sys.argv[0] = PYWEBEXEC
+        with open(basef + ".log", "a") as log:
+            pywebexec = subprocess.Popen([sys.executable] + sys.argv, stdout=log, stderr=log, bufsize=1)
             print_urls(term_command_id)
             res = start_term()
             print("Stopping server")
