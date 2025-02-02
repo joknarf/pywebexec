@@ -24,6 +24,7 @@ import fcntl
 import termios
 import struct
 import subprocess
+import logging
 
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
@@ -40,6 +41,11 @@ app.config['LDAP_GROUPS'] = os.environ.get('PYWEBEXEC_LDAP_GROUPS')
 app.config['LDAP_BASE_DN'] = os.environ.get('PYWEBEXEC_LDAP_BASE_DN')
 app.config['LDAP_BIND_DN'] = os.environ.get('PYWEBEXEC_LDAP_BIND_DN')
 app.config['LDAP_BIND_PASSWORD'] = os.environ.get('PYWEBEXEC_LDAP_BIND_PASSWORD')
+
+# Get the Gunicorn error logger
+gunicorn_logger = logging.getLogger('gunicorn.error')
+app.logger.handlers = gunicorn_logger.handlers
+app.logger.setLevel(logging.INFO)  # Set the logging level to INFO
 
 # Directory to store the command status and output
 CWD = os.getcwd()
@@ -229,7 +235,7 @@ def start_gunicorn(daemonized=False, baselog=None):
 
     if daemonized or not sys.stdout.isatty():
         errorlog = f"{baselog}.log"
-        accesslog = None # f"{baselog}.access.log"
+        accesslog = None #f"{baselog}.access.log"
     else:
         errorlog = "-"
         accesslog = None #"-"
@@ -481,8 +487,9 @@ def script(output_file):
         p.interact()
     
 
-def run_command(command, params, command_id, user):
-    #app.logger.error(f'run_command {command_id}: {command} {params} {user}')
+def run_command(fromip, user, command, params, command_id):
+    # app.logger.info(f'{fromip} run_command {command_id} {user}: {command} {params}')
+    log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}')
     start_time = datetime.now().isoformat()
     update_command_status(command_id, {
         'status': 'running',
@@ -515,6 +522,7 @@ def run_command(command, params, command_id, user):
                     'exit_code': exit_code,
                     'user': user
                 })
+                log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: command aborted')
             else:
                 exit_code = status
                 if exit_code == 0:
@@ -524,6 +532,7 @@ def run_command(command, params, command_id, user):
                         'exit_code': exit_code,
                         'user': user
                     })
+                    log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: completed successfully')
                 else:
                     update_command_status(command_id, {
                         'status': 'failed',
@@ -531,6 +540,8 @@ def run_command(command, params, command_id, user):
                         'exit_code': exit_code,
                         'user': user
                     })
+                    log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: exit code {exit_code}')
+
     except Exception as e:
         end_time = datetime.now().isoformat()
         update_command_status(command_id, {
@@ -541,6 +552,16 @@ def run_command(command, params, command_id, user):
         })
         with open(get_output_file_path(command_id), 'a') as output_file:
             output_file.write(str(e))
+        app.logger.error(fromip, user, f'Error running command {command_id}: {e}')
+
+
+def command_str(command, params):
+    try:
+        params = shlex.join(params)
+    except AttributeError:
+        params = " ".join([shlex.quote(p) if " " in p else p for p in params])
+    return f"{command} {params}"
+
 
 def read_commands():
     commands = []
@@ -549,11 +570,7 @@ def read_commands():
             command_id = filename[:-5]
             status = read_command_status(command_id)
             if status:
-                try:
-                    params = shlex.join(status.get('params', []))
-                except AttributeError:
-                    params = " ".join([shlex.quote(p) if " " in p else p for p in status['params']])
-                command = status.get('command', '-') + ' ' + params
+                command = command_str(status.get('command', '-'), status.get('params', []))
                 last_line = status.get('last_output_line')
                 if last_line is None:
                     output_file_path = get_output_file_path(command_id)
@@ -595,8 +612,18 @@ def check_processes():
 
 parseargs()
 
+def log_info(fromip, user, message):
+    app.logger.info(f"{user} {fromip}: {message}")
+
+def log_error(fromip, user, message):
+    app.logger.error(f"{user} {fromip}: {message}")
+
+def log_request(message):
+    log_info(request.remote_addr, session.get('username', '-'), message)
+
 @app.route('/stop_command/<command_id>', methods=['POST'])
 def stop_command(command_id):
+    log_request(f"stop_command {command_id}")
     status = read_command_status(command_id)
     if not status or 'pid' not in status:
         return jsonify({'error': 'Invalid command_id or command not running'}), 400
@@ -707,11 +734,12 @@ def run_command_endpoint():
         'status': 'running',
         'command': command,
         'params': params,
-        'user': user
+        'user': user,
+        'from': request.remote_addr,
     })
 
     # Run the command in a separate thread
-    thread = threading.Thread(target=run_command, args=(command_path, params, command_id, user))
+    thread = threading.Thread(target=run_command, args=(request.remote_addr, user, command_path, params, command_id))
     thread.start()
 
     return jsonify({'message': 'Command is running', 'command_id': command_id})
