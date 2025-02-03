@@ -55,6 +55,18 @@ const fitAddon = new FitAddon.FitAddon();
 terminal.loadAddon(fitAddon);
 terminal.open(document.getElementById('output'));
 fitAddon.fit();
+terminal.onTitleChange((title) => {
+    document.getElementById('commandInfo').innerText = title;
+})
+terminal.onSelectionChange(() => {
+    const selectionText = terminal.getSelection();
+    if (selectionText) {
+        navigator.clipboard.writeText(selectionText).catch(err => {
+            console.error('Failed to copy text to clipboard:', err);
+        });
+    }
+});
+
 
 let currentCommandId = null;
 let outputInterval = null;
@@ -72,13 +84,11 @@ function getTokenParam() {
 }
 const urlToken = getTokenParam();
 
-function extractTitle(output) {
-    const titleindex = output.lastIndexOf('\x1b]0;');
-    if (titleindex < 0) return null;
-    const endindex = output.slice(titleindex+4).indexOf('\x07');
-    if (endindex < 0) return null;
-    return output.slice(titleindex+4, titleindex+4+endindex);
+
+function setCommandStatus(status) {
+    document.getElementById("commandStatus").className = `status-icon status-${status}`;
 }
+
 
 async function fetchOutput(url) {
     if (isPaused) return;
@@ -112,15 +122,10 @@ async function fetchOutput(url) {
                 clearInterval(outputInterval);
                 document.title = document.title.replace('[running]',`[${data.status}]`);
                 toggleButton.style.display = 'none';
-                document.getElementById('commandStatus').classList.remove('status-running');
-                document.getElementById('commandStatus').classList.add(`status-${data.status}`);
+                setCommandStatus(data.status)
             } else {
                 toggleButton.style.display = 'block';
-                const title = extractTitle(data.output);
-                if (title) {
-                    document.title = `${title} - [running]`;
-                    document.getElementById('commandInfo').innerHTML = `<span id="commandStatus" class="status-icon status-running"></span>${title}`;
-                }
+                setCommandStatus(data.status)
             }
         }
     } catch (error) {
@@ -146,7 +151,8 @@ async function viewOutput(command_id) {
         const data = await response.json();
         const commandInfo = document.getElementById('commandInfo');
         const command = `${data.command.replace(/^\.\//, '')} ${data.params.join(' ')}`;
-        commandInfo.innerHTML = `<span id="commandStatus" class="status-icon status-${data.status}"></span>${command}`;
+        setCommandStatus(data.status);
+        commandInfo.innerText = command;
         commandInfo.setAttribute('title', command);
         document.title = `${data.command} ${data.params.join(' ')} - [${data.status}]`;
         if (data.command == 'term')
