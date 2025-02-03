@@ -18,7 +18,7 @@ function initTerminal()
         cursorBlink: false,
         cursorInactiveStyle: 'none',
         disableStdin: true,
-        convertEol: true,
+        //convertEol: true,
         fontFamily: '"Consolas NF", "Fira Code", monospace, "Powerline Extra Symbols", courier-new, courier',
         fontSize: fontSize,
         scrollback: maxScrollback,
@@ -79,6 +79,14 @@ fitAddon.fit();
 terminal.onTitleChange((title) => {
     document.getElementById('commandInfo').innerText = title;
 })
+
+/*terminal.onResize((evt) => {
+    const terminal_size = {
+        Width: evt.cols,
+        Height: evt.rows,
+    };
+    console.log(terminal_size);
+})*/
 
 terminal.onSelectionChange(() => {
     const selectionText = terminal.getSelection();
