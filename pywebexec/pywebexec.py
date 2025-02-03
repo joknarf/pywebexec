@@ -1,5 +1,5 @@
 import sys
-from flask import Flask, request, jsonify, render_template, session, redirect, url_for
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for, Response, stream_with_context
 from flask_httpauth import HTTPBasicAuth
 import threading
 import os
@@ -798,14 +798,25 @@ def get_command_output(command_id):
 @app.route('/command_output_raw/<command_id>', methods=['GET'])
 def get_command_output_raw(command_id):
     offset = int(request.args.get('offset', 0))
-    maxsize = int(request.args.get('maxsize', 10485760))
-    output_file_path = get_output_file_path(command_id)
-    if os.path.exists(output_file_path):
-        with open(output_file_path, 'rb') as output_file:
-            output_file.seek(offset)
-            output = output_file.read(maxsize)
-        return output, 200, {'Content-Type': 'text/plain'}
-    return jsonify({'error': 'Invalid command_id'}), 404
+    @stream_with_context
+    def generate(offset):
+        try:
+            output_file_path = get_output_file_path(command_id)
+            if os.path.exists(output_file_path):
+                with open(output_file_path, 'rb') as output_file:
+                    while True:
+                        while True:
+                            chunk = output_file.read(1024)
+                            if not chunk:
+                                time.sleep(0.5)
+                                break
+                            yield chunk
+                        status = read_command_status(command_id)
+                        if not status or status['status'] != 'running':
+                            break
+        except GeneratorExit:
+            return
+    return Response(generate(offset), content_type='text/plain')
 
 @app.route('/executables', methods=['GET'])
 def list_executables():
