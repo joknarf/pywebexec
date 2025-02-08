@@ -25,7 +25,7 @@ import termios
 import struct
 import subprocess
 import logging
-
+import pyte
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
@@ -181,8 +181,14 @@ class PyWebExec(Application):
     def load(self):
         return self.application
 
-
-ANSI_ESCAPE = re.compile(br'(?:\x1B[@-Z\\-_]|\x1B([(]B|>)|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B\[[0-9]{1,2};[0-9]{1,2}[m|K]|\x1B\[[0-9;]*[mGKHF]|[\x00-\x1F\x7F])')
+def get_visible_output(line):
+    screen = pyte.Screen(len(line)+1, 2)
+    stream = pyte.Stream(screen)
+    stream.feed(line)
+    visible_line = screen.display[0]
+    return visible_line
+                                                                                                    #38;2;66;59;165m
+ANSI_ESCAPE = re.compile(br'(?:\x1B[@-Z\\-_]|\x1B([(]B|>)|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B\[([0-9]{1,2};){0,4}[0-9]{1,3}[m|K]|\x1B\[[0-9;]*[mGKHF]|[\x00-\x1F\x7F])')
 
 def strip_ansi_control_chars(text):
     """Remove ANSI and control characters from the text."""
@@ -192,7 +198,7 @@ def strip_ansi_control_chars(text):
 def decode_line(line: bytes) -> str:
     """try decode line exception on binary"""
     try:
-        return strip_ansi_control_chars(line).decode().strip(" ")
+        return get_visible_output(line.decode()).strip(" ")
     except UnicodeDecodeError:
         return ""
 
@@ -216,6 +222,8 @@ def last_line(fd, maxsize=500):
             break
         last_pos = fd.tell()
         line = decode_line(fd.readline())
+    if size == maxsize:
+        return ""
     return line.strip()
 
 
