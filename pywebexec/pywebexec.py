@@ -180,18 +180,6 @@ class PyWebExec(Application):
 
     def load(self):
         return self.application
-
-def get_visible_output(line):
-    try:
-        screen = pyte.Screen(len(line)+1, 2)
-        stream = pyte.Stream(screen)
-        stream.feed(line)
-        visible_line = screen.display[1].strip(" ")
-        if visible_line:
-            return visible_line
-        return screen.display[0].strip(" ")
-    except:
-        return ""
                                                                                                     #38;2;66;59;165m
 ANSI_ESCAPE = re.compile(br'(?:\x1B[@-Z\\-_]|\x1B([(]B|>)|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B\[([0-9]{1,2};){0,4}[0-9]{1,3}[m|K]|\x1B\[[0-9;]*[mGKHF]|[\x00-\x1F\x7F])')
 
@@ -208,22 +196,34 @@ def decode_line(line: bytes) -> str:
         return ""
 
 
-def get_last_line(file_path, maxsize=1024):
+def get_visible_output(line, cols, rows):
+    """pyte vt100 render to get last line"""
+    try:
+        screen = pyte.Screen(cols, rows)
+        stream = pyte.ByteStream(screen)
+        stream.feed(line)
+        visible_line = ""
+        row = rows - 1
+        while row > 0:
+            visible_line = screen.display[row].strip(" ")
+            if visible_line:
+                return visible_line
+            row -= 1
+    except:
+        return ""
+    return ""
+
+
+def get_last_line(file_path, cols=None, rows=None, maxsize=2048):
     """Retrieve last non empty line after vt100 interpretation"""
+    cols = cols or 125
+    rows = rows or 24
     with open(file_path, 'rb') as fd:
         try:
             fd.seek(-maxsize, os.SEEK_END)
         except OSError:
             fd.seek(0)
-        lines = fd.read().split(b"\n")
-        if len(lines) == 1:
-            return ""
-        line = ""
-        while True:
-            line = decode_line(lines.pop())
-            if line or not lines:
-                break
-        return line
+        return get_visible_output(fd.read(), cols, rows)
     
 
 def start_gunicorn(daemonized=False, baselog=None):
@@ -431,21 +431,16 @@ def get_output_file_path(command_id):
 
 def update_command_status(command_id, updates):
     status_file_path = get_status_file_path(command_id)
-    status_data = read_command_status(command_id) or {}
-    status_data.update(updates)
-    if status_data['status'] != 'running':
+    status = read_command_status(command_id) or {}
+    status.update(updates)
+    if status.get('status') != 'running':
         output_file_path = get_output_file_path(command_id)
         if os.path.exists(output_file_path):
-            status_data['last_output_line'] = get_last_line(output_file_path)
+            status['last_output_line'] = get_last_line(output_file_path, status.get('cols'), status.get('rows'))
+        command_status_cache[command_id] = status
     with open(status_file_path, 'w') as f:
-        json.dump(status_data, f)
+        json.dump(status, f)
     
-    # Update cache if status is not "running"
-    if status_data['status'] != 'running':
-        command_status_cache[command_id] = status_data
-    elif command_id in command_status_cache:
-        del command_status_cache[command_id]
-
 def read_command_status(command_id):
     # Return cached status if available
     if command_id in command_status_cache:
@@ -575,13 +570,13 @@ def read_commands():
             if status:
                 command = command_str(status.get('command', '-'), status.get('params', []))
                 last_line = status.get('last_output_line')
-                if last_line is None:
+                if status.get('status') == 'running':
                     output_file_path = get_output_file_path(command_id)
                     if os.path.exists(output_file_path):
-                        last_line = get_last_line(output_file_path)
+                        last_line = get_last_line(output_file_path, status.get('cols'), status.get('rows'))
                 commands.append({
                     'command_id': command_id,
-                    'status': status['status'],
+                    'status': status.get('status'),
                     'start_time': status.get('start_time', 'N/A'),
                     'end_time': status.get('end_time', 'N/A'),
                     'command': command,
