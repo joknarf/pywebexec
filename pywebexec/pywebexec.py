@@ -203,34 +203,22 @@ def decode_line(line: bytes) -> str:
         return ""
 
 
-def last_line(fd, maxsize=500):
-    """last non empty line of file"""
-    line = "\n"
-    fd.seek(0, os.SEEK_END)
-    size = 0
-    last_pos = 0
-    while line in ["", "\n", "\r"] and size < maxsize:
-        try:  # catch if file empty / only empty lines
-            if last_pos:
-                fd.seek(last_pos-2, os.SEEK_SET)
-            while fd.read(1) not in [b"\n", b"\r"] and size < maxsize:
-                fd.seek(-2, os.SEEK_CUR)
-                size += 1
+def get_last_line(file_path, maxsize=1024):
+    """Retrieve last non empty line after vt100 interpretation"""
+    with open(file_path, 'rb') as fd:
+        try:
+            fd.seek(-maxsize, os.SEEK_END)
         except OSError:
             fd.seek(0)
-            line = decode_line(fd.readline())
-            break
-        last_pos = fd.tell()
-        line = decode_line(fd.readline())
-    if size == maxsize:
-        return ""
-    return line.strip()
-
-
-def get_last_non_empty_line_of_file(file_path):
-    """Get the last non-empty line of a file."""
-    with open(file_path, 'rb') as f:
-        return last_line(f)
+        lines = fd.read().split(b"\n")
+        if len(lines) == 1:
+            return ""
+        line = ""
+        while True:
+            line = decode_line(lines.pop())
+            if line or not lines:
+                break
+        return line
     
 
 def start_gunicorn(daemonized=False, baselog=None):
@@ -443,7 +431,7 @@ def update_command_status(command_id, updates):
     if status_data['status'] != 'running':
         output_file_path = get_output_file_path(command_id)
         if os.path.exists(output_file_path):
-            status_data['last_output_line'] = get_last_non_empty_line_of_file(output_file_path)
+            status_data['last_output_line'] = get_last_line(output_file_path)
     with open(status_file_path, 'w') as f:
         json.dump(status_data, f)
     
@@ -585,7 +573,7 @@ def read_commands():
                 if last_line is None:
                     output_file_path = get_output_file_path(command_id)
                     if os.path.exists(output_file_path):
-                        last_line = get_last_non_empty_line_of_file(output_file_path)
+                        last_line = get_last_line(output_file_path)
                 commands.append({
                     'command_id': command_id,
                     'status': status['status'],
