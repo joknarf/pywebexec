@@ -182,11 +182,16 @@ class PyWebExec(Application):
         return self.application
 
 def get_visible_output(line):
-    screen = pyte.Screen(len(line)+1, 2)
-    stream = pyte.Stream(screen)
-    stream.feed(line)
-    visible_line = screen.display[0]
-    return visible_line
+    try:
+        screen = pyte.Screen(len(line)+1, 2)
+        stream = pyte.Stream(screen)
+        stream.feed(line)
+        visible_line = screen.display[1].strip(" ")
+        if visible_line:
+            return visible_line
+        return screen.display[0].strip(" ")
+    except:
+        return ""
                                                                                                     #38;2;66;59;165m
 ANSI_ESCAPE = re.compile(br'(?:\x1B[@-Z\\-_]|\x1B([(]B|>)|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B\[([0-9]{1,2};){0,4}[0-9]{1,3}[m|K]|\x1B\[[0-9;]*[mGKHF]|[\x00-\x1F\x7F])')
 
@@ -198,7 +203,7 @@ def strip_ansi_control_chars(text):
 def decode_line(line: bytes) -> str:
     """try decode line exception on binary"""
     try:
-        return get_visible_output(line.decode()).strip(" ")
+        return get_visible_output(line.decode())
     except UnicodeDecodeError:
         return ""
 
