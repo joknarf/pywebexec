@@ -183,9 +183,12 @@ class PyWebExec(Application):
 
 def get_visible_output(line):
     try:
-        screen = pyte.Screen(len(line)+1, 1)
+        screen = pyte.Screen(len(line)+1, 2)
         stream = pyte.Stream(screen)
         stream.feed(line)
+        visible_line = screen.display[1].strip(" ")
+        if visible_line:
+            return visible_line
         return screen.display[0].strip(" ")
     except:
         return ""
