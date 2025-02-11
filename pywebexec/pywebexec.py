@@ -58,7 +58,7 @@ CONFDIR += "/.pywebexec"
 term_command_id = str(uuid.uuid4())
 
 # In-memory cache for command statuses
-command_status_cache = {}
+status_cache = {}
 
 def generate_random_password(length=12):
     characters = string.ascii_letters + string.digits + string.punctuation
@@ -162,7 +162,6 @@ def generate_selfsigned_cert(hostname, ip_addresses=None, key=None):
     return cert_pem, key_pem
 
 
-
 class PyWebExec(Application):
 
     def __init__(self, app, options=None):
@@ -242,7 +241,8 @@ def start_gunicorn(daemonized=False, baselog=None):
         accesslog = None #"-"
     options = {
         'bind': '%s:%s' % (args.listen, args.port),
-        'workers': 4,
+        'workers': 1,
+        'threads': 4,
         'timeout': 600,
         'certfile': args.cert,
         'keyfile': args.key,
@@ -437,28 +437,27 @@ def update_command_status(command_id, updates):
         output_file_path = get_output_file_path(command_id)
         if os.path.exists(output_file_path):
             status['last_output_line'] = get_last_line(output_file_path, status.get('cols'), status.get('rows'))
-        command_status_cache[command_id] = status
+    status_cache[command_id] = status
     with open(status_file_path, 'w') as f:
         json.dump(status, f)
     
 def read_command_status(command_id):
     # Return cached status if available
-    if command_id in command_status_cache:
-        return command_status_cache[command_id]
-    
+    status_data = {}
+    if command_id in status_cache:
+        status_data = status_cache[command_id]
+    status = status_data.get('status')
+    if status and status != "running":
+        return status_data
     status_file_path = get_status_file_path(command_id)
     if not os.path.exists(status_file_path):
         return None
     with open(status_file_path, 'r') as f:
         try:
-            status_data = json.load(f)
+            status_data.update(json.load(f))
         except json.JSONDecodeError:
             return None
-    
-    # Cache the status if it is not "running"
-    if status_data['status'] != 'running':
-        command_status_cache[command_id] = status_data
-    
+    status_cache[command_id] = status_data
     return status_data
 
 def sigwinch_passthrough(sig, data):
@@ -562,6 +561,7 @@ def command_str(command, params):
 
 
 def read_commands():
+    global status_cache
     commands = []
     for filename in os.listdir(COMMAND_STATUS_DIR):
         if filename.endswith('.json'):
@@ -569,11 +569,17 @@ def read_commands():
             status = read_command_status(command_id)
             if status:
                 command = command_str(status.get('command', '-'), status.get('params', []))
-                last_line = status.get('last_output_line')
-                if status.get('status') == 'running':
+                if status.get('status') == 'running' and status.get('last_update',0)<datetime.now().timestamp()-5:
                     output_file_path = get_output_file_path(command_id)
                     if os.path.exists(output_file_path):
-                        last_line = get_last_line(output_file_path, status.get('cols'), status.get('rows'))
+                        size = os.path.getsize(output_file_path)
+                        if size != status.get('size'):
+                            status.update({
+                                'size': size,
+                                'last_update': datetime.now().timestamp(),
+                                'last_output_line': get_last_line(output_file_path, status.get('cols'), status.get('rows')),
+                            })
+                            status_cache[command_id] = status
                 commands.append({
                     'command_id': command_id,
                     'status': status.get('status'),
@@ -581,7 +587,7 @@ def read_commands():
                     'end_time': status.get('end_time', 'N/A'),
                     'command': command,
                     'exit_code': status.get('exit_code', 'N/A'),
-                    'last_output_line': last_line,
+                    'last_output_line': status.get('last_output_line'),
                 })
     return commands
 
