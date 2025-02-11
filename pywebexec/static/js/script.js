@@ -120,7 +120,7 @@ document.getElementById('launchForm').addEventListener('submit', async (event) =
             throw new Error('Failed to launch command');
         }
         const data = await response.json();
-        await new Promise(r => setTimeout(r, 300));
+        //await new Promise(r => setTimeout(r, 300));// not ok
         fetchCommands();
         viewOutput(data.command_id);
         commandInput.focus()
