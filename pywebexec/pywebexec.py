@@ -429,6 +429,9 @@ def get_status_file_path(command_id):
 def get_output_file_path(command_id):
     return os.path.join(COMMAND_STATUS_DIR, f'{command_id}_output.txt')
 
+def get_done_file_path(command_id):
+    return os.path.join(COMMAND_STATUS_DIR, f'{command_id}.done')
+
 def update_command_status(command_id, updates):
     status_file_path = get_status_file_path(command_id)
     status = read_command_status(command_id) or {}
@@ -440,7 +443,10 @@ def update_command_status(command_id, updates):
     status_cache[command_id] = status
     with open(status_file_path, 'w') as f:
         json.dump(status, f)
-    
+    if status.get('status') != 'running':
+        open(get_done_file_path(command_id), 'a').close()
+
+
 def read_command_status(command_id):
     # Return cached status if available
     status_data = {}
@@ -448,6 +454,8 @@ def read_command_status(command_id):
         status_data = status_cache[command_id]
     status = status_data.get('status')
     if status and status != "running":
+        return status_data
+    if command_id in status_cache and not os.path.exists(get_done_file_path(command_id)):
         return status_data
     status_file_path = get_status_file_path(command_id)
     if not os.path.exists(status_file_path):
