@@ -48,7 +48,7 @@ select { /* Safari bug */
     min-width: 150px;
 }
 .output {
-    white-space: pre-wrap;
+    display: flex;
     background: #111;
     padding: 10px;
     border: 1px solid #ccc;

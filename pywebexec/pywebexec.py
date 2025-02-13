@@ -429,9 +429,6 @@ def get_status_file_path(command_id):
 def get_output_file_path(command_id):
     return os.path.join(COMMAND_STATUS_DIR, f'{command_id}_output.txt')
 
-def get_done_file_path(command_id):
-    return os.path.join(COMMAND_STATUS_DIR, f'{command_id}.done')
-
 def update_command_status(command_id, updates):
     status_file_path = get_status_file_path(command_id)
     status = read_command_status(command_id) or {}
@@ -443,8 +440,6 @@ def update_command_status(command_id, updates):
     status_cache[command_id] = status
     with open(status_file_path, 'w') as f:
         json.dump(status, f)
-    if status.get('status') != 'running':
-        open(get_done_file_path(command_id), 'a').close()
 
 
 def read_command_status(command_id):
@@ -455,7 +450,7 @@ def read_command_status(command_id):
     status = status_data.get('status')
     if status and status != "running":
         return status_data
-    if command_id in status_cache and not os.path.exists(get_done_file_path(command_id)):
+    if command_id in status_cache and status_cache.get('last_read',0)>datetime.now().timestamp()-0.5:
         return status_data
     status_file_path = get_status_file_path(command_id)
     if not os.path.exists(status_file_path):
@@ -465,6 +460,7 @@ def read_command_status(command_id):
             status_data.update(json.load(f))
         except json.JSONDecodeError:
             return None
+    status_data['last_read'] = datetime.now().timestamp()
     status_cache[command_id] = status_data
     return status_data
 
@@ -798,6 +794,7 @@ def get_command_output(command_id):
             'output': output[-maxsize:],
             'status': status_data.get("status"),
             'cols': status_data.get("cols"),
+            'rows': status_data.get("rows"),
             'links': {
                 'next': f'{request.url_root}command_output/{command_id}?offset={new_offset}&maxsize={maxsize}{token_param}'
             }

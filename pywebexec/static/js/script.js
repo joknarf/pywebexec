@@ -11,6 +11,7 @@ let fontSize = 14;
 let isPaused = false;
 let showRunningOnly = false;
 let hiddenCommandIds = [];
+let cols = 0;
 
 function initTerminal()
 {
@@ -96,6 +97,15 @@ terminal.onSelectionChange(() => {
         });
     }
 });
+
+function autoFit() {
+    if (cols) {
+        fit = fitAddon.proposeDimensions();
+        terminal.resize(cols, fit.rows);
+        return;
+    }
+    fitAddon.fit();
+}
 
 function getTokenParam() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -201,8 +211,9 @@ async function fetchOutput(url) {
             clearInterval(outputInterval);
         } else {
             if (data.cols) {
-                terminal.resize(data.cols, terminal.rows);
-            } else fitAddon.fit();
+                cols = data.cols;
+                autoFit();
+            }
             fullOutput += data.output;
             if (fullOutput.length > maxSize)
                 fullOutput = fullOutput.slice(-maxSize);
@@ -370,7 +381,7 @@ function adjustOutputHeight() {
     const outputTop = outputDiv.getBoundingClientRect().top;
     const maxHeight = windowHeight - outputTop - 60; // Adjusted for slider height
     outputDiv.style.height = `${maxHeight}px`;
-    fitAddon.fit();
+    autoFit();
 }
 
 function initResizer() {
@@ -412,13 +423,13 @@ slider.addEventListener('input', sliderUpdateOutput);
 document.getElementById('decreaseFontSize').addEventListener('click', () => {
     fontSize = Math.max(8, fontSize - 1);
     terminal.options.fontSize = fontSize;
-    fitAddon.fit();
+    autoFit();
 });
 
 document.getElementById('increaseFontSize').addEventListener('click', () => {
     fontSize = Math.min(32, fontSize + 1);
     terminal.options.fontSize = fontSize;
-    fitAddon.fit();
+    autoFit();
 });
 
 const toggleButton = document.getElementById('toggleFetch');
