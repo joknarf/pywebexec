@@ -181,6 +181,8 @@ class PyWebExec(Application):
         return self.application
                                                                                                     #38;2;66;59;165m
 ANSI_ESCAPE = re.compile(br'(?:\x1B[@-Z\\-_]|\x1B([(]B|>)|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B\[([0-9]{1,2};){0,4}[0-9]{1,3}[m|K]|\x1B\[[0-9;]*[mGKHF]|[\x00-\x1F\x7F])')
+ANSI_ESCAPE = re.compile(br'(?:\x1B[@-Z\\-_]|\x1B([(]B|>)|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B\[([0-9]{1,2};){0,4}[0-9]{1,3}[m|K]|\x1B\[[0-9;]*[mGKHF])')
+ANSI_ESCAPE = re.compile(br'(\x1B\[([0-9]{1,2};){0,4}[0-9]{1,3}[m|K]|\x1B\[[0-9;]*[mGKHF])')
 
 def strip_ansi_control_chars(text):
     """Remove ANSI and control characters from the text."""
@@ -202,12 +204,10 @@ def get_visible_output(line, cols, rows):
         stream = pyte.ByteStream(screen)
         stream.feed(line)
         visible_line = ""
-        row = rows - 1
-        while row > 0:
-            visible_line = screen.display[row].strip(" ")
+        for visible_line in reversed(screen.display):
+            visible_line = visible_line.strip(" ")
             if visible_line:
                 return visible_line
-            row -= 1
     except:
         return ""
     return ""
