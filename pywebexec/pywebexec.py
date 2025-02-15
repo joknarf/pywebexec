@@ -36,7 +36,7 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Add SameSite attribute to sessi
 auth = HTTPBasicAuth()
 
 app.config['LDAP_SERVER'] = os.environ.get('PYWEBEXEC_LDAP_SERVER')
-app.config['LDAP_USER_ID'] = os.environ.get('PYWEBEXEC_LDAP_USER_ID', "uid")
+app.config['LDAP_USER_ID'] = os.environ.get('PYWEBEXEC_LDAP_USER_ID', "uid") # sAMAccountName
 app.config['LDAP_GROUPS'] = os.environ.get('PYWEBEXEC_LDAP_GROUPS')
 app.config['LDAP_BASE_DN'] = os.environ.get('PYWEBEXEC_LDAP_BASE_DN')
 app.config['LDAP_BIND_DN'] = os.environ.get('PYWEBEXEC_LDAP_BIND_DN')
@@ -593,6 +593,7 @@ def read_commands():
                     'start_time': status.get('start_time', 'N/A'),
                     'end_time': status.get('end_time', 'N/A'),
                     'command': command,
+                    'user': status.get('user'),
                     'exit_code': status.get('exit_code', 'N/A'),
                     'last_output_line': status.get('last_output_line'),
                 })
@@ -687,13 +688,18 @@ def verify_ldap(username, password):
     tls_configuration = Tls(validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLSv1_2) if app.config['LDAP_SERVER'].startswith("ldaps:") else None
     server = Server(app.config['LDAP_SERVER'], tls=tls_configuration, get_info=ALL)
     user_filter = f"({app.config['LDAP_USER_ID']}={username})"
+    group_filter = ""
+    if app.config["LDAP_GROUPS"]:
+        group_filter = "".join(f"(memberOf={group})" for group in app.config['LDAP_GROUPS'].split(" "))
+        group_filter = f"(|{group_filter})"
+    ldap_filter = f"(&(objectClass=person){user_filter}{group_filter})"
     try:
         # Bind with the bind DN and password
         conn = Connection(server, user=app.config['LDAP_BIND_DN'], password=app.config['LDAP_BIND_PASSWORD'], authentication=SIMPLE, auto_bind=True, read_only=True)
         try:
-            conn.search(search_base=app.config['LDAP_BASE_DN'], search_filter=user_filter, search_scope=SUBTREE)
+            conn.search(search_base=app.config['LDAP_BASE_DN'], search_filter=ldap_filter, search_scope=SUBTREE)
             if len(conn.entries) == 0:
-                print(f"User {username} not found in LDAP.")
+                print(f"User {username} not found in LDAP in allowed groups.")
                 return False
             user_dn = conn.entries[0].entry_dn
         finally:
@@ -702,15 +708,10 @@ def verify_ldap(username, password):
         # Bind with the user DN and password to verify credentials
         conn = Connection(server, user=user_dn, password=password, authentication=SIMPLE, auto_bind=True, read_only=True)
         try:
-            if not app.config['LDAP_GROUPS'] and conn.result["result"] == 0:
+            if conn.result["result"] == 0:
                 return True
-            group_filter = "".join([f'({group})' for group in app.config['LDAP_GROUPS'].split(",")])
-            group_filter = f"(&{group_filter}(|(member={user_dn})(uniqueMember={user_dn})))"
-            conn.search(search_base=app.config['LDAP_BASE_DN'], search_filter=group_filter, search_scope=SUBTREE)
-            result = len(conn.entries) > 0
-            if not result:
-                print(f"User {username} is not a member of groups {app.config['LDAP_GROUPS']}.")
-            return result
+            print(f"{username}: Password mismatch")
+            return False
         finally:
             conn.unbind()
     except Exception as e:
