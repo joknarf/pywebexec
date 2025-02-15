@@ -77,15 +77,17 @@ let slider = null;
 let isPaused = false;
 let cols = 0;
 let rows = 0;
+let fitWindow = false;
 
 const toggleButton = document.getElementById('toggleFetch');
 const pausedMessage = document.getElementById('pausedMessage');
+const toggleFitButton = document.getElementById('toggleFit');
 
 function autoFit(scroll=true) {
     // Scroll output div to bottom
     const outputDiv = document.getElementById('output');
     outputDiv.scrollTop = terminal.element.clientHeight - outputDiv.clientHeight + 20;
-    if (cols) {
+    if (cols && !fitWindow) {
         let fit = fitAddon.proposeDimensions();
         if (fit.rows < rows) {
             terminal.resize(cols, rows);
@@ -235,9 +237,20 @@ function toggleFetchOutput() {
     }
     isPaused = !isPaused;
 }
+function toggleFit() {
+    fitWindow = ! fitWindow;
+    if (fitWindow) {
+        toggleFitButton.classList.add('fit-tty');
+        toggleFitButton.setAttribute('title', 'terminal fit tty');
+    } else {
+        toggleFitButton.classList.remove('fit-tty');
+        toggleFitButton.setAttribute('title', 'terminal fit window');
+    }
+    autoFit();
+}
 
 toggleButton.addEventListener('click', toggleFetchOutput);
-
+toggleFitButton.addEventListener('click', toggleFit);
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', () => {
     slider = document.getElementById('outputSlider');
