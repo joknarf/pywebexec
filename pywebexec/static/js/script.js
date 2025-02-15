@@ -186,7 +186,7 @@ async function fetchCommands(hide=false) {
                 <td>
                     ${command.command.startsWith('term') ? '' : command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}', event)">Stop</button>` : `<button onclick="relaunchCommand('${command.command_id}', event)">Run</button>`}
                 </td>
-                <td class="system-font">${command.command.replace(/^\.\//, '')}</td>
+                <td class="system-font" title="${command.user == '-' ? '' : command.user}">${command.command.replace(/^\.\//, '')}</td>
                 <td class="monospace outcol">
                     <button class="popup-button" onclick="openPopup('${command.command_id}', event)"></button>
                     ${command.last_output_line || ''}
