@@ -12,6 +12,7 @@ let isPaused = false;
 let showRunningOnly = false;
 let hiddenCommandIds = [];
 let cols = 0;
+let rows = 0;
 
 function initTerminal()
 {
@@ -98,13 +99,21 @@ terminal.onSelectionChange(() => {
     }
 });
 
-function autoFit() {
+function autoFit(scroll=true) {
+    // Scroll output div to bottom
+    const outputDiv = document.getElementById('output');
+    outputDiv.scrollTop = terminal.element.clientHeight - outputDiv.clientHeight + 20;
     if (cols) {
-        fit = fitAddon.proposeDimensions();
-        terminal.resize(cols, fit.rows);
-        return;
+        let fit = fitAddon.proposeDimensions();
+        if (fit.rows < rows) {
+            terminal.resize(cols, rows);
+        } else {
+            terminal.resize(cols, fit.rows);
+        }
+    } else {
+        fitAddon.fit();
     }
-    fitAddon.fit();
+    if (scroll) terminal.scrollToBottom();
 }
 
 function getTokenParam() {
@@ -212,7 +221,8 @@ async function fetchOutput(url) {
         } else {
             if (data.cols) {
                 cols = data.cols;
-                autoFit();
+                rows = data.rows;
+                autoFit(scroll=false);
             }
             fullOutput += data.output;
             if (fullOutput.length > maxSize)

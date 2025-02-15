@@ -84,7 +84,7 @@ const pausedMessage = document.getElementById('pausedMessage');
 function autoFit(scroll=true) {
     // Scroll output div to bottom
     const outputDiv = document.getElementById('output');
-    outputDiv.scrollTop = outputDiv.scrollHeight;        
+    outputDiv.scrollTop = terminal.element.clientHeight - outputDiv.clientHeight + 20;
     if (cols) {
         let fit = fitAddon.proposeDimensions();
         if (fit.rows < rows) {

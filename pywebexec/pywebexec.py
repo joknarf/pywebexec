@@ -56,6 +56,8 @@ if os.path.isdir(f"{CONFDIR}/.config"):
     CONFDIR += '/.config'
 CONFDIR += "/.pywebexec"
 term_command_id = str(uuid.uuid4())
+tty_cols = 125
+tty_rows = 30
 
 # In-memory cache for command statuses
 status_cache = {}
@@ -215,8 +217,8 @@ def get_visible_output(line, cols, rows):
 
 def get_last_line(file_path, cols=None, rows=None, maxsize=2048):
     """Retrieve last non empty line after vt100 interpretation"""
-    cols = cols or 125
-    rows = rows or 24
+    cols = cols or tty_cols
+    rows = rows or tty_rows
     with open(file_path, 'rb') as fd:
         try:
             fd.seek(-maxsize, os.SEEK_END)
@@ -497,18 +499,19 @@ def run_command(fromip, user, command, params, command_id):
         'command': command,
         'params': params,
         'start_time': start_time,
-        'user': user
+        'user': user,
+        'cols': tty_cols,
+        'rows': tty_rows,
     })
     output_file_path = get_output_file_path(command_id)
     try:
         with open(output_file_path, 'wb') as fd:
-            p = pexpect.spawn(command, params, ignore_sighup=True, timeout=None)
+            p = pexpect.spawn(command, params, ignore_sighup=True, timeout=None, dimensions=(tty_rows, tty_cols))
             update_command_status(command_id, {
                 'status': 'running',
                 'pid': p.pid,
                 'user': user
             })
-            p.setwinsize(24, 125)
             p.logfile = fd
             p.expect(pexpect.EOF)
             fd.flush()
