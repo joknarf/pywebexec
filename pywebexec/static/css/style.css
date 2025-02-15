@@ -48,7 +48,6 @@ select { /* Safari bug */
     min-width: 150px;
 }
 .output {
-    white-space: pre-wrap;
     background: #111;
     padding: 10px;
     border: 1px solid #ccc;
@@ -329,20 +328,18 @@ span {
 
 .pause {
     background-image: url("/static/images/pause.svg");
-    /*background-size: contain;*/
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 24px 24px;
 }
 .resume {
     background-image: url("/static/images/resume.svg");
-    /*background-size: contain;*/
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 24px 24px;
 }
 
-.pause-resume-button {
+.fit-window {
+    background-image: url("/static/images/fit-win.svg");
+}
+.fit-tty {
+    background-image: url("/static/images/fit-tty.svg");
+}
+.pause-resume-button, .fit-button {
     background-color: transparent;
     border: none;
     /*padding: 0;*/
@@ -350,6 +347,10 @@ span {
     height: 24px;
     cursor: pointer;
     flex-shrink: 0;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 24px 24px;
+
 }
 
 
@@ -389,4 +390,8 @@ span {
     border-radius: 17px;
     min-width: 17px;
     text-align: center;
+}
+
+.xterm-accessibility {
+    display: none;
 }

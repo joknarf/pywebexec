@@ -56,6 +56,8 @@ if os.path.isdir(f"{CONFDIR}/.config"):
     CONFDIR += '/.config'
 CONFDIR += "/.pywebexec"
 term_command_id = str(uuid.uuid4())
+tty_cols = 125
+tty_rows = 30
 
 # In-memory cache for command statuses
 status_cache = {}
@@ -181,6 +183,8 @@ class PyWebExec(Application):
         return self.application
                                                                                                     #38;2;66;59;165m
 ANSI_ESCAPE = re.compile(br'(?:\x1B[@-Z\\-_]|\x1B([(]B|>)|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B\[([0-9]{1,2};){0,4}[0-9]{1,3}[m|K]|\x1B\[[0-9;]*[mGKHF]|[\x00-\x1F\x7F])')
+ANSI_ESCAPE = re.compile(br'(?:\x1B[@-Z\\-_]|\x1B([(]B|>)|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B\[([0-9]{1,2};){0,4}[0-9]{1,3}[m|K]|\x1B\[[0-9;]*[mGKHF])')
+ANSI_ESCAPE = re.compile(br'(\x1B\[([0-9]{1,2};){0,4}[0-9]{1,3}[m|K]|\x1B\[[0-9;]*[mGKHF])')
 
 def strip_ansi_control_chars(text):
     """Remove ANSI and control characters from the text."""
@@ -202,12 +206,10 @@ def get_visible_output(line, cols, rows):
         stream = pyte.ByteStream(screen)
         stream.feed(line)
         visible_line = ""
-        row = rows - 1
-        while row > 0:
-            visible_line = screen.display[row].strip(" ")
+        for visible_line in reversed(screen.display):
+            visible_line = visible_line.strip(" ")
             if visible_line:
                 return visible_line
-            row -= 1
     except:
         return ""
     return ""
@@ -215,8 +217,8 @@ def get_visible_output(line, cols, rows):
 
 def get_last_line(file_path, cols=None, rows=None, maxsize=2048):
     """Retrieve last non empty line after vt100 interpretation"""
-    cols = cols or 125
-    rows = rows or 24
+    cols = cols or tty_cols
+    rows = rows or tty_rows
     with open(file_path, 'rb') as fd:
         try:
             fd.seek(-maxsize, os.SEEK_END)
@@ -429,9 +431,6 @@ def get_status_file_path(command_id):
 def get_output_file_path(command_id):
     return os.path.join(COMMAND_STATUS_DIR, f'{command_id}_output.txt')
 
-def get_done_file_path(command_id):
-    return os.path.join(COMMAND_STATUS_DIR, f'{command_id}.done')
-
 def update_command_status(command_id, updates):
     status_file_path = get_status_file_path(command_id)
     status = read_command_status(command_id) or {}
@@ -443,8 +442,6 @@ def update_command_status(command_id, updates):
     status_cache[command_id] = status
     with open(status_file_path, 'w') as f:
         json.dump(status, f)
-    if status.get('status') != 'running':
-        open(get_done_file_path(command_id), 'a').close()
 
 
 def read_command_status(command_id):
@@ -455,7 +452,7 @@ def read_command_status(command_id):
     status = status_data.get('status')
     if status and status != "running":
         return status_data
-    if command_id in status_cache and not os.path.exists(get_done_file_path(command_id)):
+    if command_id in status_cache and status_cache.get('last_read',0)>datetime.now().timestamp()-0.5:
         return status_data
     status_file_path = get_status_file_path(command_id)
     if not os.path.exists(status_file_path):
@@ -465,6 +462,7 @@ def read_command_status(command_id):
             status_data.update(json.load(f))
         except json.JSONDecodeError:
             return None
+    status_data['last_read'] = datetime.now().timestamp()
     status_cache[command_id] = status_data
     return status_data
 
@@ -501,18 +499,19 @@ def run_command(fromip, user, command, params, command_id):
         'command': command,
         'params': params,
         'start_time': start_time,
-        'user': user
+        'user': user,
+        'cols': tty_cols,
+        'rows': tty_rows,
     })
     output_file_path = get_output_file_path(command_id)
     try:
         with open(output_file_path, 'wb') as fd:
-            p = pexpect.spawn(command, params, ignore_sighup=True, timeout=None)
+            p = pexpect.spawn(command, params, ignore_sighup=True, timeout=None, dimensions=(tty_rows, tty_cols))
             update_command_status(command_id, {
                 'status': 'running',
                 'pid': p.pid,
                 'user': user
             })
-            p.setwinsize(24, 125)
             p.logfile = fd
             p.expect(pexpect.EOF)
             fd.flush()
@@ -798,6 +797,7 @@ def get_command_output(command_id):
             'output': output[-maxsize:],
             'status': status_data.get("status"),
             'cols': status_data.get("cols"),
+            'rows': status_data.get("rows"),
             'links': {
                 'next': f'{request.url_root}command_output/{command_id}?offset={new_offset}&maxsize={maxsize}{token_param}'
             }

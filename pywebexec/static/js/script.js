@@ -11,6 +11,9 @@ let fontSize = 14;
 let isPaused = false;
 let showRunningOnly = false;
 let hiddenCommandIds = [];
+let fitWindow = false;
+let cols = 0;
+let rows = 0;
 
 function initTerminal()
 {
@@ -96,6 +99,23 @@ terminal.onSelectionChange(() => {
         });
     }
 });
+
+function autoFit(scroll=true) {
+    // Scroll output div to bottom
+    const outputDiv = document.getElementById('output');
+    outputDiv.scrollTop = terminal.element.clientHeight - outputDiv.clientHeight + 20;
+    if (cols && !fitWindow) {
+        let fit = fitAddon.proposeDimensions();
+        if (fit.rows < rows) {
+            terminal.resize(cols, rows);
+        } else {
+            terminal.resize(cols, fit.rows);
+        }
+    } else {
+        fitAddon.fit();
+    }
+    if (scroll) terminal.scrollToBottom();
+}
 
 function getTokenParam() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -201,8 +221,10 @@ async function fetchOutput(url) {
             clearInterval(outputInterval);
         } else {
             if (data.cols) {
-                terminal.resize(data.cols, terminal.rows);
-            } else fitAddon.fit();
+                cols = data.cols;
+                rows = data.rows;
+                autoFit(scroll=false);
+            }
             fullOutput += data.output;
             if (fullOutput.length > maxSize)
                 fullOutput = fullOutput.slice(-maxSize);
@@ -370,7 +392,7 @@ function adjustOutputHeight() {
     const outputTop = outputDiv.getBoundingClientRect().top;
     const maxHeight = windowHeight - outputTop - 60; // Adjusted for slider height
     outputDiv.style.height = `${maxHeight}px`;
-    fitAddon.fit();
+    autoFit();
 }
 
 function initResizer() {
@@ -412,17 +434,19 @@ slider.addEventListener('input', sliderUpdateOutput);
 document.getElementById('decreaseFontSize').addEventListener('click', () => {
     fontSize = Math.max(8, fontSize - 1);
     terminal.options.fontSize = fontSize;
-    fitAddon.fit();
+    autoFit();
 });
 
 document.getElementById('increaseFontSize').addEventListener('click', () => {
     fontSize = Math.min(32, fontSize + 1);
     terminal.options.fontSize = fontSize;
-    fitAddon.fit();
+    autoFit();
 });
 
 const toggleButton = document.getElementById('toggleFetch');
 const pausedMessage = document.getElementById('pausedMessage');
+const toggleFitButton = document.getElementById('toggleFit');
+
 
 function toggleFetchOutput() {
     if (isPaused) {
@@ -446,8 +470,20 @@ function toggleFetchOutput() {
     }
     isPaused = !isPaused;
 }
+function toggleFit() {
+    fitWindow = ! fitWindow;
+    if (fitWindow) {
+        toggleFitButton.classList.add('fit-tty');
+        toggleFitButton.setAttribute('title', 'terminal fit tty');
+    } else {
+        toggleFitButton.classList.remove('fit-tty');
+        toggleFitButton.setAttribute('title', 'terminal fit window');
+    }
+    autoFit();
+}
 
 toggleButton.addEventListener('click', toggleFetchOutput);
+toggleFitButton.addEventListener('click', toggleFit);
 
 document.getElementById('thStatus').addEventListener('click', () => {
     showRunningOnly = !showRunningOnly;
