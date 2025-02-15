@@ -33,6 +33,8 @@ if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Secret key for session management
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Add SameSite attribute to session cookies
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 auth = HTTPBasicAuth()
 
 app.config['LDAP_SERVER'] = os.environ.get('PYWEBEXEC_LDAP_SERVER')
