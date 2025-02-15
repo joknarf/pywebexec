@@ -90,8 +90,9 @@ $ pywebexec -u myuser [-P mypass]
 Generated password is given if no `--pasword` option
 
 * ldap(s) password check / group member
+ldap server must accept memberOf attribute for group members
 ```shell
-$ export PYWEBEXEC_LDAP_SERVER=ldap://ldap.forumsys.com:389
+$ export PYWEBEXEC_LDAP_SERVER=ldaps://ldap.mydomain.com:389
 $ export PYWEBEXEC_LDAP_BIND_DN="cn=read-only-admin,dc=example,dc=com"
 $ export PYWEBEXEC_LDAP_BIND_PASSWORD="password"
 $ export PYWEBEXEC_LDAP_BASE_DN="dc=example,dc=com"
