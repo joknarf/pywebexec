@@ -117,7 +117,7 @@ async function fetchOutput(url) {
     try {
         const response = await fetch(url);
         if (!response.ok) {
-            document.getElementById('dimmer').style.display = 'none';
+            document.getElementById('dimmer').style.display = 'block';
             return;
         }
         const data = await response.json();
@@ -151,6 +151,7 @@ async function fetchOutput(url) {
                 toggleButton.style.display = 'block';
                 setCommandStatus(data.status)
             }
+            document.getElementById('dimmer').style.display = 'none';
         }
     } catch (error) {
         document.getElementById('dimmer').style.display = 'block';
