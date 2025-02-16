@@ -486,6 +486,7 @@ function toggleFit() {
         toggleFitButton.setAttribute('title', 'terminal fit window');
     }
     autoFit();
+    viewOutput(currentCommandId);
 }
 
 toggleButton.addEventListener('click', toggleFetchOutput);
