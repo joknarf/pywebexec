@@ -143,8 +143,8 @@ document.getElementById('launchForm').addEventListener('submit', async (event) =
         }
         const data = await response.json();
         //await new Promise(r => setTimeout(r, 300));// not ok
-        fetchCommands();
         viewOutput(data.command_id);
+        fetchCommands();
         commandInput.focus()
         commandInput.setSelectionRange(0, commandInput.value.length)
     } catch (error) {
@@ -334,8 +334,8 @@ async function relaunchCommand(command_id, event) {
             throw new Error('Failed to relaunch command');
         }
         const relaunchData = await relaunchResponse.json();
-        fetchCommands();
         viewOutput(relaunchData.command_id);
+        fetchCommands();
     } catch (error) {
         console.log('Error relaunching command:', error);
         alert('Failed to relaunch command. Please try again.');
