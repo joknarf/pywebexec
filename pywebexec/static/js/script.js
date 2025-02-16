@@ -361,7 +361,7 @@ async function stopCommand(command_id, event) {
 function formatTime(time) {
     if (!time || time === 'N/A') return 'N/A';
     const date = new Date(time);
-    return date.toLocaleString().slice(0, 16).replace('T', ' ');
+    return date.toLocaleString("sv-SE", { hour12: false, timeStyle: 'short', dateStyle: 'short' }).slice(5);
 }
 
 function formatDuration(startTime, endTime) {
@@ -370,8 +370,8 @@ function formatDuration(startTime, endTime) {
     const end = new Date(endTime);
     const duration = (end - start) / 1000;
     const hours = Math.floor(duration / 3600);
-    const minutes = Math.floor((duration % 3600) / 60);
-    const seconds = Math.floor(duration % 60);
+    const minutes = Math.floor((duration % 3600) / 60).toString().padStart(2, '0');
+    const seconds = Math.floor(duration % 60).toString().padStart(2, '0');
     return `${hours}h ${minutes}m ${seconds}s`;
 }
 
