@@ -128,13 +128,15 @@ document.getElementById('launchForm').addEventListener('submit', async (event) =
     event.preventDefault();
     const commandName = document.getElementById('commandName').value;
     const params = document.getElementById('params').value.split(' ');
+    fitAddon.fit();
+    terminal.clear();
     try {
         const response = await fetch(`/run_command${urlToken}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ command: commandName, params: params })
+            body: JSON.stringify({ command: commandName, params: params, rows: terminal.rows, cols: terminal.cols })
         });
         if (!response.ok) {
             throw new Error('Failed to launch command');
@@ -314,6 +316,8 @@ async function relaunchCommand(command_id, event) {
             alert(data.error);
             return;
         }
+        fitAddon.fit();
+        terminal.clear();
         const relaunchResponse = await fetch(`/run_command${urlToken}`, {
             method: 'POST',
             headers: {
@@ -321,7 +325,9 @@ async function relaunchCommand(command_id, event) {
             },
             body: JSON.stringify({
                 command: data.command,
-                params: data.params
+                params: data.params,
+                rows: terminal.rows,
+                cols: terminal.cols,
             })
         });
         if (!relaunchResponse.ok) {

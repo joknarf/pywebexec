@@ -492,33 +492,31 @@ def script(output_file):
         p.interact()
 
 
-def run_command(fromip, user, command, params, command_id):
+def run_command(fromip, user, command, params, command_id, rows, cols):
     # app.logger.info(f'{fromip} run_command {command_id} {user}: {command} {params}')
     log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}')
-    start_time = datetime.now().isoformat()
+    start_time = datetime.now(timezone.utc).isoformat()
     update_command_status(command_id, {
         'status': 'running',
         'command': command,
         'params': params,
         'start_time': start_time,
         'user': user,
-        'cols': tty_cols,
-        'rows': tty_rows,
+        'cols': cols,
+        'rows': rows,
     })
     output_file_path = get_output_file_path(command_id)
     try:
         with open(output_file_path, 'wb') as fd:
-            p = pexpect.spawn(command, params, ignore_sighup=True, timeout=None, dimensions=(tty_rows, tty_cols))
+            p = pexpect.spawn(command, params, ignore_sighup=True, timeout=None, dimensions=(rows, cols))
             update_command_status(command_id, {
-                'status': 'running',
                 'pid': p.pid,
-                'user': user
             })
             p.logfile = fd
             p.expect(pexpect.EOF)
             fd.flush()
             status = p.wait()
-            end_time = datetime.now().isoformat()
+            end_time = datetime.now(timezone.utc).isoformat()
             # Update the status based on the result
             if status is None:
                 exit_code = -15
@@ -549,7 +547,7 @@ def run_command(fromip, user, command, params, command_id):
                     log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: exit code {exit_code}')
 
     except Exception as e:
-        end_time = datetime.now().isoformat()
+        end_time = datetime.now(timezone.utc).isoformat()
         update_command_status(command_id, {
             'status': 'failed',
             'end_time': end_time,
@@ -617,7 +615,7 @@ def check_processes():
             status = read_command_status(command_id)
             if status.get('status') == 'running' and 'pid' in status:
                 if not is_process_alive(status['pid']):
-                    end_time = datetime.now().isoformat()
+                    end_time = datetime.now(timezone.utc).isoformat()
                     update_command_status(command_id, {
                         'status': 'aborted',
                         'end_time': end_time,
@@ -643,7 +641,7 @@ def stop_command(command_id):
         return jsonify({'error': 'Invalid command_id or command not running'}), 400
 
     pid = status['pid']
-    end_time = datetime.now().isoformat()
+    end_time = datetime.now(timezone.utc).isoformat()
     try:
         #update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
         os.killpg(os.getpgid(pid), 15)  # Send SIGTERM to the process group
@@ -725,6 +723,8 @@ def run_command_endpoint():
     data = request.json
     command = data.get('command')
     params = data.get('params', [])
+    rows = data.get('rows', tty_rows)
+    cols = data.get('cols', tty_cols)
 
     if not command:
         return jsonify({'error': 'command is required'}), 400
@@ -753,7 +753,7 @@ def run_command_endpoint():
     })
 
     # Run the command in a separate thread
-    thread = threading.Thread(target=run_command, args=(request.remote_addr, user, command_path, params, command_id))
+    thread = threading.Thread(target=run_command, args=(request.remote_addr, user, command_path, params, command_id, rows, cols))
     thread.start()
 
     return jsonify({'message': 'Command is running', 'command_id': command_id})
