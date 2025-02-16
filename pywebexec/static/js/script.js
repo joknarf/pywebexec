@@ -361,7 +361,7 @@ async function stopCommand(command_id, event) {
 function formatTime(time) {
     if (!time || time === 'N/A') return 'N/A';
     const date = new Date(time);
-    return date.toISOString().slice(0, 16).replace('T', ' ');
+    return date.toLocaleString().slice(0, 16).replace('T', ' ');
 }
 
 function formatDuration(startTime, endTime) {

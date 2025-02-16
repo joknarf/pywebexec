@@ -114,7 +114,7 @@ def generate_selfsigned_cert(hostname, ip_addresses=None, key=None):
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric import rsa
-    
+
     # Generate our key
     if key is None:
         key = rsa.generate_private_key(
@@ -122,16 +122,16 @@ def generate_selfsigned_cert(hostname, ip_addresses=None, key=None):
             key_size=2048,
             backend=default_backend(),
         )
-    
+
     name = x509.Name([
         x509.NameAttribute(NameOID.COMMON_NAME, hostname)
     ])
- 
-    # best practice seem to be to include the hostname in the SAN, which *SHOULD* mean COMMON_NAME is ignored.    
+
+    # best practice seem to be to include the hostname in the SAN, which *SHOULD* mean COMMON_NAME is ignored.
     alt_names = [x509.DNSName(hostname)]
     alt_names.append(x509.DNSName("localhost"))
-    
-    # allow addressing by IP, for when you don't have real DNS (common in most testing scenarios 
+
+    # allow addressing by IP, for when you don't have real DNS (common in most testing scenarios
     if ip_addresses:
         for addr in ip_addresses:
             # openssl wants DNSnames for ips...
@@ -140,7 +140,7 @@ def generate_selfsigned_cert(hostname, ip_addresses=None, key=None):
             # note: older versions of cryptography do not understand ip_address objects
             alt_names.append(x509.IPAddress(ipaddress.ip_address(addr)))
     san = x509.SubjectAlternativeName(alt_names)
-    
+
     # path_len=0 means this cert can only sign itself, not other certs.
     basic_contraints = x509.BasicConstraints(ca=True, path_length=0)
     now = datetime.now(timezone.utc)
@@ -227,7 +227,7 @@ def get_last_line(file_path, cols=None, rows=None, maxsize=2048):
         except OSError:
             fd.seek(0)
         return get_visible_output(fd.read(), cols, rows)
-    
+
 
 def start_gunicorn(daemonized=False, baselog=None):
     check_processes()
@@ -306,7 +306,7 @@ def daemon_d(action, pidfilepath, silent=False, hostname=None, args=None):
 def start_term():
     os.environ["PYWEBEXEC"] = " (shared)"
     os.chdir(CWD)
-    start_time = datetime.now().isoformat()
+    start_time = datetime.now(timezone.utc).isoformat()
     user = pwd.getpwuid(os.getuid())[0]
     print(f"Starting terminal session for {user} : {term_command_id}")
     update_command_status(term_command_id, {
@@ -318,7 +318,7 @@ def start_term():
     })
     output_file_path = get_output_file_path(term_command_id)
     res = script(output_file_path)
-    end_time = datetime.now().isoformat()
+    end_time = datetime.now(timezone.utc).isoformat()
     update_command_status(term_command_id, {
         'status': 'success',
         'end_time': end_time,
@@ -490,7 +490,7 @@ def script(output_file):
         sigwinch_passthrough(None, None)
         signal.signal(signal.SIGWINCH, sigwinch_passthrough)
         p.interact()
-    
+
 
 def run_command(fromip, user, command, params, command_id):
     # app.logger.info(f'{fromip} run_command {command_id} {user}: {command} {params}')
@@ -665,7 +665,7 @@ def check_authentication():
         if request.args.get('token') == token:
             return
         return jsonify({'error': 'Forbidden'}), 403
-    
+
     if not app.config['USER'] and not app.config['LDAP_SERVER']:
         return
 
@@ -706,7 +706,7 @@ def verify_ldap(username, password):
             user_dn = conn.entries[0].entry_dn
         finally:
             conn.unbind()
-        
+
         # Bind with the user DN and password to verify credentials
         conn = Connection(server, user=user_dn, password=password, authentication=SIMPLE, auto_bind=True, read_only=True)
         try:
