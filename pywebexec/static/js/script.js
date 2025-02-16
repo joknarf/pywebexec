@@ -228,12 +228,12 @@ async function fetchOutput(url) {
             fullOutput += data.output;
             if (fullOutput.length > maxSize)
                 fullOutput = fullOutput.slice(-maxSize);
-            if (slider.value == 100)
-                terminal.write(data.output); //.replace(/ \r/g, "\r\n")); tty size mismatch
+            if (slider.value == 1000)
+                terminal.write(data.output);
             else {
-                percentage = Math.round((outputLength * 100)/fullOutput.length);
+                percentage = Math.round((outputLength * 1000)/fullOutput.length);
                 slider.value = percentage;
-                outputPercentage.innerText = `${percentage}%`;
+                outputPercentage.innerText = `${Math.floor(percentage/10)}%`;
             }
             nextOutputLink = data.links.next;
             if (data.status != 'running') {
@@ -256,7 +256,7 @@ function setCommandStatus(status) {
 }
 
 async function viewOutput(command_id) {
-    slider.value = 100;
+    slider.value = 1000;
     outputPercentage.innerText = '100%';
     adjustOutputHeight();
     currentCommandId = command_id;
@@ -420,13 +420,13 @@ function initResizer() {
 
 function sliderUpdateOutput()
 {
-    const percentage = slider.value;
+    const percentage = slider.value/10;
     outputLength = Math.floor((fullOutput.length * percentage) / 100);
     const limitedOutput = fullOutput.slice(0, outputLength);
     terminal.clear();
     terminal.reset();
     terminal.write(limitedOutput);
-    outputPercentage.innerText = `${percentage}%`;
+    outputPercentage.innerText = `${Math.floor(percentage)}%`;
 }
 
 slider.addEventListener('input', sliderUpdateOutput);

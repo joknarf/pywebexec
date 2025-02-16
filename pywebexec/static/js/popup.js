@@ -134,12 +134,12 @@ async function fetchOutput(url) {
             fullOutput += data.output;
             if (fullOutput.length > maxSize)
                 fullOutput = fullOutput.slice(-maxSize);
-            if (percentage == 100)
+            if (percentage == 1000)
                 terminal.write(data.output);
             else {
-                percentage = Math.round((outputLength * 100)/fullOutput.length);
+                percentage = Math.round((outputLength * 1000)/fullOutput.length);
                 slider.value = percentage;
-                document.getElementById('outputPercentage').innerText = `${percentage}%`;
+                document.getElementById('outputPercentage').innerText = `${Math.floor(percentage/10)}%`;
             }
             nextOutputLink = data.links.next;
             if (data.status != 'running') {
@@ -160,7 +160,7 @@ async function fetchOutput(url) {
 }
 
 async function viewOutput(command_id) {
-    slider.value = 100;
+    slider.value = 1000;
     adjustOutputHeight();
     currentCommandId = command_id;
     nextOutputLink = `/command_output/${command_id}${urlToken}`;
@@ -207,18 +207,18 @@ function adjustOutputHeight() {
 }
 
 function sliderUpdateOutput() {
-    const percentage = slider.value;
+    const percentage = slider.value / 10;
     outputLength = Math.floor((fullOutput.length * percentage) / 100);
     const limitedOutput = fullOutput.slice(0, outputLength);
     terminal.clear();
     terminal.reset();
     terminal.write(limitedOutput);
-    document.getElementById('outputPercentage').innerText = `${percentage}%`;
+    document.getElementById('outputPercentage').innerText = `${Math.floor(percentage)}%`;
 }
 
 function toggleFetchOutput() {
     if (isPaused) {
-        slider.value = 100;
+        slider.value = 1000;
         document.getElementById('outputPercentage').innerText = '100%';
         terminal.clear();
         terminal.reset();
