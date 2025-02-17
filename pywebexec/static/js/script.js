@@ -126,8 +126,8 @@ const urlToken = getTokenParam();
 
 document.getElementById('launchForm').addEventListener('submit', async (event) => {
     event.preventDefault();
-    const commandName = document.getElementById('commandName').value;
-    const params = document.getElementById('params').value.split(' ');
+    const commandName = commandInput.value;
+    const params = paramsInput.value.split(' ');
     fitAddon.fit();
     terminal.clear();
     try {

@@ -1,5 +1,5 @@
 // commands.js
-let commandInput = document.getElementById('commandName');
+let commandInput = document.getElementById('command');
 let paramsInput = document.getElementById('params');
 let commandListSelect = document.getElementById('commandList');
 let showCommandListButton = document.getElementById('showCommandListButton');

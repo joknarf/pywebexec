@@ -81,6 +81,8 @@ button {
     outline: none;
     text-indent: 10px;
     background-color: #eee;
+    color: #000;
+    font-weight: normal;
 }
 form {
     padding-bottom: 15px;
@@ -138,7 +140,7 @@ form {
 .copy_clip_ok, .copy_clip_ok:hover {
     background-image: url("/static/images/copy_ok.svg");
 }
-#params, #commandName {
+#params, #command {
     -webkit-appearance: none;
     -webkit-border-radius: none;
     appearance: none;
@@ -152,7 +154,7 @@ form {
     margin: 0; /* Remove margin */
 }
 
-#commandName {
+#command {
     width: auto; /* Allow dynamic width */
     background-size: 16px 16px;
     border-radius: 15px 0px 0px 15px;
