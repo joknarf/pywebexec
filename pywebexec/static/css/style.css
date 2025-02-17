@@ -74,12 +74,11 @@ button {
     -webkit-border-radius: none;
     appearance: none;
     border-radius: 15px;
-    padding-right: 13px;
+    padding: 0px 13px;
     border: 1px #555 solid;
     height: 22px;
     font-size: 13px;
     outline: none;
-    text-indent: 10px;
     background-color: #eee;
     color: #000;
     font-weight: normal;
