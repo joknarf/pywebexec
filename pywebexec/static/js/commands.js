@@ -121,14 +121,22 @@ commandListDiv.addEventListener('keydown', (event) => {
     const items = Array.from(commandListDiv.children);
     const currentIndex = items.indexOf(document.activeElement);
 
-    if (event.key === 'ArrowDown') {
+    if (event.key === 'Escape') {
+        commandInput.focus();
+        commandListDiv.style.display = 'none';
+    }else if (event.key === 'ArrowDown') {
         event.preventDefault();
         const nextIndex = (currentIndex + 1) % items.length;
         items[nextIndex].focus();
     } else if (event.key === 'ArrowUp') {
         event.preventDefault();
-        const prevIndex = (currentIndex - 1 + items.length) % items.length;
-        items[prevIndex].focus();
+        if (currentIndex === 0 || items[currentIndex-1].style.display == 'none') {
+            commandInput.focus();
+            commandListDiv.style.display = 'none';
+        } else {
+            const prevIndex = (currentIndex - 1 + items.length) % items.length;
+            items[prevIndex].focus();
+        }
     } else if (event.key === 'Enter' || event.key === 'Tab' || event.key === ' ') {
         event.preventDefault(); // Prevent form submission
         const selectedOption = document.activeElement;
@@ -138,10 +146,6 @@ commandListDiv.addEventListener('keydown', (event) => {
             adjustInputWidth(commandInput);
             paramsInput.focus();
         }
-    }
-    if (event.key === 'ArrowUp' && document.activeElement === commandListDiv.firstChild) {
-        commandInput.focus();
-        commandListDiv.style.display = 'none';
     }
 });
 
