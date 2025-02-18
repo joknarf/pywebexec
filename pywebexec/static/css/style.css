@@ -212,15 +212,18 @@ form {
     margin-top: 2px;
     overflow-y: auto;
     z-index: 1000;
+    max-height: 200px;
 }
 
 .command-item {
-    padding: 3px 5px 3px 5px;
+    padding: 1px 5px 1px 5px;
+    margin-top: 1px;
     cursor: pointer;
+    outline: none; /* Remove default focus border */
 }
 
-.command-item:hover, .command-item.highlighted {
-    background-color: #eee;
+.command-item:hover, .command-item.highlighted, .command-item:focus {
+    background-color: #a7d0ff;
 }
 
 .currentcommand {
@@ -301,17 +304,9 @@ span {
 }
 .font-increase {
     background-image: url("/static/images/font-increase.svg");
-    /*background-size: contain;*/
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 14px 14px;
 }
 .font-decrease {
     background-image: url("/static/images/font-decrease.svg");
-    /*background-size: contain;*/
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 14px 14px;
 }
 .font-size-button {
     background-color: #444;
@@ -322,6 +317,9 @@ span {
     font-size: 14px;
     width: 20px;
     height: 20px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 14px 14px;
 }
 .font-size-button:hover {
     background-color: #666;
