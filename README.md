@@ -142,4 +142,4 @@ $ curl http://myhost:8080/command_output/<command_id> -H "Accept: text/plain"
 | GET       | /commands                   |                    | array of<br>command_id: uuid<br>command: str<br>start_time: isotime<br>end_time: isotime<br>status: str<br>exit_code: int<br>last_output_line: str      |
 | GET       | /executables                |                    | array of str        |
 | GET       | /command_output/command_id  | offset: int        | output: str<br>status: str<br>links: { next: str }         |
-| GET       | /command_output_raw/command_id  | offset: int        | output: stream raw output until end of command<br>curl -N -s http://srv/command_output_raw/command_id|
+| GET       | /command_output_raw/command_id  | offset: int        | output: stream raw output until end of command<br>curl -Ns http://srv/command_output_raw/command_id|
