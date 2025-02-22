@@ -309,6 +309,7 @@ span {
     background-repeat: no-repeat;
     background-position: center;
     background-size: 14px 14px;
+    padding: 10px;
 }
 .font-size-button:hover {
     background-color: #666;
