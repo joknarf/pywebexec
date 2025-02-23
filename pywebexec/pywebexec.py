@@ -26,7 +26,7 @@ import struct
 import subprocess
 import logging
 import pyte
-from host_ip import get_host_ip
+from . import host_ip
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
@@ -365,7 +365,7 @@ def parseargs():
         COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
         sys.exit(start_term())
 
-    (hostname, ip) = get_host_ip(args.listen)
+    (hostname, ip) = host_ip.get_host_ip(args.listen)
 
     if args.tokenurl:
         token = os.environ.get("PYWEBEXEC_TOKEN", token_urlsafe())
