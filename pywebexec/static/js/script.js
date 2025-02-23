@@ -270,7 +270,7 @@ async function viewOutput(command_id) {
     try {
         const response = await fetch(`/command_status/${command_id}${urlToken}`);
         if (!response.ok) {
-            return;
+            outputInterval = setInterval(() => fetchOutput(nextOutputLink), 500);
         }
         const data = await response.json();
         const commandInfo = document.getElementById('commandInfo');
@@ -428,7 +428,7 @@ function sliderUpdateOutput()
 {
     const percentage = slider.value/10;
     outputLength = Math.floor((fullOutput.length * percentage) / 100);
-    const limitedOutput = fullOutput.slice(0, outputLength);
+    limitedOutput = fullOutput.slice(0, outputLength);
     terminal.clear();
     terminal.reset();
     terminal.write(limitedOutput);

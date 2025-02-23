@@ -25,6 +25,7 @@ import termios
 import struct
 import subprocess
 import logging
+from pathlib import Path
 import pyte
 from . import host_ip
 
@@ -720,6 +721,7 @@ def run_command_endpoint():
         'from': request.remote_addr,
     })
 
+    Path(get_output_file_path(command_id)).touch()
     # Run the command in a separate thread
     thread = threading.Thread(target=run_command, args=(request.remote_addr, user, command_path, params, command_id, rows, cols))
     thread.start()
