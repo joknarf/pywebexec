@@ -6,7 +6,7 @@ let terminal = new Terminal({
     cursorInactiveStyle: 'none',
     disableStdin: true,
     convertEol: true,
-    fontFamily: 'Consolas NF, monospace, courier-new, courier',
+    fontFamily: '"CommitMono Nerd Font Mono", monospace, courier-new, courier',
     fontSize: fontSize,
     scrollback: maxScrollback,
     theme: {
@@ -36,20 +36,20 @@ terminal.loadAddon(new CanvasAddon.CanvasAddon());
 unicode11Addon = new Unicode11Addon.Unicode11Addon();
 terminal.loadAddon(unicode11Addon);
 terminal.unicode.activeVersion = '11';
-terminal.register({
-    wcwidth: (character) => {
-        const code = character.charCodeAt(0);
-        if (code == 0x1F525) return 2;  // Fire emoji
-        // Handle powerline symbols (usually should be width 1)
-        if (code >= 0xE0A0 && code <= 0xE0D4) return 1;
-        // Handle other specific unicode ranges
-        if (code >= 0x1100 && code <= 0x11FF) return 2;  // Hangul Jamo
-        if (code >= 0x3000 && code <= 0x30FF) return 2;  // CJK Symbols and Japanese
-        if (code >= 0x4E00 && code <= 0x9FFF) return 2;  // CJK Unified Ideographs
-        // Default to system wcwidth
-        return null;
-    }
-});
+// terminal.register({
+//     wcwidth: (character) => {
+//         const code = character.charCodeAt(0);
+//         if (code == 0x1F525) return 2;  // Fire emoji
+//         // Handle powerline symbols (usually should be width 1)
+//         if (code >= 0xE0A0 && code <= 0xE0D4) return 1;
+//         // Handle other specific unicode ranges
+//         if (code >= 0x1100 && code <= 0x11FF) return 2;  // Hangul Jamo
+//         if (code >= 0x3000 && code <= 0x30FF) return 2;  // CJK Symbols and Japanese
+//         if (code >= 0x4E00 && code <= 0x9FFF) return 2;  // CJK Unified Ideographs
+//         // Default to system wcwidth
+//         return null;
+//     }
+// });
 
 const fitAddon = new FitAddon.FitAddon();
 terminal.loadAddon(fitAddon);
