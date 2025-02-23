@@ -13,7 +13,7 @@ import time
 import shlex
 from gunicorn.app.base import Application
 import ipaddress
-from socket import socket, gethostname, gethostbyname_ex, gethostbyaddr, inet_aton, inet_ntoa, AF_INET, SOCK_STREAM
+from socket import socket, AF_INET, SOCK_STREAM
 import ssl
 import re
 import pwd
@@ -26,6 +26,7 @@ import struct
 import subprocess
 import logging
 import pyte
+from host_ip import get_host_ip
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
@@ -69,39 +70,6 @@ def generate_random_password(length=12):
     return ''.join(random.choice(characters) for i in range(length))
 
 
-def resolve_hostname(host):
-    """try get fqdn from DNS/hosts"""
-    try:
-        hostinfo = gethostbyname_ex(host)
-        return (hostinfo[0].rstrip('.'), hostinfo[2][0])
-    except OSError:
-        return (host, host)
-
-
-def resolve_ip(ip):
-    """try resolve hostname by reverse dns query on ip addr"""
-    ip = inet_ntoa(inet_aton(ip))
-    try:
-        ipinfo = gethostbyaddr(ip)
-        return (ipinfo[0].rstrip('.'), ipinfo[2][0])
-    except OSError:
-        return (ip, ip)
-
-
-def is_ip(host):
-    """determine if host is valid ip"""
-    try:
-        inet_aton(host)
-        return True
-    except OSError:
-        return False
-
-
-def resolve(host_or_ip):
-    """resolve hostname from ip / hostname"""
-    if is_ip(host_or_ip):
-        return resolve_ip(host_or_ip)
-    return resolve_hostname(host_or_ip)
 
 
 def generate_selfsigned_cert(hostname, ip_addresses=None, key=None):
@@ -397,7 +365,7 @@ def parseargs():
         COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
         sys.exit(start_term())
 
-    (hostname, ip) = resolve(gethostname()) if args.listen == '0.0.0.0' else resolve(args.listen)
+    (hostname, ip) = get_host_ip(args.listen)
 
     if args.tokenurl:
         token = os.environ.get("PYWEBEXEC_TOKEN", token_urlsafe())
