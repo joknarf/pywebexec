@@ -404,13 +404,15 @@ def get_output_file_path(command_id):
 
 def update_command_status(command_id, updates):
     status_file_path = get_status_file_path(command_id)
-    status = read_command_status(command_id) or {}
-    status = status.copy()
+    status = read_command_status(command_id)
     status.update(updates)
+    status = status.copy()
     if status.get('status') != 'running':
         output_file_path = get_output_file_path(command_id)
         if os.path.exists(output_file_path):
             status['last_output_line'] = get_last_line(output_file_path, status.get('cols'), status.get('rows'))
+    if 'last_read' in status:
+        del status['last_read']
     with open(status_file_path, 'w') as f:
         json.dump(status, f)
     os.sync()
@@ -419,24 +421,25 @@ def update_command_status(command_id, updates):
 
 def read_command_status(command_id):
     # Return cached status if available
-    status_data = {}
-    if command_id in status_cache:
-        status_data = status_cache[command_id]
+    global status_cache
+    if not command_id in status_cache:
+        status_cache[command_id] = {}
+    status_data = status_cache[command_id]
     status = status_data.get('status')
     if status and status != "running":
         return status_data
-    if command_id in status_cache and status_cache.get('last_read',0)>datetime.now().timestamp()-0.5:
+    if status_data.get('last_read',0)>datetime.now().timestamp()-0.5:
         return status_data
     status_file_path = get_status_file_path(command_id)
     if not os.path.exists(status_file_path):
-        return None
+        return status_data
     with open(status_file_path, 'r') as f:
         try:
             status_data.update(json.load(f))
         except json.JSONDecodeError:
-            return None
+            return status_data
     status_data['last_read'] = datetime.now().timestamp()
-    status_cache[command_id] = status_data
+    #status_cache[command_id] = status_data
     return status_data
 
 def sigwinch_passthrough(sig, data):
@@ -552,7 +555,6 @@ def read_commands():
                                 'last_update': datetime.now().timestamp(),
                                 'last_output_line': get_last_line(output_file_path, status.get('cols'), status.get('rows')),
                             })
-                            status_cache[command_id] = status
                 commands.append({
                     'command_id': command_id,
                     'status': status.get('status'),
@@ -730,13 +732,6 @@ def get_command_status(command_id):
     status = read_command_status(command_id)
     if not status:
         return jsonify({'error': 'Invalid command_id'}), 404
-
-    # output_file_path = get_output_file_path(command_id)
-    # if os.path.exists(output_file_path):
-    #     with open(output_file_path, 'r') as output_file:
-    #         output = output_file.read()
-    #     status['output'] = output
-
     return jsonify(status)
 
 @app.route('/')
@@ -756,11 +751,16 @@ def get_command_output(command_id):
     maxsize = int(request.args.get('maxsize', 10485760))
     output_file_path = get_output_file_path(command_id)
     if os.path.exists(output_file_path):
-        with open(output_file_path, 'rb') as output_file:
-            output_file.seek(offset)
-            output = output_file.read().decode('utf-8', errors='replace')
-            new_offset = output_file.tell()
-        status_data = read_command_status(command_id) or {}
+        size = os.path.getsize(output_file_path)
+        if offset >= size:
+            output = ''
+            new_offset = offset
+        else:
+            with open(output_file_path, 'rb') as output_file:
+                output_file.seek(offset)
+                output = output_file.read().decode('utf-8', errors='replace')
+                new_offset = output_file.tell()
+        status_data = read_command_status(command_id)
         token = app.config.get("TOKEN_URL")
         token_param = f"&token={token}" if token else ""
         response = {
