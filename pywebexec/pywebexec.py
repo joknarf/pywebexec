@@ -848,9 +848,8 @@ def main():
         COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
         check_processes()
         sys.argv.remove("shareterm")
-        sys.argv[0] = PYWEBEXEC
         with open(basef + ".log", "a") as log:
-            pywebexec = subprocess.Popen([sys.executable] + sys.argv, stdout=log, stderr=log, bufsize=1)
+            pywebexec = subprocess.Popen(sys.argv, stdout=log, stderr=log, bufsize=1)
             print_urls(term_command_id)
             res = start_term()
             print("Stopping server")
