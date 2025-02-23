@@ -6,7 +6,10 @@ def resolve_hostname(host):
     """try get fqdn from DNS/hosts"""
     try:
         hostinfo = gethostbyname_ex(host)
-        return (hostinfo[0].rstrip('.'), hostinfo[2][0])
+        for ip in hostinfo[2]:
+            if not ip.startswith('127.') or host in ('localhost', 'localhost.localdomain'):
+                return (hostinfo[0].rstrip('.'), ip)
+        return (host, host)
     except OSError:
         return (host, host)
 
