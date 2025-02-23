@@ -17,7 +17,6 @@ dependencies = [
   "gunicorn>=21.2.0",
   "ldap3>=2.9.1",
   "pyte>=0.8.1",
-  "netifaces>=0.11.0",
 ]
 dynamic=["version"]
 readme = "README.md"
