@@ -171,7 +171,11 @@ commandInput.addEventListener('click', () => {
 });
 
 commandInput.addEventListener('blur', (event) => {
-    if (event.relatedTarget === showCommandListButton || event.relatedTarget === commandListDiv || event.relatedTarget.classList.includes('command-item')) {
+    if (
+        event.relatedTarget === showCommandListButton ||
+        event.relatedTarget === commandListDiv ||
+        (event.relatedTarget && event.relatedTarget.classList && event.relatedTarget.classList.contains('command-item'))
+    ) {
         event.preventDefault();
         return;
     }
