@@ -405,14 +405,16 @@ def get_output_file_path(command_id):
 def update_command_status(command_id, updates):
     status_file_path = get_status_file_path(command_id)
     status = read_command_status(command_id) or {}
+    status = status.copy()
     status.update(updates)
     if status.get('status') != 'running':
         output_file_path = get_output_file_path(command_id)
         if os.path.exists(output_file_path):
             status['last_output_line'] = get_last_line(output_file_path, status.get('cols'), status.get('rows'))
-    status_cache[command_id] = status
     with open(status_file_path, 'w') as f:
         json.dump(status, f)
+    os.sync()
+    status_cache[command_id] = status
 
 
 def read_command_status(command_id):
@@ -466,7 +468,6 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
     log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}')
     start_time = datetime.now(timezone.utc).isoformat()
     update_command_status(command_id, {
-        'status': 'running',
         'command': command,
         'params': params,
         'start_time': start_time,
@@ -493,7 +494,6 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
                     'status': 'aborted',
                     'end_time': end_time,
                     'exit_code': exit_code,
-                    'user': user
                 })
                 log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: command aborted')
             else:
@@ -503,7 +503,6 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
                         'status': 'success',
                         'end_time': end_time,
                         'exit_code': exit_code,
-                        'user': user
                     })
                     log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: completed successfully')
                 else:
@@ -511,7 +510,6 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
                         'status': 'failed',
                         'end_time': end_time,
                         'exit_code': exit_code,
-                        'user': user
                     })
                     log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: exit code {exit_code}')
 
@@ -521,7 +519,6 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
             'status': 'failed',
             'end_time': end_time,
             'exit_code': 1,
-            'user': user
         })
         with open(get_output_file_path(command_id), 'a') as output_file:
             output_file.write(str(e))
