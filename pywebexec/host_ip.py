@@ -1,7 +1,5 @@
-import subprocess
 import ipaddress
-import platform
-from scapy.all import *
+import netifaces
 from socket import gethostname, gethostbyname_ex, gethostbyaddr, inet_aton, inet_ntoa, AF_INET, SOCK_STREAM
 
 def resolve_hostname(host):
@@ -39,24 +37,45 @@ def resolve(host_or_ip):
     return resolve_hostname(host_or_ip)
 
 
-def get_host_ip_scapy():
-    ip = scapy.all.get_if_addr(scapy.all.conf.iface)
-    if ip == '0.0.0.0':
-        nics = scapy.all.conf.ifaces
-        for nic in nics:
-            ip = scapy.all.get_if_addr(nic)
-            if ip not in ['127.0.0.1', '0.0.0.0']:
-                break
-    if ip == '0.0.0.0':
-        ip = '127.0.0.1'
-    return ip
+def get_default_gateway_ip():
+    gateways = netifaces.gateways()
+    default = gateways.get('default', {}).get(netifaces.AF_INET)
+    if default:
+        return default[0]
+    gateways = gateways.get(netifaces.AF_INET)
+    if gateways:
+        return gateways[0][0]
+    return None
+
+def get_primary_ip():
+    """try to get primary ip address 
+    first ip address in the same network as default gateway"""
+    default_gateway_ip = get_default_gateway_ip()
+    if default_gateway_ip:
+        default_ip = ipaddress.ip_address(default_gateway_ip)
+    for iface in netifaces.interfaces():
+        addrs = netifaces.ifaddresses(iface)
+        if netifaces.AF_INET in addrs:
+            for addr in addrs[netifaces.AF_INET]:
+                iface_ip = addr.get('addr')
+                iface_netmask = addr.get('netmask')
+                if iface_ip and iface_netmask:
+                    if not default_gateway_ip:
+                        return iface_ip
+                    try:
+                        network = ipaddress.ip_network(f"{iface_ip}/{iface_netmask}", strict=False)
+                    except Exception:
+                        continue
+                    if default_ip in network:
+                        return iface_ip
+    return '127.0.0.1'
 
 
 def get_host_ip(host_or_ip='0.0.0.0'):
     if host_or_ip == '0.0.0.0':
         (hostname, ip) = resolve(gethostname())
         if ip == '127.0.0.1':
-            (hostname, ip) = resolve(get_host_ip_scapy())
+            (hostname, ip) = resolve(get_primary_ip())
     else:
         (hostname, ip) = resolve(host_or_ip)
     return (hostname, ip)
