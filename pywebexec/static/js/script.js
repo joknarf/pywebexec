@@ -22,7 +22,7 @@ function initTerminal()
         cursorInactiveStyle: 'none',
         disableStdin: true,
         //convertEol: true,
-        fontFamily: '"CommitMono Nerd Font Mono", "Fira Code", monospace, "Powerline Extra Symbols", courier-new, courier',
+        fontFamily: '"CaskaydiaCove NF", "Fira Code", monospace, "Powerline Extra Symbols", courier-new, courier',
         fontSize: fontSize,
         scrollback: maxScrollback,
         theme: {

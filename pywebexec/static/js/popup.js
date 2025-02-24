@@ -6,7 +6,7 @@ let terminal = new Terminal({
     cursorInactiveStyle: 'none',
     disableStdin: true,
     convertEol: true,
-    fontFamily: '"CommitMono Nerd Font Mono", monospace, courier-new, courier',
+    fontFamily: '"CaskaydiaCove NF", monospace, courier-new, courier',
     fontSize: fontSize,
     scrollback: maxScrollback,
     theme: {
