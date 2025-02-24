@@ -1,0 +1,3 @@
+#!/usr/bin/env python3
+from pywebexec.pywebexec import main
+main()
