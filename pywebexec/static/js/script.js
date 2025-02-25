@@ -22,11 +22,18 @@ function initTerminal()
         cursorInactiveStyle: 'none',
         disableStdin: true,
         //convertEol: true,
-        fontFamily: '"CaskaydiaCove NF", "Fira Code", monospace, "Powerline Extra Symbols", courier-new, courier',
-        fontSize: fontSize,
         scrollback: maxScrollback,
+        fontFamily: '"CommitMono Nerd Font Mono", "Fira Code", monospace, "Powerline Extra Symbols", courier-new, courier',
+        fontSize: fontSize,
+        letterSpacing: 0,
+        lineHeight: 1.1,
+        fontWeightBold: 500,
+        //fontWeight: 400,
+        screenReaderMode: true,
         theme: {
             background: '#111412',
+            foreground: '#d0d0d0',
+            white: '#d0d0d0',
             black: '#111412',
             green: '#088a5b',
             blue: "#2760aa",
@@ -34,6 +41,7 @@ function initTerminal()
             yellow: "#cf8700",
             magenta: "#4c3d80",
             cyan: "#00a7aa",
+            brightWhite: '#efefef',
             brightBlack: "#243C4F",
             brightBlue: "#5584b1",
             brightGreen: "#18Ed93",
@@ -41,8 +49,6 @@ function initTerminal()
         customGlyphs: true,
         rescaleOverlappingGlyphs: true,
         allowProposedApi: true,
-        letterSpacing: 0,
-        screenReaderMode: true,
         //overviewRulerWidth: 30,
         // windowsPty: {
         //     backend: 'conpty',
@@ -59,20 +65,9 @@ terminal.loadAddon(new CanvasAddon.CanvasAddon());
 unicode11Addon = new Unicode11Addon.Unicode11Addon();
 terminal.loadAddon(unicode11Addon);
 terminal.unicode.activeVersion = '11';
-// terminal.register({
-//     wcwidth: (character) => {
-//         const code = character.charCodeAt(0);
-//         if (code == 0x1F525) return 3;  // Fire emoji
-//         // Handle powerline symbols (usually should be width 1)
-//         if (code >= 0xE0A0 && code <= 0xE0D4) return 1;
-//         // Handle other specific unicode ranges
-//         if (code >= 0x1100 && code <= 0x11FF) return 3;  // Hangul Jamo
-//         if (code >= 0x3000 && code <= 0x30FF) return 3;  // CJK Symbols and Japanese
-//         if (code >= 0x4E00 && code <= 0x9FFF) return 3;  // CJK Unified Ideographs
-//         // Default to system wcwidth
-//         return null;
-//     }
-// });
+
+UnicodeGraphemesAddon = new UnicodeGraphemesAddon.UnicodeGraphemesAddon();
+terminal.loadAddon(UnicodeGraphemesAddon);
 
 const fitAddon = new FitAddon.FitAddon();
 terminal.loadAddon(fitAddon);
@@ -82,14 +77,6 @@ fitAddon.fit();
 terminal.onTitleChange((title) => {
     document.getElementById('commandInfo').innerText = title;
 })
-
-/*terminal.onResize((evt) => {
-    const terminal_size = {
-        Width: evt.cols,
-        Height: evt.rows,
-    };
-    console.log(terminal_size);
-})*/
 
 terminal.onSelectionChange(() => {
     const selectionText = terminal.getSelection();
