@@ -37,7 +37,6 @@ if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Secret key for session management
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Add SameSite attribute to session cookies
-# app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 auth = HTTPBasicAuth()
 
@@ -594,6 +593,8 @@ def check_processes():
                     })
 
 args = parseargs()
+if args.cert:
+    app.config['SESSION_COOKIE_SECURE'] = True
 app.config['TITLE'] = f"{args.title} API"
 
 # Register Swagger UI blueprint with safe token included in API_URL
