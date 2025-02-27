@@ -1,0 +1,48 @@
+swagger: "2.0"
+info:
+  title: PyWebExec API
+  version: "1.0"
+paths:
+  /run_command:
+    post:
+      summary: "Run a command"
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: commandRequest
+          schema:
+            type: object
+            properties:
+              command:
+                type: string
+              params:
+                type: array
+                items:
+                  type: string
+              rows:
+                type: integer
+              cols:
+                type: integer
+      responses:
+        "200":
+          description: "Command started"
+  /command_status/{command_id}:
+    get:
+      summary: "Get command status"
+      parameters:
+        - in: path
+          name: command_id
+          required: true
+          type: string
+      responses:
+        "200":
+          description: "Command status returned"
+  /commands:
+    get:
+      summary: "List commands"
+      responses:
+        "200":
+          description: "List of all commands"

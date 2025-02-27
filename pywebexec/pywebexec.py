@@ -28,6 +28,7 @@ import logging
 from pathlib import Path
 import pyte
 from . import host_ip
+from flask_swagger_ui import get_swaggerui_blueprint  # new import
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
@@ -45,6 +46,18 @@ app.config['LDAP_GROUPS'] = os.environ.get('PYWEBEXEC_LDAP_GROUPS')
 app.config['LDAP_BASE_DN'] = os.environ.get('PYWEBEXEC_LDAP_BASE_DN')
 app.config['LDAP_BIND_DN'] = os.environ.get('PYWEBEXEC_LDAP_BIND_DN')
 app.config['LDAP_BIND_PASSWORD'] = os.environ.get('PYWEBEXEC_LDAP_BIND_PASSWORD')
+
+# Register Swagger UI blueprint with endpoint /v0/documentation/
+SWAGGER_URL = '/v0/documentation'
+API_URL = '/swagger.yaml'  # assuming swagger.yaml is served from the root
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': "PyWebExec API"
+    }
+)
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 # Get the Gunicorn error logger
 gunicorn_logger = logging.getLogger('gunicorn.error')
@@ -829,6 +842,16 @@ def do_popup(command_id):
     </body>
     </html>
     """
+
+@app.route('/swagger.yaml')
+def swagger_yaml():
+    swagger_path = os.path.join(os.path.dirname(__file__), 'swagger.yaml')
+    try:
+        with open(swagger_path, 'r') as f:
+            swagger_spec = f.read()
+        return Response(swagger_spec, mimetype='application/yaml')
+    except Exception as e:
+        return Response(f"Error reading swagger spec: {e}", status=500)
 
 def main():
     global COMMAND_STATUS_DIR
