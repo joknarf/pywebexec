@@ -91,11 +91,13 @@ form {
     vertical-align: middle;
 }
 .title-icon {
-    width: 30px;
+    display: inline;
     height: 30px;
     background-image: url("/static/images/favicon.svg");
+    background-size: 30px 30px;
+    background-repeat: no-repeat;
     vertical-align: bottom;
-    text-indent: 35px;
+    padding-left: 35px;
 }
 #thStatus {
     cursor: pointer;
