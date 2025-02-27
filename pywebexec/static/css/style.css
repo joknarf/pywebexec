@@ -95,6 +95,7 @@ form {
     height: 30px;
     background-image: url("/static/images/favicon.svg");
     vertical-align: bottom;
+    text-indent: 35px;
 }
 #thStatus {
     cursor: pointer;
@@ -383,4 +384,8 @@ span {
 
 .xterm-accessibility {
     display: none;
+}
+.swaggerlink {
+    text-decoration: none;
+    font-size: 10px;
 }

@@ -37,7 +37,7 @@ if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Secret key for session management
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Add SameSite attribute to session cookies
-app.config['SESSION_COOKIE_SECURE'] = True
+# app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 auth = HTTPBasicAuth()
 
@@ -594,15 +594,17 @@ def check_processes():
                     })
 
 args = parseargs()
-# Register Swagger UI blueprint with endpoint /v0/documentation/
-SWAGGER_URL = '/v0/documentation'
-API_URL = '/swagger.yaml'  # assuming swagger.yaml is served from the root
 app.config['TITLE'] = f"{args.title} API"
+
+# Register Swagger UI blueprint with safe token included in API_URL
+SWAGGER_URL = '/v0/documentation'
+API_URL = '/swagger.yaml'
 swaggerui_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL,
     API_URL,
     config={
-        'app_name': f"{args.title} API"
+        'app_name': f"{args.title} API",
+        'layout': 'BaseLayout'
     }
 )
 app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
@@ -640,10 +642,10 @@ def stop_command(command_id):
 
 @app.before_request
 def check_authentication():
-    # Check for token in URL if TOKEN_URL is set
     token = app.config.get('TOKEN_URL')
     if token and request.endpoint not in ['login', 'static']:
-        if request.args.get('token') == token:
+        if request.args.get('token') == token or session.get('token') == token:
+            session['token'] = token
             return
         return jsonify({'error': 'Forbidden'}), 403
 
