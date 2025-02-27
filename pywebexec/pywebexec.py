@@ -47,17 +47,6 @@ app.config['LDAP_BASE_DN'] = os.environ.get('PYWEBEXEC_LDAP_BASE_DN')
 app.config['LDAP_BIND_DN'] = os.environ.get('PYWEBEXEC_LDAP_BIND_DN')
 app.config['LDAP_BIND_PASSWORD'] = os.environ.get('PYWEBEXEC_LDAP_BIND_PASSWORD')
 
-# Register Swagger UI blueprint with endpoint /v0/documentation/
-SWAGGER_URL = '/v0/documentation'
-API_URL = '/swagger.yaml'  # assuming swagger.yaml is served from the root
-swaggerui_blueprint = get_swaggerui_blueprint(
-    SWAGGER_URL,
-    API_URL,
-    config={
-        'app_name': "PyWebExec API"
-    }
-)
-app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 # Get the Gunicorn error logger
 gunicorn_logger = logging.getLogger('gunicorn.error')
@@ -603,7 +592,18 @@ def check_processes():
                         'exit_code': -1,
                     })
 
-parseargs()
+args = parseargs()
+# Register Swagger UI blueprint with endpoint /v0/documentation/
+SWAGGER_URL = '/v0/documentation'
+API_URL = '/swagger.yaml'  # assuming swagger.yaml is served from the root
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': f"{args.title} API"
+    }
+)
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 def log_info(fromip, user, message):
     app.logger.info(f"{user} {fromip}: {message}")
