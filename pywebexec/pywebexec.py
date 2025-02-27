@@ -29,6 +29,7 @@ from pathlib import Path
 import pyte
 from . import host_ip
 from flask_swagger_ui import get_swaggerui_blueprint  # new import
+import yaml  # new import
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
@@ -596,6 +597,7 @@ args = parseargs()
 # Register Swagger UI blueprint with endpoint /v0/documentation/
 SWAGGER_URL = '/v0/documentation'
 API_URL = '/swagger.yaml'  # assuming swagger.yaml is served from the root
+app.config['TITLE'] = f"{args.title} API"
 swaggerui_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL,
     API_URL,
@@ -848,8 +850,12 @@ def swagger_yaml():
     swagger_path = os.path.join(os.path.dirname(__file__), 'swagger.yaml')
     try:
         with open(swagger_path, 'r') as f:
-            swagger_spec = f.read()
-        return Response(swagger_spec, mimetype='application/yaml')
+            swagger_spec_str = f.read()
+        swagger_spec = yaml.safe_load(swagger_spec_str)
+        # Set title dynamically using the app configuration
+        swagger_spec['info']['title'] = app.config.get('TITLE', 'PyWebExec API')
+        swagger_spec_str = yaml.dump(swagger_spec)
+        return Response(swagger_spec_str, mimetype='application/yaml')
     except Exception as e:
         return Response(f"Error reading swagger spec: {e}", status=500)
 

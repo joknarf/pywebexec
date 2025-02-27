@@ -46,3 +46,9 @@ paths:
       responses:
         "200":
           description: "List of all commands"
+  /executables:
+    get:
+      summary: "List executables"
+      responses:
+        "200":
+          description: "List of executables returned as an array of executable names"
