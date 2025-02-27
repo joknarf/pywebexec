@@ -28,6 +28,8 @@ import logging
 from pathlib import Path
 import pyte
 from . import host_ip
+from flask_swagger_ui import get_swaggerui_blueprint  # new import
+import yaml  # new import
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
@@ -35,7 +37,6 @@ if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Secret key for session management
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Add SameSite attribute to session cookies
-app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 auth = HTTPBasicAuth()
 
@@ -45,6 +46,7 @@ app.config['LDAP_GROUPS'] = os.environ.get('PYWEBEXEC_LDAP_GROUPS')
 app.config['LDAP_BASE_DN'] = os.environ.get('PYWEBEXEC_LDAP_BASE_DN')
 app.config['LDAP_BIND_DN'] = os.environ.get('PYWEBEXEC_LDAP_BIND_DN')
 app.config['LDAP_BIND_PASSWORD'] = os.environ.get('PYWEBEXEC_LDAP_BIND_PASSWORD')
+
 
 # Get the Gunicorn error logger
 gunicorn_logger = logging.getLogger('gunicorn.error')
@@ -590,7 +592,23 @@ def check_processes():
                         'exit_code': -1,
                     })
 
-parseargs()
+args = parseargs()
+if args.cert:
+    app.config['SESSION_COOKIE_SECURE'] = True
+app.config['TITLE'] = f"{args.title} API"
+
+# Register Swagger UI blueprint with safe token included in API_URL
+SWAGGER_URL = '/v0/documentation'
+API_URL = '/swagger.yaml'
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': f"{args.title} API",
+        'layout': 'BaseLayout'
+    }
+)
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 def log_info(fromip, user, message):
     app.logger.info(f"{user} {fromip}: {message}")
@@ -625,10 +643,10 @@ def stop_command(command_id):
 
 @app.before_request
 def check_authentication():
-    # Check for token in URL if TOKEN_URL is set
     token = app.config.get('TOKEN_URL')
     if token and request.endpoint not in ['login', 'static']:
-        if request.args.get('token') == token:
+        if request.args.get('token') == token or session.get('token') == token:
+            session['token'] = token
             return
         return jsonify({'error': 'Forbidden'}), 403
 
@@ -829,6 +847,20 @@ def do_popup(command_id):
     </body>
     </html>
     """
+
+@app.route('/swagger.yaml')
+def swagger_yaml():
+    swagger_path = os.path.join(os.path.dirname(__file__), 'swagger.yaml')
+    try:
+        with open(swagger_path, 'r') as f:
+            swagger_spec_str = f.read()
+        swagger_spec = yaml.safe_load(swagger_spec_str)
+        # Set title dynamically using the app configuration
+        swagger_spec['info']['title'] = app.config.get('TITLE', 'PyWebExec API')
+        swagger_spec_str = yaml.dump(swagger_spec)
+        return Response(swagger_spec_str, mimetype='application/yaml')
+    except Exception as e:
+        return Response(f"Error reading swagger spec: {e}", status=500)
 
 def main():
     global COMMAND_STATUS_DIR
