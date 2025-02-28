@@ -161,7 +161,7 @@ async function viewOutput(command_id) {
     slider.value = 1000;
     adjustOutputHeight();
     currentCommandId = command_id;
-    nextOutputLink = `/command_output/${command_id}${urlToken}`;
+    nextOutputLink = `/commands/${command_id}/output${urlToken}`;
     clearInterval(outputInterval);
     terminal.clear();
     terminal.reset();

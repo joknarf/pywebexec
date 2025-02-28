@@ -763,7 +763,7 @@ def list_commands():
     commands.sort(key=lambda x: x['start_time'], reverse=True)
     return jsonify(commands)
 
-@app.route('/command_output/<command_id>', methods=['GET'])
+@app.route('/commands/<command_id>/output', methods=['GET'])
 def get_command_output(command_id):
     offset = int(request.args.get('offset', 0))
     maxsize = int(request.args.get('maxsize', 10485760))
@@ -787,7 +787,7 @@ def get_command_output(command_id):
             'cols': status_data.get("cols"),
             'rows': status_data.get("rows"),
             'links': {
-                'next': f'{request.url_root}command_output/{command_id}?offset={new_offset}&maxsize={maxsize}{token_param}'
+                'next': f'{request.url_root}commands/{command_id}/output?offset={new_offset}&maxsize={maxsize}{token_param}'
             }
         }
         if request.headers.get('Accept') == 'text/plain':

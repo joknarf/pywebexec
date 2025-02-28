@@ -3,7 +3,7 @@ info:
   title: PyWebExec API
   version: "1.0"
 paths:
-  /commands:            # changed from /run_command
+  /commands:            # changed from /run_command            
     get:
       summary: "List commands status"
       responses:
@@ -45,9 +45,28 @@ paths:
       responses:
         "200":
           description: "Command status returned"
+  /commands/{command_id}/output:
+    get:
+      summary: "Get command output"
+      parameters:
+        - in: path
+          name: command_id
+          required: true
+          type: string
+        - in: query
+          name: offset
+          type: integer
+          default: 0
+        - in: query
+          name: maxsize
+          type: integer
+          default: 10485760
+      responses:
+        "200":
+          description: "Command output returned"
   /executables:
     get:
-      summary: "List executables"
+      summary: "List available executable commands"
       responses:
         "200":
           description: "List of executables returned as an array of executable names"

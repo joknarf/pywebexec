@@ -252,7 +252,7 @@ async function viewOutput(command_id) {
     outputPercentage.innerText = '100%';
     adjustOutputHeight();
     currentCommandId = command_id;
-    nextOutputLink = `/command_output/${command_id}${urlToken}`;
+    nextOutputLink = `/commands/${command_id}/output${urlToken}`; // updated URL
     clearInterval(outputInterval);
     terminal.clear();
     terminal.reset();
