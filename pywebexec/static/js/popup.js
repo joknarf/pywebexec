@@ -98,11 +98,6 @@ function autoFit(scroll=true) {
     if (scroll) terminal.scrollToBottom();
 }
 
-function getTokenParam() {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('token') ? `?token=${urlParams.get('token')}` : '';
-}
-const urlToken = getTokenParam();
 
 
 function setCommandStatus(status) {
@@ -161,14 +156,14 @@ async function viewOutput(command_id) {
     slider.value = 1000;
     adjustOutputHeight();
     currentCommandId = command_id;
-    nextOutputLink = `/commands/${command_id}/output${urlToken}`;
+    nextOutputLink = `/commands/${command_id}/output`;
     clearInterval(outputInterval);
     terminal.clear();
     terminal.reset();
     fullOutput = '';
     try {
         // Updated endpoint below:
-        const response = await fetch(`/commands/${command_id}${urlToken}`);
+        const response = await fetch(`/commands/${command_id}`);
         if (!response.ok) {
             return;
         }

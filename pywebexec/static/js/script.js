@@ -108,12 +108,6 @@ function autoFit(scroll=true) {
     if (scroll) terminal.scrollToBottom();
 }
 
-function getTokenParam() {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('token') ? `?token=${urlParams.get('token')}` : '';
-}
-const urlToken = getTokenParam();
-
 
 document.getElementById('launchForm').addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -122,7 +116,7 @@ document.getElementById('launchForm').addEventListener('submit', async (event) =
     fitAddon.fit();
     terminal.clear();
     try {
-        const response = await fetch(`/commands${urlToken}`, {
+        const response = await fetch(`/commands`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -144,7 +138,7 @@ document.getElementById('launchForm').addEventListener('submit', async (event) =
 
 async function fetchCommands(hide=false) {
     try {
-        const response = await fetch(`/commands${urlToken}`);
+        const response = await fetch(`/commands`);
         if (!response.ok) {
             document.getElementById('dimmer').style.display = 'block';
             return;
@@ -252,13 +246,13 @@ async function viewOutput(command_id) {
     outputPercentage.innerText = '100%';
     adjustOutputHeight();
     currentCommandId = command_id;
-    nextOutputLink = `/commands/${command_id}/output${urlToken}`; // updated URL
+    nextOutputLink = `/commands/${command_id}/output`;
     clearInterval(outputInterval);
     terminal.clear();
     terminal.reset();
     fullOutput = '';
     try {
-        const response = await fetch(`/commands/${command_id}${urlToken}`);
+        const response = await fetch(`/commands/${command_id}`);
         if (!response.ok) {
             outputInterval = setInterval(() => fetchOutput(nextOutputLink), 500);
         }
@@ -289,7 +283,7 @@ async function viewOutput(command_id) {
 async function openPopup(command_id, event) {
     event.stopPropagation();
     event.stopImmediatePropagation();
-    const popupUrl = `/commands/${command_id}/popup${urlToken}`;
+    const popupUrl = `/commands/${command_id}/popup`;
     window.open(popupUrl, '_blank', 'width=1000,height=600');
 }
 
@@ -297,7 +291,7 @@ async function relaunchCommand(command_id, event) {
     event.stopPropagation();
     event.stopImmediatePropagation();
     try {
-        const response = await fetch(`/commands/${command_id}${urlToken}`);
+        const response = await fetch(`/commands/${command_id}`);
         if (!response.ok) {
             throw new Error('Failed to fetch command status');
         }
@@ -308,7 +302,7 @@ async function relaunchCommand(command_id, event) {
         }
         fitAddon.fit();
         terminal.clear();
-        const relaunchResponse = await fetch(`/commands${urlToken}`, {
+        const relaunchResponse = await fetch(`/commands`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -336,7 +330,7 @@ async function stopCommand(command_id, event) {
     event.stopPropagation();
     event.stopImmediatePropagation();
     try {
-        const response = await fetch(`/commands/${command_id}/stop${urlToken}`, {
+        const response = await fetch(`/commands/${command_id}/stop`, {
             method: 'PATCH'
         });
         if (!response.ok) {

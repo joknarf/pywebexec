@@ -216,7 +216,7 @@ window.addEventListener('load', () => {
 
 async function fetchExecutables() {
     try {
-        const response = await fetch(`/executables${urlToken}`);
+        const response = await fetch(`/executables`);
         if (!response.ok) {
             throw new Error('Failed to fetch command status');
         }
