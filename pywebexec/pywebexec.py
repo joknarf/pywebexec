@@ -308,8 +308,8 @@ def print_urls(command_id=None):
     if command_id:
         print(f"web popup: {protocol}://{hostname}:{args.port}/dopopup/{command_id}{url_params}", flush=True)
         print(f"web popup: {protocol}://{ip}:{args.port}/dopopup/{command_id}{url_params}", flush=True)
-        print(f"raw output: {protocol}://{hostname}:{args.port}/command_output_raw/{command_id}{url_params}", flush=True)
-        print(f"raw output: {protocol}://{ip}:{args.port}/command_output_raw/{command_id}{url_params}", flush=True)
+        print(f"raw output: {protocol}://{hostname}:{args.port}/commands/{command_id}/output_raw{url_params}", flush=True)
+        print(f"raw output: {protocol}://{ip}:{args.port}/commands/{command_id}/output_raw{url_params}", flush=True)
     else:
         print(f"web commands: {protocol}://{hostname}:{args.port}{url_params}", flush=True)
         print(f"web commands: {protocol}://{ip}:{args.port}{url_params}", flush=True)
@@ -795,7 +795,7 @@ def get_command_output(command_id):
         return jsonify(response)
     return jsonify({'error': 'Invalid command_id'}), 404
 
-@app.route('/command_output_raw/<command_id>', methods=['GET'])
+@app.route('/commands/<command_id>/output_raw', methods=['GET'])
 def get_command_output_raw(command_id):
     offset = int(request.args.get('offset', 0))
     @stream_with_context
