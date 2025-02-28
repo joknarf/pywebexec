@@ -122,7 +122,7 @@ document.getElementById('launchForm').addEventListener('submit', async (event) =
     fitAddon.fit();
     terminal.clear();
     try {
-        const response = await fetch(`/run_command${urlToken}`, {
+        const response = await fetch(`/commands${urlToken}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -133,7 +133,6 @@ document.getElementById('launchForm').addEventListener('submit', async (event) =
             throw new Error('Failed to launch command');
         }
         const data = await response.json();
-        //await new Promise(r => setTimeout(r, 300));// not ok
         viewOutput(data.command_id);
         fetchCommands();
         commandInput.focus()
@@ -259,7 +258,7 @@ async function viewOutput(command_id) {
     terminal.reset();
     fullOutput = '';
     try {
-        const response = await fetch(`/command_status/${command_id}${urlToken}`);
+        const response = await fetch(`/commands/${command_id}${urlToken}`);
         if (!response.ok) {
             outputInterval = setInterval(() => fetchOutput(nextOutputLink), 500);
         }
@@ -298,7 +297,7 @@ async function relaunchCommand(command_id, event) {
     event.stopPropagation();
     event.stopImmediatePropagation();
     try {
-        const response = await fetch(`/command_status/${command_id}${urlToken}`);
+        const response = await fetch(`/commands/${command_id}${urlToken}`);
         if (!response.ok) {
             throw new Error('Failed to fetch command status');
         }
@@ -309,7 +308,7 @@ async function relaunchCommand(command_id, event) {
         }
         fitAddon.fit();
         terminal.clear();
-        const relaunchResponse = await fetch(`/run_command${urlToken}`, {
+        const relaunchResponse = await fetch(`/commands${urlToken}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

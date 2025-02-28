@@ -3,7 +3,12 @@ info:
   title: PyWebExec API
   version: "1.0"
 paths:
-  /run_command:
+  /commands:            # changed from /run_command
+    get:
+      summary: "List commands status"
+      responses:
+        "200":
+          description: "List of all commands status"
     post:
       summary: "Run a command"
       consumes:
@@ -29,7 +34,7 @@ paths:
       responses:
         "200":
           description: "Command started"
-  /command_status/{command_id}:
+  /commands/{command_id}:
     get:
       summary: "Get command status"
       parameters:
@@ -40,12 +45,6 @@ paths:
       responses:
         "200":
           description: "Command status returned"
-  /commands:
-    get:
-      summary: "List commands"
-      responses:
-        "200":
-          description: "List of all commands"
   /executables:
     get:
       summary: "List executables"

@@ -167,7 +167,8 @@ async function viewOutput(command_id) {
     terminal.reset();
     fullOutput = '';
     try {
-        const response = await fetch(`/command_status/${command_id}${urlToken}`);
+        // Updated endpoint below:
+        const response = await fetch(`/commands/${command_id}${urlToken}`);
         if (!response.ok) {
             return;
         }

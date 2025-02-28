@@ -704,7 +704,7 @@ def verify_ldap(username, password):
         print(f"LDAP authentication failed: {e}")
         return False
 
-@app.route('/run_command', methods=['POST'])
+@app.route('/commands', methods=['POST'])
 def run_command_endpoint():
     data = request.json
     command = data.get('command')
@@ -745,7 +745,7 @@ def run_command_endpoint():
 
     return jsonify({'message': 'Command is running', 'command_id': command_id})
 
-@app.route('/command_status/<command_id>', methods=['GET'])
+@app.route('/commands/<command_id>', methods=['GET'])
 def get_command_status(command_id):
     status = read_command_status(command_id)
     if not status:
