@@ -306,8 +306,8 @@ def print_urls(command_id=None):
     if token:
         url_params = f"?token={token}"
     if command_id:
-        print(f"web popup: {protocol}://{hostname}:{args.port}/dopopup/{command_id}{url_params}", flush=True)
-        print(f"web popup: {protocol}://{ip}:{args.port}/dopopup/{command_id}{url_params}", flush=True)
+        print(f"web popup: {protocol}://{hostname}:{args.port}/commands/{command_id}/dopopup{url_params}", flush=True)
+        print(f"web popup: {protocol}://{ip}:{args.port}/commands/{command_id}/dopopup{url_params}", flush=True)
         print(f"raw output: {protocol}://{hostname}:{args.port}/commands/{command_id}/output_raw{url_params}", flush=True)
         print(f"raw output: {protocol}://{ip}:{args.port}/commands/{command_id}/output_raw{url_params}", flush=True)
     else:
@@ -619,7 +619,7 @@ def log_error(fromip, user, message):
 def log_request(message):
     log_info(request.remote_addr, session.get('username', '-'), message)
 
-@app.route('/stop_command/<command_id>', methods=['POST'])
+@app.route('/commands/<command_id>/stop', methods=['PATCH'])
 def stop_command(command_id):
     log_request(f"stop_command {command_id}")
     status = read_command_status(command_id)
@@ -629,7 +629,6 @@ def stop_command(command_id):
     pid = status['pid']
     end_time = datetime.now(timezone.utc).isoformat()
     try:
-        #update_command_status(command_id, 'aborted', end_time=end_time, exit_code=-15)
         os.killpg(os.getpgid(pid), 15)  # Send SIGTERM to the process group
         return jsonify({'message': 'Command aborted'})
     except Exception as e:
@@ -825,11 +824,11 @@ def list_executables():
     executables.sort()  # Sort the list of executables alphabetically
     return jsonify(executables)
 
-@app.route('/popup/<command_id>')
+@app.route('/commands/<command_id>/popup')
 def popup(command_id):
     return render_template('popup.html', command_id=command_id)
 
-@app.route('/dopopup/<command_id>')
+@app.route('/commands/<command_id>/dopopup')
 def do_popup(command_id):
     token = request.args.get('token', '')
     token_param = f'?token={token}' if token else ''
@@ -838,7 +837,7 @@ def do_popup(command_id):
     <head>
         <script type="text/javascript">
             window.onload = function() {{
-                window.open('/popup/{command_id}{token_param}', '_blank', 'width=1000,height=600');
+                window.open('/commands/{command_id}/popup{token_param}', '_blank', 'width=1000,height=600');
                 window.close();
             }};
         </script>

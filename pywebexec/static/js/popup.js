@@ -257,7 +257,7 @@ window.addEventListener('load', () => {
     slider = document.getElementById('outputSlider');
     slider.addEventListener('input', sliderUpdateOutput);
     adjustOutputHeight();
-    const commandId = window.location.pathname.split('/').slice(-1)[0];
+    const commandId = window.location.pathname.split('/').slice(-2)[0];
     viewOutput(commandId);
 });
 

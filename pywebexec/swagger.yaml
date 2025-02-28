@@ -3,7 +3,7 @@ info:
   title: PyWebExec API
   version: "1.0"
 paths:
-  /commands:            # changed from /run_command            
+  /commands:
     get:
       summary: "List commands status"
       responses:
@@ -64,6 +64,17 @@ paths:
       responses:
         "200":
           description: "Command output returned"
+  /commands/{command_id}/stop:
+    patch:
+      summary: "Stop a running command"
+      parameters:
+        - in: path
+          name: command_id
+          required: true
+          type: string
+      responses:
+        "200":
+          description: "Command stopped successfully"
   /executables:
     get:
       summary: "List available executable commands"

@@ -289,7 +289,7 @@ async function viewOutput(command_id) {
 async function openPopup(command_id, event) {
     event.stopPropagation();
     event.stopImmediatePropagation();
-    const popupUrl = `/popup/${command_id}${urlToken}`;
+    const popupUrl = `/commands/${command_id}/popup${urlToken}`;
     window.open(popupUrl, '_blank', 'width=1000,height=600');
 }
 
@@ -336,8 +336,8 @@ async function stopCommand(command_id, event) {
     event.stopPropagation();
     event.stopImmediatePropagation();
     try {
-        const response = await fetch(`/stop_command/${command_id}${urlToken}`, {
-            method: 'POST'
+        const response = await fetch(`/commands/${command_id}/stop${urlToken}`, {
+            method: 'PATCH'
         });
         if (!response.ok) {
             throw new Error('Failed to stop command');

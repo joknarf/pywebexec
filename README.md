@@ -142,4 +142,4 @@ $ curl http://myhost:8080/command_output/<command_id> -H "Accept: text/plain"
 | GET       | /commands/{id}/output    | offset: int        | output: str<br>status: str<br>links: { next: str }         |
 | GET       | /commands/{id}/output_raw  | offset: int        | output: stream raw output until end of command<br>curl -Ns http://srv/commands/{id}/output_raw|
 | POST      | /commands                | command: str<br>params: array[str]<br>rows: int<br>cols: int       | command_id: uuid<br>message: str    |
-| POST      | /commands/{id}/stop    |                    | message: str        |
+| PATCH      | /commands/{id}/stop    |                    | message: str        |
