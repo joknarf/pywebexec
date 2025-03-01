@@ -174,7 +174,7 @@ def decode_line(line: bytes) -> str:
 def get_visible_output(output, cols, rows):
     """pyte vt100 render to get last line"""
     try:
-        screen = pyte.Screen(cols, 5000)
+        screen = pyte.Screen(cols, rows)
         stream = pyte.Stream(screen)
         stream.feed(output)
         return "\n".join(screen.display).strip()
@@ -829,7 +829,7 @@ def get_command_output(command_id):
             }
         }
         if request.headers.get('Accept') == 'text/plain':
-            return f"{get_visible_output(output, status_data.get('cols'), status_data.get('rows'))}\nstatus: {status_data.get('status')}", 200, {'Content-Type': 'text/plain'}
+            return f"{get_visible_output(output, status_data.get('cols'), maxlines)}\nstatus: {status_data.get('status')}", 200, {'Content-Type': 'text/plain'}
         return jsonify(response)
     return jsonify({'error': 'Invalid command_id'}), 404
 
