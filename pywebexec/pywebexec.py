@@ -744,6 +744,34 @@ def run_command_endpoint():
 
     return jsonify({'message': 'Command is running', 'command_id': command_id})
 
+@app.route('/commands/<cmd>', methods=['POST'])
+def run_dynamic_command(cmd):
+    # Validate that 'cmd' is an executable in the current directory
+    cmd_path = os.path.join(".", os.path.basename(cmd))
+    if not os.path.isfile(cmd_path) or not os.access(cmd_path, os.X_OK):
+        return jsonify({'error': 'Command not found or not executable'}), 400
+    data = request.json or {}
+    params = data.get('params', [])
+    rows = data.get('rows', tty_rows)
+    cols = data.get('cols', tty_cols)
+    try:
+        params = shlex.split(' '.join(params)) if isinstance(params, list) else []
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+    user = session.get('username', '-')
+    command_id = str(uuid.uuid4())
+    update_command_status(command_id, {
+        'status': 'running',
+        'command': cmd,
+        'params': params,
+        'user': user,
+        'from': request.remote_addr,
+    })
+    Path(get_output_file_path(command_id)).touch()
+    thread = threading.Thread(target=run_command, args=(request.remote_addr, user, cmd_path, params, command_id, rows, cols))
+    thread.start()
+    return jsonify({'message': 'Command is running', 'command_id': command_id})
+
 @app.route('/commands/<command_id>', methods=['GET'])
 def get_command_status(command_id):
     status = read_command_status(command_id)
@@ -854,19 +882,43 @@ def swagger_yaml():
         with open(swagger_path, 'r') as f:
             swagger_spec_str = f.read()
         swagger_spec = yaml.safe_load(swagger_spec_str)
-        # Dynamically update the "command" enum for POST /commands endpoint.
-        executables = [
-            f for f in os.listdir('.') 
-            if os.path.isfile(f) and os.access(f, os.X_OK)
-        ]
+        # Update existing POST /commands enum if present
+        executables = [f for f in os.listdir('.') if os.path.isfile(f) and os.access(f, os.X_OK)]
         post_cmd = swagger_spec.get('paths', {}).get('/commands', {}).get('post')
         if post_cmd:
-            params = post_cmd.get('parameters', [])
-            for param in params:
+            params_list = post_cmd.get('parameters', [])
+            for param in params_list:
                 if param.get('in') == 'body' and 'schema' in param:
                     props = param['schema'].get('properties', {})
                     if 'command' in props:
                         props['command']['enum'] = executables
+        # Add dynamic paths for each executable:
+        for exe in executables:
+            dynamic_path = "/commands/" + exe
+            swagger_spec.setdefault("paths", {})[dynamic_path] = {
+                "post": {
+                    "summary": f"Run command {exe}",
+                    "consumes": ["application/json"],
+                    "produces": ["application/json"],
+                    "parameters": [
+                        {
+                            "in": "body",
+                            "name": "commandRequest",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "params": {"type": "array", "items": {"type": "string"}},
+                                    "rows": {"type": "integer"},
+                                    "cols": {"type": "integer"}
+                                }
+                            }
+                        }
+                    ],
+                    "responses": {
+                        "200": {"description": "Command started"}
+                    }
+                }
+            }
         swagger_spec['info']['title'] = app.config.get('TITLE', 'PyWebExec API')
         swagger_spec_str = yaml.dump(swagger_spec)
         return Response(swagger_spec_str, mimetype='application/yaml')

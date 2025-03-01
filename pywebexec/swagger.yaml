@@ -23,6 +23,7 @@ paths:
             properties:
               command:
                 type: string
+                # Enum will be added dynamically by the APIs
               params:
                 type: array
                 items:
@@ -31,6 +32,8 @@ paths:
                 type: integer
               cols:
                 type: integer
+            required:
+              - command
       responses:
         "200":
           description: "Command started"
