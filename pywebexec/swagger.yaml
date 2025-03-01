@@ -24,14 +24,18 @@ paths:
               command:
                 type: string
                 # Enum will be added dynamically by the APIs
+                default: commandName
               params:
                 type: array
                 items:
                   type: string
+                default: []
               rows:
                 type: integer
+                default: 24
               cols:
                 type: integer
+                default: 125
             required:
               - command
       responses:
