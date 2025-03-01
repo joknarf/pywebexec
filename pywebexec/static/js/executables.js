@@ -234,10 +234,10 @@ async function fetchExecutables() {
         gExecutables = {};
         commandListDiv.innerHTML = '';
         data.executables.forEach(exeObj => {
-            gExecutables[exeObj.name] = exeObj;
+            gExecutables[exeObj.command] = exeObj;
             const div = document.createElement('div');
             div.className = 'command-item';
-            div.textContent = exeObj.name;
+            div.textContent = exeObj.command;
             div.tabIndex = 0;
             if (exeObj.help) {
                 div.title = exeObj.help;

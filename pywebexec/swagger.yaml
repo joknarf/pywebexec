@@ -196,14 +196,14 @@ paths:
                 items:
                   type: object
                   properties:
-                    name:
+                    command:
                       type: string
                     help:
                       type: string
           examples:
             application/json:
               executables:
-                - name: ls
+                - command: ls
                   help: "List directory contents\nparams:\n  <ls_params>"
-                - name: cat
+                - command: cat
                   help: "Concatenate and display files\nparams:\n  <cat_params>"

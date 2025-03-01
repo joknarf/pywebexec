@@ -639,7 +639,7 @@ def get_executables():
             if os.path.exists(help_file) and os.path.isfile(help_file):
                 with open(help_file, 'r') as hf:
                     help_text = hf.read()
-            executables_list.append({"name": f, "help": help_text})
+            executables_list.append({"command": f, "help": help_text})
     return executables_list
 
 
@@ -917,14 +917,14 @@ def swagger_yaml():
                 if param.get('in') == 'body' and 'schema' in param:
                     props = param['schema'].get('properties', {})
                     if 'command' in props:
-                        props['command']['enum'] = [e['name'] for e in executables]
+                        props['command']['enum'] = [e['command'] for e in executables]
         # Add dynamic paths for each 
         # Add dynamic paths for each executable:
         for exe in executables:
-            dynamic_path = "/commands/" + exe["name"]
+            dynamic_path = "/commands/" + exe["command"]
             swagger_spec.setdefault("paths", {})[dynamic_path] = {
                 "post": {
-                    "summary": f"Run command {exe["name"]}",
+                    "summary": f"Run command {exe["command"]}",
                     "description": html.escape(exe["help"]),
                     "consumes": ["application/json"],
                     "produces": ["application/json"],
