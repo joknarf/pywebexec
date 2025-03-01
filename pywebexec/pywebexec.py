@@ -167,12 +167,22 @@ def strip_ansi_control_chars(text):
 def decode_line(line: bytes) -> str:
     """try decode line exception on binary"""
     try:
-        return get_visible_output(line.decode())
+        return get_visible_line(line.decode())
+    except UnicodeDecodeError:
+        return ""
+
+def get_visible_output(output, cols, rows):
+    """pyte vt100 render to get last line"""
+    try:
+        screen = pyte.Screen(cols, 5000)
+        stream = pyte.Stream(screen)
+        stream.feed(output)
+        return "\n".join(screen.display).strip()
     except UnicodeDecodeError:
         return ""
 
 
-def get_visible_output(line, cols, rows):
+def get_visible_line(line, cols, rows):
     """pyte vt100 render to get last line"""
     try:
         screen = pyte.Screen(cols, rows)
@@ -197,7 +207,7 @@ def get_last_line(file_path, cols=None, rows=None, maxsize=2048):
             fd.seek(-maxsize, os.SEEK_END)
         except OSError:
             fd.seek(0)
-        return get_visible_output(fd.read(), cols, rows)
+        return get_visible_line(fd.read(), cols, rows)
 
 
 def start_gunicorn(daemonized=False, baselog=None):
@@ -752,8 +762,8 @@ def run_dynamic_command(cmd):
         return jsonify({'error': 'Command not found or not executable'}), 400
     data = request.json or {}
     params = data.get('params', [])
-    rows = data.get('rows', tty_rows)
-    cols = data.get('cols', tty_cols)
+    rows = data.get('rows', tty_rows) or tty_rows
+    cols = data.get('cols', tty_cols) or tty_cols
     try:
         params = shlex.split(' '.join(params)) if isinstance(params, list) else []
     except Exception as e:
@@ -794,6 +804,7 @@ def list_commands():
 def get_command_output(command_id):
     offset = int(request.args.get('offset', 0))
     maxsize = int(request.args.get('maxsize', 10485760))
+    maxlines = int(request.args.get('maxlines', 5000))
     output_file_path = get_output_file_path(command_id)
     if os.path.exists(output_file_path):
         size = os.path.getsize(output_file_path)
@@ -818,7 +829,7 @@ def get_command_output(command_id):
             }
         }
         if request.headers.get('Accept') == 'text/plain':
-            return f"{output}\nstatus: {status_data.get('status')}", 200, {'Content-Type': 'text/plain'}
+            return f"{get_visible_output(output, status_data.get('cols'), status_data.get('rows'))}\nstatus: {status_data.get('status')}", 200, {'Content-Type': 'text/plain'}
         return jsonify(response)
     return jsonify({'error': 'Invalid command_id'}), 404
 
@@ -907,9 +918,9 @@ def swagger_yaml():
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "params": {"type": "array", "items": {"type": "string"}},
-                                    "rows": {"type": "integer"},
-                                    "cols": {"type": "integer"}
+                                    "params": {"type": "array", "items": {"type": "string"}, "default": []},
+                                    "rows": {"type": "integer", "default": tty_rows},
+                                    "cols": {"type": "integer", "default": tty_cols},
                                 }
                             }
                         }

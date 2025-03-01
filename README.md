@@ -36,6 +36,7 @@ all commands output / statuses are available in the executables directory in sub
 ## features
 
 * Serve executables in a directory
+* full API driven with dynamic swagger UI
 * Launch commands with params from web browser or API call
 * multiple share terminal output
 * Follow live output
@@ -126,9 +127,9 @@ $ pywebexec stop
 ## Launch command through API
 
 ```shell
-$ curl http://myhost:8080/run_command -H 'Content-Type: application/json' -X POST -d '{ "command":"myscript", "params":["param1", ...]}'
-$ curl http://myhost:8080/command_status/<command_id>
-$ curl http://myhost:8080/command_output/<command_id> -H "Accept: text/plain"
+$ curl http://myhost:8080/commands/myscript -H 'Content-Type: application/json' -X POST -d '{"params":["param1", ...]}'
+$ curl http://myhost:8080/commands/<command_id>
+$ curl http://myhost:8080/commands/<command_id>/output -H "Accept: text/plain"
 ```
 
 ## API reference

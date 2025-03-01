@@ -64,6 +64,15 @@ paths:
           name: maxsize
           type: integer
           default: 10485760
+        - in: query
+          name: maxlines
+          type: integer
+          default: 5000
+      consumes:
+        - application/json
+      produces:
+        - application/json
+        - text/plain
       responses:
         "200":
           description: "Command output returned"
