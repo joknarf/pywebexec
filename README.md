@@ -147,8 +147,8 @@ The help message is displayed:
 
 | method    | route                       | params/payload     | returns
 |-----------|-----------------------------|--------------------|---------------------|
-| GET       | /executables                |                    | array of dict:<br>&nbsp;&nbsp;command: str<br>&nbsp;&nbsp;help: str        |
-| GET       | /commands                   |                    | array of<br>command_id: uuid<br>command: str<br>start_time: isotime<br>end_time: isotime<br>status: str<br>exit_code: int<br>last_output_line: str      |
+| GET       | /executables                |                    | executables: [<br>&nbsp;&nbsp;{command: str,help: str},<br>]        |
+| GET       | /commands                   |                    | commands: [<br>&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;command_id: uuid<br>&nbsp;&nbsp;&nbsp;&nbsp;command: str<br>&nbsp;&nbsp;&nbsp;&nbsp;start_time: isotime<br>&nbsp;&nbsp;&nbsp;&nbsp;end_time: isotime<br>&nbsp;&nbsp;&nbsp;&nbsp;status: str<br>&nbsp;&nbsp;&nbsp;&nbsp;exit_code: int<br>&nbsp;&nbsp;&nbsp;&nbsp;last_output_line: str<br>&nbsp;&nbsp;},<br>]      |
 | GET       | /commands/{id}  |                    | command_id: uuid<br>command: str<br>params: array[str]<br>start_time: isotime<br>end_time: isotime<br>status: str<br>exit_code: int<br>last_output_line: str      |
 | GET       | /commands/{id}/output    | offset: int        | output: str<br>status: str<br>links: { next: str }         |
 | GET       | /commands/{id}/output_raw  | offset: int        | output: stream raw output until end of command<br>curl -Ns http://srv/commands/{id}/output_raw|
