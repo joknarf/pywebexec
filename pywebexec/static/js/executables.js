@@ -6,6 +6,7 @@ let showCommandListButton = document.getElementById('showCommandListButton');
 let isHandlingKeydown = false;
 let firstVisibleItem = 0;
 let gExecutables = {};
+let helpDiv = document.getElementById('paramsHelp');
 
 function unfilterCommands() {
     const items = commandListDiv.children;
@@ -42,6 +43,13 @@ function setCommandListPosition() {
     const rect = commandInput.getBoundingClientRect();
     commandListDiv.style.left = `${rect.left}px`;
     commandListDiv.style.top = `${rect.bottom}px`;
+}
+
+// Update helpDiv position relative to paramsInput
+function setHelpDivPosition() {
+    const rect = paramsInput.getBoundingClientRect();
+    helpDiv.style.left = `${rect.left}px`;
+    helpDiv.style.top = `${rect.bottom + 2}px`;
 }
 
 function adjustInputWidth(input) {
@@ -248,13 +256,18 @@ async function fetchExecutables() {
 paramsInput.addEventListener('focus', () => {
     const currentCmd = commandInput.value;
     if (gExecutables[currentCmd] && gExecutables[currentCmd].help) {
-        // Display help as tooltip by setting title attribute
-        paramsInput.title = gExecutables[currentCmd].help;
+        //helpDiv.innerHTML = gExecutables[currentCmd].help.replace(/\n/g, '<br>');
+        helpDiv.innerText = gExecutables[currentCmd].help;
+        setHelpDivPosition();
+        helpDiv.style.display = 'block';
     } else {
-        paramsInput.title = '';
+        helpDiv.style.display = 'none';
     }
 });
 
 paramsInput.addEventListener('blur', () => {
-    paramsInput.title = '';
+    helpDiv.style.display = 'none';
 });
+
+window.addEventListener('resize', setHelpDivPosition);
+window.addEventListener('scroll', setHelpDivPosition);
