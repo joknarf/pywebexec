@@ -854,7 +854,19 @@ def swagger_yaml():
         with open(swagger_path, 'r') as f:
             swagger_spec_str = f.read()
         swagger_spec = yaml.safe_load(swagger_spec_str)
-        # Set title dynamically using the app configuration
+        # Dynamically update the "command" enum for POST /commands endpoint.
+        executables = [
+            f for f in os.listdir('.') 
+            if os.path.isfile(f) and os.access(f, os.X_OK)
+        ]
+        post_cmd = swagger_spec.get('paths', {}).get('/commands', {}).get('post')
+        if post_cmd:
+            params = post_cmd.get('parameters', [])
+            for param in params:
+                if param.get('in') == 'body' and 'schema' in param:
+                    props = param['schema'].get('properties', {})
+                    if 'command' in props:
+                        props['command']['enum'] = executables
         swagger_spec['info']['title'] = app.config.get('TITLE', 'PyWebExec API')
         swagger_spec_str = yaml.dump(swagger_spec)
         return Response(swagger_spec_str, mimetype='application/yaml')
