@@ -1,11 +1,11 @@
 [![Pypi version](https://img.shields.io/pypi/v/pywebexec.svg)](https://pypi.org/project/pywebexec/)
-![example](https://github.com/joknarf/pywebexec/actions/workflows/python-publish.yml/badge.svg)
+![Publish Package](https://github.com/joknarf/pywebexec/actions/workflows/python-publish.yml/badge.svg)
 [![Licence](https://img.shields.io/badge/licence-MIT-blue.svg)](https://shields.io/)
 [![PyPI Downloads](https://static.pepy.tech/badge/pywebexec)](https://pepy.tech/projects/pywebexec)
 [![Python versions](https://img.shields.io/badge/python-3.6+-blue.svg)](https://shields.io/)
 
 # pywebexec
-Simple Python HTTP(S) API/Web Command Launcher and Terminal sharing
+Simple Python HTTP(S) API/Web Server Command Launcher and Terminal sharing
 
 ## Install
 ```
@@ -15,6 +15,8 @@ $ pip install pywebexec
 ## Quick start
 
 * share terminal
+  * start http server and spawn a new terminal shared on 0.0.0.0 port 8080 (defaults)
+  * exiting terminal stops server/share
 ```shell
 $ pywebexec shareterm
 ```
@@ -143,4 +145,5 @@ $ curl http://myhost:8080/commands/<command_id>/output -H "Accept: text/plain"
 | GET       | /commands/{id}/output    | offset: int        | output: str<br>status: str<br>links: { next: str }         |
 | GET       | /commands/{id}/output_raw  | offset: int        | output: stream raw output until end of command<br>curl -Ns http://srv/commands/{id}/output_raw|
 | POST      | /commands                | command: str<br>params: array[str]<br>rows: int<br>cols: int       | command_id: uuid<br>message: str    |
+| POST      | /commands/{cmd}       | params: array[str]<br>rows: int<br>cols: int       | command_id: uuid<br>message: str    |
 | PATCH      | /commands/{id}/stop    |                    | message: str        |
