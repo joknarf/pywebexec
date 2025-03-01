@@ -134,6 +134,14 @@ $ curl http://myhost:8080/commands/<command_id>
 $ curl http://myhost:8080/commands/<command_id>/output -H "Accept: text/plain"
 ```
 
+## Add help to commands
+
+For each exposed command, you can add a help message by creating a file named `<command>.help` in the same directory as the command.  
+The help message is displayed:
+* in the web interface as tooltip when focused on param input field,
+* in the response when calling the API `/executables`
+* in the swagger-ui in the `/commands/<command>` route.
+
 ## API reference
 
 
