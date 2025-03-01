@@ -774,7 +774,10 @@ def run_dynamic_command(cmd):
     cmd_path = os.path.join(".", os.path.basename(cmd))
     if not os.path.isfile(cmd_path) or not os.access(cmd_path, os.X_OK):
         return jsonify({'error': 'Command not found or not executable'}), 400
-    data = request.json or {}
+    try:
+        data = request.json
+    except Exception as e:
+        data = {}
     params = data.get('params', [])
     rows = data.get('rows', tty_rows) or tty_rows
     cols = data.get('cols', tty_cols) or tty_cols
@@ -940,7 +943,16 @@ def swagger_yaml():
                         }
                     ],
                     "responses": {
-                        "200": {"description": "Command started"}
+                        "200": {
+                            "description": "Command started",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "message": {"type": "string"},
+                                    "command_id": {"type": "string"}
+                                }
+                            }
+                        }
                     }
                 }
             }

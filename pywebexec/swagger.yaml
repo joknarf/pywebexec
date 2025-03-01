@@ -9,6 +9,32 @@ paths:
       responses:
         "200":
           description: "List of all commands status"
+          schema:
+            type: object
+            properties:
+              commands:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    command_id:
+                      type: string
+                    command:
+                      type: string
+                    status:
+                      type: string
+                    start_time:
+                      type: string
+                      format: date-time
+                    end_time:
+                      type: string
+                      format: date-time
+                    exit_code:
+                      type: integer
+                    last_output_line:
+                      type: string
+                    user:
+                      type: string
     post:
       summary: "Run a command"
       consumes:
@@ -41,6 +67,13 @@ paths:
       responses:
         "200":
           description: "Command started"
+          schema:
+            type: object
+            properties:
+              command_id:
+                type: string
+              message:
+                type: string
   /commands/{command_id}:
     get:
       summary: "Get command status"
@@ -52,6 +85,40 @@ paths:
       responses:
         "200":
           description: "Command status returned"
+          schema:
+            type: object
+            properties:
+              command_id:
+                type: string
+              command:
+                type: string
+              params:
+                type: array
+                items:
+                  type: string
+              status:
+                type: string
+              start_time:
+                type: string
+                format: date-time
+              end_time:
+                type: string
+                format: date-time
+              exit_code:
+                type: integer
+              last_output_line:
+                type: string
+              cols:
+                type: integer
+              rows:
+                type: integer
+              user:
+                type: string
+              from:
+                type: string
+              pid:
+                type: integer
+
   /commands/{command_id}/output:
     get:
       summary: "Get command output"
@@ -80,6 +147,23 @@ paths:
       responses:
         "200":
           description: "Command output returned"
+          schema:
+            type: object
+            properties:
+              output:
+                type: string
+              status:
+                type: string
+              rows:
+                type: integer
+              cols:
+                type: integer
+              links:
+                type: object
+                properties:
+                  next:
+                    type: string
+                    format: uri
   /commands/{command_id}/stop:
     patch:
       summary: "Stop a running command"
@@ -91,9 +175,35 @@ paths:
       responses:
         "200":
           description: "Command stopped successfully"
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
   /executables:
     get:
       summary: "List available executable commands"
+      produces:
+        - application/json
       responses:
         "200":
-          description: "List of executables returned as an array of executable names"
+          description: "List of executables returned as an array of executable objects"
+          schema:
+            type: object
+            properties:
+              executables:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    help:
+                      type: string
+          examples:
+            application/json:
+              executables:
+                - name: ls
+                  help: "List directory contents\nparams:\n  <ls_params>"
+                - name: cat
+                  help: "Concatenate and display files\nparams:\n  <cat_params>"
