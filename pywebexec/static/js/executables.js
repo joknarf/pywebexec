@@ -5,6 +5,7 @@ let commandListDiv = document.getElementById('commandList');
 let showCommandListButton = document.getElementById('showCommandListButton');
 let isHandlingKeydown = false;
 let firstVisibleItem = 0;
+let gExecutables = {};
 
 function unfilterCommands() {
     const items = commandListDiv.children;
@@ -220,15 +221,15 @@ async function fetchExecutables() {
         if (!response.ok) {
             throw new Error('Failed to fetch executables');
         }
-        const executables = await response.json();
+        gExecutables = await response.json();
         commandListDiv.innerHTML = '';
-        Object.keys(executables).forEach(exe => {
+        Object.keys(gExecutables).forEach(exe => {
             const div = document.createElement('div');
             div.className = 'command-item';
             div.textContent = exe;
             div.tabIndex = 0;
-            if (executables[exe].help) {
-                div.title = executables[exe].help;
+            if (gExecutables[exe].help) {
+                div.title = gExecutables[exe].help;
             }
             commandListDiv.appendChild(div);
         });
@@ -243,3 +244,17 @@ async function fetchExecutables() {
         document.getElementById('launchForm').style.display = 'none';
 
 }
+
+paramsInput.addEventListener('focus', () => {
+    const currentCmd = commandInput.value;
+    if (gExecutables[currentCmd] && gExecutables[currentCmd].help) {
+        // Display help as tooltip by setting title attribute
+        paramsInput.title = gExecutables[currentCmd].help;
+    } else {
+        paramsInput.title = '';
+    }
+});
+
+paramsInput.addEventListener('blur', () => {
+    paramsInput.title = '';
+});
