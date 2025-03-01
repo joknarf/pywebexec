@@ -143,7 +143,9 @@ async function fetchCommands(hide=false) {
             document.getElementById('dimmer').style.display = 'block';
             return;
         }
-        const commands = await response.json();
+        // Adapt to the new result structure:
+        const data = await response.json();
+        const commands = data.commands;
         commands.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
         const commandsTbody = document.getElementById('commands');
         commandsTbody.innerHTML = '';

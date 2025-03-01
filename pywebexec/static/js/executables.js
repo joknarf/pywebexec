@@ -229,15 +229,18 @@ async function fetchExecutables() {
         if (!response.ok) {
             throw new Error('Failed to fetch executables');
         }
-        gExecutables = await response.json();
+        const data = await response.json();
+        // Build mapping from executable name to its object
+        gExecutables = {};
         commandListDiv.innerHTML = '';
-        Object.keys(gExecutables).forEach(exe => {
+        data.executables.forEach(exeObj => {
+            gExecutables[exeObj.name] = exeObj;
             const div = document.createElement('div');
             div.className = 'command-item';
-            div.textContent = exe;
+            div.textContent = exeObj.name;
             div.tabIndex = 0;
-            if (gExecutables[exe].help) {
-                div.title = gExecutables[exe].help;
+            if (exeObj.help) {
+                div.title = exeObj.help;
             }
             commandListDiv.appendChild(div);
         });

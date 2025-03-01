@@ -29,7 +29,8 @@ from pathlib import Path
 import pyte
 from . import host_ip
 from flask_swagger_ui import get_swaggerui_blueprint  # new import
-import yaml  # new import
+import yaml
+import html
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
@@ -629,6 +630,19 @@ def log_error(fromip, user, message):
 def log_request(message):
     log_info(request.remote_addr, session.get('username', '-'), message)
 
+def get_executables():
+    executables_list = []
+    for f in os.listdir('.'):
+        if os.path.isfile(f) and os.access(f, os.X_OK):
+            help_file = f"{f}.help"
+            help_text = ""
+            if os.path.exists(help_file) and os.path.isfile(help_file):
+                with open(help_file, 'r') as hf:
+                    help_text = hf.read()
+            executables_list.append({"name": f, "help": help_text})
+    return executables_list
+
+
 @app.route('/commands/<command_id>/stop', methods=['PATCH'])
 def stop_command(command_id):
     log_request(f"stop_command {command_id}")
@@ -795,10 +809,9 @@ def index():
 
 @app.route('/commands', methods=['GET'])
 def list_commands():
-    # Sort commands by start_time in descending order
     commands = read_commands()
     commands.sort(key=lambda x: x['start_time'], reverse=True)
-    return jsonify(commands)
+    return jsonify({"commands": commands})
 
 @app.route('/commands/<command_id>/output', methods=['GET'])
 def get_command_output(command_id):
@@ -859,16 +872,8 @@ def get_command_output_raw(command_id):
 
 @app.route('/executables', methods=['GET'])
 def list_executables():
-    result = {}
-    for f in os.listdir('.'):
-        if os.path.isfile(f) and os.access(f, os.X_OK):
-            help_file = f"{f}.help"
-            help_text = ""
-            if os.path.exists(help_file) and os.path.isfile(help_file):
-                with open(help_file, 'r') as hf:
-                    help_text = hf.read()
-            result[f] = {"help": help_text}
-    return jsonify(result)
+    executables_list = get_executables()
+    return jsonify({"executables": executables_list})
 
 @app.route('/commands/<command_id>/popup')
 def popup(command_id):
@@ -901,7 +906,7 @@ def swagger_yaml():
             swagger_spec_str = f.read()
         swagger_spec = yaml.safe_load(swagger_spec_str)
         # Update existing POST /commands enum if present
-        executables = [f for f in os.listdir('.') if os.path.isfile(f) and os.access(f, os.X_OK)]
+        executables = get_executables()
         post_cmd = swagger_spec.get('paths', {}).get('/commands', {}).get('post')
         if post_cmd:
             params_list = post_cmd.get('parameters', [])
@@ -909,13 +914,15 @@ def swagger_yaml():
                 if param.get('in') == 'body' and 'schema' in param:
                     props = param['schema'].get('properties', {})
                     if 'command' in props:
-                        props['command']['enum'] = executables
+                        props['command']['enum'] = [e['name'] for e in executables]
+        # Add dynamic paths for each 
         # Add dynamic paths for each executable:
         for exe in executables:
-            dynamic_path = "/commands/" + exe
+            dynamic_path = "/commands/" + exe["name"]
             swagger_spec.setdefault("paths", {})[dynamic_path] = {
                 "post": {
-                    "summary": f"Run command {exe}",
+                    "summary": f"Run command {exe["name"]}",
+                    "description": html.escape(exe["help"]),
                     "consumes": ["application/json"],
                     "produces": ["application/json"],
                     "parameters": [
