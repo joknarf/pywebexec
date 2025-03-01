@@ -859,9 +859,16 @@ def get_command_output_raw(command_id):
 
 @app.route('/executables', methods=['GET'])
 def list_executables():
-    executables = [f for f in os.listdir('.') if os.path.isfile(f) and os.access(f, os.X_OK)]
-    executables.sort()  # Sort the list of executables alphabetically
-    return jsonify(executables)
+    result = {}
+    for f in os.listdir('.'):
+        if os.path.isfile(f) and os.access(f, os.X_OK):
+            help_file = f"{f}.help"
+            help_text = ""
+            if os.path.exists(help_file) and os.path.isfile(help_file):
+                with open(help_file, 'r') as hf:
+                    help_text = hf.read()
+            result[f] = {"help": help_text}
+    return jsonify(result)
 
 @app.route('/commands/<command_id>/popup')
 def popup(command_id):

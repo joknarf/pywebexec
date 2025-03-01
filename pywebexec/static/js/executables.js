@@ -218,15 +218,18 @@ async function fetchExecutables() {
     try {
         const response = await fetch(`/executables`);
         if (!response.ok) {
-            throw new Error('Failed to fetch command status');
+            throw new Error('Failed to fetch executables');
         }
         const executables = await response.json();
         commandListDiv.innerHTML = '';
-        executables.forEach(executable => {
+        Object.keys(executables).forEach(exe => {
             const div = document.createElement('div');
             div.className = 'command-item';
-            div.textContent = executable;
-            div.tabIndex = 0; // Make the div focusable
+            div.textContent = exe;
+            div.tabIndex = 0;
+            if (executables[exe].help) {
+                div.title = executables[exe].help;
+            }
             commandListDiv.appendChild(div);
         });
     } catch (error) {

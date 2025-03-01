@@ -139,7 +139,7 @@ $ curl http://myhost:8080/commands/<command_id>/output -H "Accept: text/plain"
 
 | method    | route                       | params/payload     | returns
 |-----------|-----------------------------|--------------------|---------------------|
-| GET       | /executables                |                    | array of str        |
+| GET       | /executables                |                    | dict:<br>command_name: <br>&nbsp;&nbsp;help: str        |
 | GET       | /commands                   |                    | array of<br>command_id: uuid<br>command: str<br>start_time: isotime<br>end_time: isotime<br>status: str<br>exit_code: int<br>last_output_line: str      |
 | GET       | /commands/{id}  |                    | command_id: uuid<br>command: str<br>params: array[str]<br>start_time: isotime<br>end_time: isotime<br>status: str<br>exit_code: int<br>last_output_line: str      |
 | GET       | /commands/{id}/output    | offset: int        | output: str<br>status: str<br>links: { next: str }         |
