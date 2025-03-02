@@ -53,6 +53,7 @@ all commands output / statuses are available in the executables directory in sub
 * Can be started as a daemon (POSIX)
 * Uses gunicorn to serve http/https
 * Linux/MacOS compatible
+* Markdown help for commands
 
 ## Customize server
 ```shell
@@ -134,9 +135,9 @@ $ curl http://myhost:8080/commands/<command_id>
 $ curl http://myhost:8080/commands/<command_id>/output -H "Accept: text/plain"
 ```
 
-## Add help to commands
+## Add markdown help to commands
 
-For each exposed command, you can add a help message by creating a file named `<command>.help` in the same directory as the command.  
+For each exposed command, you can add a help message by creating a file named `<command>.help` in the same directory as the command. The help message must be written in markdown.  
 The help message is displayed:
 * in the web interface as tooltip when focused on param input field,
 * in the response when calling the API `/executables`
