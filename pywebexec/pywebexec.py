@@ -766,6 +766,12 @@ def run_command_endpoint():
 
     return jsonify({'message': 'Command is running', 'command_id': command_id})
 
+@app.route('/commands/exposed', methods=['GET'])
+def list_executables():
+    executables_list = get_executables()
+    return jsonify({"commands": executables_list})
+
+
 @app.route('/commands/<cmd>', methods=['POST'])
 def run_dynamic_command(cmd):
     # Validate that 'cmd' is an executable in the current directory
@@ -871,10 +877,6 @@ def get_command_output_raw(command_id):
             return
     return Response(generate(offset), content_type='text/plain')
 
-@app.route('/executables', methods=['GET'])
-def list_executables():
-    executables_list = get_executables()
-    return jsonify({"executables": executables_list})
 
 @app.route('/commands/<command_id>/popup')
 def popup(command_id):

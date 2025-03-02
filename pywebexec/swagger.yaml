@@ -190,7 +190,7 @@ paths:
             properties:
               message:
                 type: string
-  /executables:
+  /commands/exposed:
     get:
       summary: "List available executable commands"
       tags:
@@ -199,11 +199,11 @@ paths:
         - application/json
       responses:
         "200":
-          description: "List of executables returned as an array of executable objects"
+          description: "List of commands with markdown help"
           schema:
             type: object
             properties:
-              executables:
+              commands:
                 type: array
                 items:
                   type: object
@@ -214,8 +214,8 @@ paths:
                       type: string
           examples:
             application/json:
-              executables:
+              commands:
                 - command: ls
-                  help: "List directory contents\nparams:\n  <ls_params>"
+                  help: "List directory contents \n**params**:\n* `<ls_params>`"
                 - command: cat
-                  help: "Concatenate and display files\nparams:\n  <cat_params>"
+                  help: "Concatenate and display files \n**params**:\n* `<cat_params>`"

@@ -225,7 +225,7 @@ window.addEventListener('load', () => {
 
 async function fetchExecutables() {
     try {
-        const response = await fetch(`/executables`);
+        const response = await fetch(`/commands/exposed`);
         if (!response.ok) {
             throw new Error('Failed to fetch executables');
         }
@@ -233,7 +233,7 @@ async function fetchExecutables() {
         // Build mapping from executable name to its object
         gExecutables = {};
         commandListDiv.innerHTML = '';
-        data.executables.forEach(exeObj => {
+        data.commands.forEach(exeObj => {
             gExecutables[exeObj.command] = exeObj;
             const div = document.createElement('div');
             div.className = 'command-item';
