@@ -131,7 +131,14 @@ code {
         padding: 4px 6px;
         border-bottom: 1px solid #ccc;
     }
-
+    ul, ol{
+        margin: 0;
+        padding: 0;
+        padding-left: 30px;
+    }
+    p {
+        margin-bottom: 4px;
+    }
     th:last-child {
         border-top-right-radius: 10px;
     }
@@ -150,9 +157,14 @@ code {
     tr > td:last-child {
         border-right: 1px solid #aaa;
     }
-    code {
+    code, pre {
         font-size: 14px;
         background-color: #d5d5fe;
+    }
+    pre {
+        padding: 5px 10px;
+        border-radius: 10px;
+        overflow-x: auto;
     }
 }
 #thStatus {
