@@ -143,7 +143,7 @@ The help message is displayed:
 * in the response when calling the API `/executables`
 * in the swagger-ui in the `/commands/<command>` route.
 
-<img src="https://github.com/user-attachments/assets/b51b14f7-c349-42ca-98c5-29f0cb5dd656" width="300"/>
+<img src="https://github.com/user-attachments/assets/ecdeb890-5018-498f-872a-57dd4bf542cf" width="400"/>
 
 ## Swagger UI
 
