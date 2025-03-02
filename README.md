@@ -156,7 +156,7 @@ A swagger UI is available at `http[s]://<srv>/v0/documentation`
 
 | method    | route                       | params/payload     | returns
 |-----------|-----------------------------|--------------------|---------------------|
-| GET       | /commands/exposed           |                    | executables: [<br>&nbsp;&nbsp;{command: str,help: str},<br>]        |
+| GET       | /commands/exposed           |                    | commands: [<br>&nbsp;&nbsp;{command: str,help: str},<br>]        |
 | GET       | /commands                   |                    | commands: [<br>&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;command_id: uuid<br>&nbsp;&nbsp;&nbsp;&nbsp;command: str<br>&nbsp;&nbsp;&nbsp;&nbsp;start_time: isotime<br>&nbsp;&nbsp;&nbsp;&nbsp;end_time: isotime<br>&nbsp;&nbsp;&nbsp;&nbsp;status: str<br>&nbsp;&nbsp;&nbsp;&nbsp;exit_code: int<br>&nbsp;&nbsp;&nbsp;&nbsp;last_output_line: str<br>&nbsp;&nbsp;},<br>]      |
 | GET       | /commands/{id}              |                    | command_id: uuid<br>command: str<br>params: array[str]<br>start_time: isotime<br>end_time: isotime<br>status: str<br>exit_code: int<br>last_output_line: str      |
 | GET       | /commands/{id}/output       | offset: int        | output: str<br>status: str<br>links: { next: str }         |
