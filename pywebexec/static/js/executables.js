@@ -18,7 +18,6 @@ function unfilterCommands() {
 
 function filterCommands() {
     const value = commandInput.value.slice(0, commandInput.selectionStart);
-    paramsInput.name = commandInput.value;
     const items = commandListDiv.children;
     let nbVisibleItems = 0;
     firstVisibleItem = -1;
@@ -56,6 +55,7 @@ function setHelpDivPosition() {
 function adjustInputWidth(input) {
     input.style.width = 'auto';
     input.style.width = `${input.scrollWidth}px`;
+
 }
 
 paramsInput.addEventListener('input', () => adjustInputWidth(paramsInput));
@@ -256,8 +256,8 @@ async function fetchExecutables() {
 
 paramsInput.addEventListener('focus', () => {
     const currentCmd = commandInput.value;
+    paramsInput.name = currentCmd;
     if (gExecutables[currentCmd] && gExecutables[currentCmd].help) {
-        //helpDiv.innerHTML = gExecutables[currentCmd].help.replace(/\n/g, '<br>');
         helpDiv.innerHTML = marked.parse(gExecutables[currentCmd].help);
         setHelpDivPosition();
         helpDiv.style.display = 'block';
