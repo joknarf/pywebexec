@@ -639,8 +639,7 @@ def get_executables():
                 with open(help_file, 'r') as hf:
                     help_text = hf.read()
             executables_list.append({"command": f, "help": help_text})
-    return executables_list
-
+    return sorted(executables_list, key=lambda x: x["command"])
 
 @app.route('/commands/<command_id>/stop', methods=['PATCH'])
 def stop_command(command_id):
