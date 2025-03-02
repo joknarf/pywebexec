@@ -99,6 +99,9 @@ form {
     vertical-align: bottom;
     padding-left: 35px;
 }
+code {
+    font-family: "CommitMono Nerd Font Mono", Consolas, "Courier New", monospace;
+}
 #paramsHelp {
     position: absolute;
     background-color: #e0e0ff;
@@ -126,7 +129,7 @@ form {
     td, th{
         margin: 0;
         padding: 4px 6px;
-        border-bottom: 1px solid #aaa;
+        border-bottom: 1px solid #ccc;
     }
 
     th:last-child {
@@ -148,8 +151,8 @@ form {
         border-right: 1px solid #aaa;
     }
     code {
-        font-family: "CommitMono Nerd Font Mono", Consolas, "Courier New", monospace;
         font-size: 14px;
+        background-color: #d5d5fe;
     }
 }
 #thStatus {
@@ -320,14 +323,6 @@ body.dimmed * {
     left: 50%;
     transform: translate(-50%, -50%);
 }
-/* allow wide chars in terminal */
-/*
-span {
-    letter-spacing: 0px !important;
-    margin-right: -0.17px;
-    margin-left: -0.09px
-}
-*/
 .slider-container {
     display: flex;
     align-items: center;
