@@ -6,6 +6,8 @@ paths:
   /commands:
     get:
       summary: "List commands status"
+      tags:
+        - commands
       responses:
         "200":
           description: "List of all commands status"
@@ -37,6 +39,8 @@ paths:
                       type: string
     post:
       summary: "Run a command"
+      tags:
+        - commands
       consumes:
         - application/json
       produces:
@@ -77,6 +81,8 @@ paths:
   /commands/{command_id}:
     get:
       summary: "Get command status"
+      tags:
+        - commands
       parameters:
         - in: path
           name: command_id
@@ -122,6 +128,8 @@ paths:
   /commands/{command_id}/output:
     get:
       summary: "Get command output"
+      tags:
+        - commands
       parameters:
         - in: path
           name: command_id
@@ -167,6 +175,8 @@ paths:
   /commands/{command_id}/stop:
     patch:
       summary: "Stop a running command"
+      tags:
+        - commands
       parameters:
         - in: path
           name: command_id
@@ -183,6 +193,8 @@ paths:
   /executables:
     get:
       summary: "List available executable commands"
+      tags:
+        - commands
       produces:
         - application/json
       responses:

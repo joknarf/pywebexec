@@ -923,6 +923,7 @@ def swagger_yaml():
             swagger_spec.setdefault("paths", {})[dynamic_path] = {
                 "post": {
                     "summary": f"Run command {exe["command"]}",
+                    "tags": ["run_commands"],
                     "description": f"{exe["help"]}",
                     "consumes": ["application/json"],
                     "produces": ["application/json"],
