@@ -149,18 +149,19 @@ The help message is displayed:
 
 A swagger UI is available at `http[s]://<srv>/v0/documentation`
 
-<img src="https://github.com/user-attachments/assets/60649510-4edb-4275-9339-181b451c603b" width="400"/>
+<img src="https://github.com/user-attachments/assets/c80a341e-c04c-4606-9510-a57b473a74e5" width="400"/>
 
 ## API reference
 
 
 | method    | route                       | params/payload     | returns
 |-----------|-----------------------------|--------------------|---------------------|
-| GET       | /executables                |                    | executables: [<br>&nbsp;&nbsp;{command: str,help: str},<br>]        |
+| GET       | /commands/exposed           |                    | executables: [<br>&nbsp;&nbsp;{command: str,help: str},<br>]        |
 | GET       | /commands                   |                    | commands: [<br>&nbsp;&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;command_id: uuid<br>&nbsp;&nbsp;&nbsp;&nbsp;command: str<br>&nbsp;&nbsp;&nbsp;&nbsp;start_time: isotime<br>&nbsp;&nbsp;&nbsp;&nbsp;end_time: isotime<br>&nbsp;&nbsp;&nbsp;&nbsp;status: str<br>&nbsp;&nbsp;&nbsp;&nbsp;exit_code: int<br>&nbsp;&nbsp;&nbsp;&nbsp;last_output_line: str<br>&nbsp;&nbsp;},<br>]      |
-| GET       | /commands/{id}  |                    | command_id: uuid<br>command: str<br>params: array[str]<br>start_time: isotime<br>end_time: isotime<br>status: str<br>exit_code: int<br>last_output_line: str      |
-| GET       | /commands/{id}/output    | offset: int        | output: str<br>status: str<br>links: { next: str }         |
-| GET       | /commands/{id}/output_raw  | offset: int        | output: stream raw output until end of command<br>curl -Ns http://srv/commands/{id}/output_raw|
-| POST      | /commands                | command: str<br>params: array[str]<br>rows: int<br>cols: int       | command_id: uuid<br>message: str    |
-| POST      | /commands/{cmd}       | params: array[str]<br>rows: int<br>cols: int       | command_id: uuid<br>message: str    |
-| PATCH      | /commands/{id}/stop    |                    | message: str        |
+| GET       | /commands/{id}              |                    | command_id: uuid<br>command: str<br>params: array[str]<br>start_time: isotime<br>end_time: isotime<br>status: str<br>exit_code: int<br>last_output_line: str      |
+| GET       | /commands/{id}/output       | offset: int        | output: str<br>status: str<br>links: { next: str }         |
+| GET       | /commands/{id}/output_raw   | offset: int        | output: stream raw output until end of command<br>curl -Ns http://srv/commands/{id}/output_raw|
+| POST      | /commands                   | command: str<br>params: array[str]<br>rows: int<br>cols: int       | command_id: uuid<br>message: str    |
+| POST      | /commands/{cmd}             | params: array[str]<br>rows: int<br>cols: int       | command_id: uuid<br>message: str    |
+| PATCH     | /commands/{id}/stop        |                    | message: str        |
+
