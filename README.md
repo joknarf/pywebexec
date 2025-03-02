@@ -165,3 +165,4 @@ A swagger UI is available at `http[s]://<srv>/v0/documentation`
 | POST      | /commands/{cmd}             | params: array[str]<br>rows: int<br>cols: int       | command_id: uuid<br>message: str    |
 | PATCH     | /commands/{id}/stop        |                    | message: str        |
 
+* to get command output as text (without ANSI codes/Control characters) use: `/commands/{id}/output` with header `"Accept: text/plain"`
