@@ -149,7 +149,7 @@ The help message is displayed:
 
 A swagger UI is available at `http[s]://<srv>/v0/documentation`
 
-<img src="https://github.com/user-attachments/assets/759e889a-8fef-4f49-9319-d2d9dbaf7e69" width="400"/>
+<img src="https://github.com/user-attachments/assets/60649510-4edb-4275-9339-181b451c603b" width="400"/>
 
 ## API reference
 
