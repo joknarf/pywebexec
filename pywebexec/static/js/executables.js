@@ -18,7 +18,7 @@ function unfilterCommands() {
 
 function filterCommands() {
     const value = commandInput.value.slice(0, commandInput.selectionStart);
-    paramsInput.name = value;
+    paramsInput.name = commandInput.value;
     const items = commandListDiv.children;
     let nbVisibleItems = 0;
     firstVisibleItem = -1;
