@@ -47,7 +47,7 @@ function setCommandListPosition() {
 
 // Update helpDiv position relative to paramsInput
 function setHelpDivPosition() {
-    const rect = paramsInput.getBoundingClientRect();
+    const rect = commandInput.getBoundingClientRect();
     helpDiv.style.left = `${rect.left}px`;
     helpDiv.style.top = `${rect.bottom + 2}px`;
 }
@@ -239,9 +239,6 @@ async function fetchExecutables() {
             div.className = 'command-item';
             div.textContent = exeObj.command;
             div.tabIndex = 0;
-            if (exeObj.help) {
-                div.title = exeObj.help;
-            }
             commandListDiv.appendChild(div);
         });
     } catch (error) {
@@ -260,7 +257,7 @@ paramsInput.addEventListener('focus', () => {
     const currentCmd = commandInput.value;
     if (gExecutables[currentCmd] && gExecutables[currentCmd].help) {
         //helpDiv.innerHTML = gExecutables[currentCmd].help.replace(/\n/g, '<br>');
-        helpDiv.innerText = gExecutables[currentCmd].help;
+        helpDiv.innerHTML = marked.parse(gExecutables[currentCmd].help);
         setHelpDivPosition();
         helpDiv.style.display = 'block';
     } else {

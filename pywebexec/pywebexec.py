@@ -30,7 +30,6 @@ import pyte
 from . import host_ip
 from flask_swagger_ui import get_swaggerui_blueprint  # new import
 import yaml
-import html
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
     from ldap3 import Server, Connection, ALL, SIMPLE, SUBTREE, Tls
@@ -925,7 +924,7 @@ def swagger_yaml():
             swagger_spec.setdefault("paths", {})[dynamic_path] = {
                 "post": {
                     "summary": f"Run command {exe["command"]}",
-                    "description": html.escape(exe["help"]),
+                    "description": f"{exe["help"]}",
                     "consumes": ["application/json"],
                     "produces": ["application/json"],
                     "parameters": [
