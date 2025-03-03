@@ -924,9 +924,9 @@ def swagger_yaml():
             dynamic_path = "/commands/" + exe["command"]
             swagger_spec.setdefault("paths", {})[dynamic_path] = {
                 "post": {
-                    "summary": f"Run command {exe["command"]}",
+                    "summary": f"Run command {exe['command']}",
                     "tags": ["run_commands"],
-                    "description": f"{exe["help"]}",
+                    "description": f"{exe['help']}",
                     "consumes": ["application/json"],
                     "produces": ["application/json"],
                     "parameters": [
