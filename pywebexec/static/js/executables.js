@@ -7,6 +7,8 @@ let isHandlingKeydown = false;
 let firstVisibleItem = 0;
 let gExecutables = {};
 let helpDiv = document.getElementById('paramsHelp');
+let paramsContainer = document.getElementById('paramsContainer');
+let schemaForm = document.getElementById('schemaForm');
 
 function unfilterCommands() {
     const items = commandListDiv.children;
@@ -48,8 +50,8 @@ function setCommandListPosition() {
 // Update helpDiv position relative to paramsInput
 function setHelpDivPosition() {
     const rect = commandInput.getBoundingClientRect();
-    helpDiv.style.left = `${rect.left}px`;
-    helpDiv.style.top = `${rect.bottom + 2}px`;
+    paramsContainer.style.left = `${rect.left}px`;
+    paramsContainer.style.top = `${rect.bottom + 2}px`;
 }
 
 function adjustInputWidth(input) {
@@ -205,13 +207,13 @@ window.addEventListener('click', (event) => {
     }
 });
 
-window.addEventListener('keydown', (event) => {
-    if ([commandInput, paramsInput, commandListDiv].includes(document.activeElement)) return;
-    if (event.code === `Key${event.key.toUpperCase()}`) {
-        commandInput.focus();
-        commandInput.dispatchEvent(new KeyboardEvent('keydown', event));
-    }
-});
+// window.addEventListener('keydown', (event) => {
+//     if ([commandInput, paramsInput, commandListDiv].includes(document.activeElement)) return;
+//     if (event.code === `Key${event.key.toUpperCase()}`) {
+//         commandInput.focus();
+//         commandInput.dispatchEvent(new KeyboardEvent('keydown', event));
+//     }
+// });
 
 window.addEventListener('resize', () => {
     setCommandListPosition();
@@ -257,18 +259,64 @@ async function fetchExecutables() {
 paramsInput.addEventListener('focus', () => {
     const currentCmd = commandInput.value;
     paramsInput.name = currentCmd;
+    if (gExecutables[currentCmd] && gExecutables[currentCmd].schema) {
+        $('#schemaForm').html('');
+        console.log(gExecutables[currentCmd].schema);
+        $('#schemaForm').jsonForm({
+            schema: gExecutables[currentCmd].schema,
+            onSubmit: function (errors, values) {
+                if (errors) {
+                    console.log(errors);
+                } else {
+                    const commandName = commandInput.value;
+                    fitAddon.fit();
+                    terminal.clear();
+                    try {
+                        const response = await fetch(`/commands/${commandName}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ params: values, rows: terminal.rows, cols: terminal.cols })
+                        });
+                        if (!response.ok) {
+                             throw new Error('Failed to launch command');
+                        }
+                        const data = await response.json();
+                        viewOutput(data.command_id);
+                        fetchCommands();
+                        commandInput.focus()
+                        commandInput.setSelectionRange(0, commandInput.value.length)
+                    } catch (error) {
+                        console.log('Error running command:', error);
+                    }
+                }
+            },
+            form: [
+                "*",
+                {
+                    type: 'submit',
+                    title: 'Run'
+                }
+            ]
+        });
+        schemaForm.firstChild.classList.add('form-inline');
+        setHelpDivPosition();
+        paramsContainer.style.display = 'block';
+    }
     if (gExecutables[currentCmd] && gExecutables[currentCmd].help) {
         helpDiv.innerHTML = marked.parse(gExecutables[currentCmd].help);
         setHelpDivPosition();
-        helpDiv.style.display = 'block';
+        paramsContainer.style.display = 'block';
     } else {
-        helpDiv.style.display = 'none';
+        paramsContainer.style.display = 'none';
     }
 });
 
 paramsInput.addEventListener('blur', () => {
-    helpDiv.style.display = 'none';
+    //paramsContainer.style.display = 'none';
 });
 
 window.addEventListener('resize', setHelpDivPosition);
 window.addEventListener('scroll', setHelpDivPosition);
+

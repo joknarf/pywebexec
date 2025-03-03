@@ -36,6 +36,7 @@ if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Secret key for session management
+app.json.sort_keys = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Add SameSite attribute to session cookies
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 auth = HTTPBasicAuth()
@@ -47,6 +48,7 @@ app.config['LDAP_BASE_DN'] = os.environ.get('PYWEBEXEC_LDAP_BASE_DN')
 app.config['LDAP_BIND_DN'] = os.environ.get('PYWEBEXEC_LDAP_BIND_DN')
 app.config['LDAP_BIND_PASSWORD'] = os.environ.get('PYWEBEXEC_LDAP_BIND_PASSWORD')
 
+app.config["JSON_SORT_KEYS"] = False
 
 # Get the Gunicorn error logger
 gunicorn_logger = logging.getLogger('gunicorn.error')
@@ -638,7 +640,13 @@ def get_executables():
             if os.path.exists(help_file) and os.path.isfile(help_file):
                 with open(help_file, 'r') as hf:
                     help_text = hf.read()
-            executables_list.append({"command": f, "help": help_text})
+            schema_file = f"{f}.schema.yaml"
+            schema = None
+            if os.path.exists(schema_file):
+                with open(schema_file, 'r') as sf:
+                    schema = yaml.safe_load(sf)
+                    print(schema)
+            executables_list.append({"command": f, "help": help_text, "schema": schema})
     return sorted(executables_list, key=lambda x: x["command"])
 
 @app.route('/commands/<command_id>/stop', methods=['PATCH'])
@@ -782,13 +790,39 @@ def run_dynamic_command(cmd):
         data = request.json
     except Exception as e:
         data = {}
-    params = data.get('params', [])
-    rows = data.get('rows', tty_rows) or tty_rows
-    cols = data.get('cols', tty_cols) or tty_cols
+    # Convert received parameters (excluding "params") to exec args.
+    # For each key, value in data:
+    # - if value is a string → ["--<key>", value]
+    # - if value is an array → ["--<key>", ...values]
+    # - if value is True → ["--<key>"]
+    # - if value is False → [] (omit)
+    print(data.get('params'))
+    if data.get('params') and isinstance(data['params'], dict):
+        params = []
+        for key, value in data['params'].items():
+            if key == "params":
+                continue
+            if isinstance(value, bool):
+                if value:
+                    params.extend([f"--{key}"])
+            elif isinstance(value, list):
+                if value:
+                    params.extend([f"--{key}"] + value)
+            elif isinstance(value, str):
+                if value:
+                    params.extend([f"--{key}", value])
+            else:
+                params.extend([f"--{key}", str(value)])
+    else:
+        params = data.get("params", [])
+    if isinstance(params, str):
+        params = [params]
     try:
         params = shlex.split(' '.join(params)) if isinstance(params, list) else []
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+    rows = data.get('rows', tty_rows) or tty_rows
+    cols = data.get('cols', tty_cols) or tty_cols
     user = session.get('username', '-')
     command_id = str(uuid.uuid4())
     update_command_status(command_id, {
@@ -922,25 +956,28 @@ def swagger_yaml():
         # Add dynamic paths for each executable:
         for exe in executables:
             dynamic_path = "/commands/" + exe["command"]
+            cmd_schema = {
+                "type": "object",
+                "properties": {
+                    "params": {"type": "array", "items": {"type": "string"}, "default": []},
+                    "rows": {"type": "integer", "default": tty_rows},
+                    "cols": {"type": "integer", "default": tty_cols}
+                }
+            }
+            if exe["schema"]:
+                cmd_schema["properties"]["params"] = exe["schema"]
             swagger_spec.setdefault("paths", {})[dynamic_path] = {
                 "post": {
-                    "summary": f"Run command {exe["command"]}",
-                    "tags": ["run_commands"],
-                    "description": f"{exe["help"]}",
+                    "summary": f"Run command {exe['command']}",
+                    "tags": ["custom_commands"],
+                    "description": f"{exe['help']}",
                     "consumes": ["application/json"],
                     "produces": ["application/json"],
                     "parameters": [
                         {
                             "in": "body",
                             "name": "commandRequest",
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "params": {"type": "array", "items": {"type": "string"}, "default": []},
-                                    "rows": {"type": "integer", "default": tty_rows},
-                                    "cols": {"type": "integer", "default": tty_cols},
-                                }
-                            }
+                            "schema": cmd_schema
                         }
                     ],
                     "responses": {
