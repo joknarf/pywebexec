@@ -6800,6 +6800,7 @@
   }
   .form-inline {
     align-items: unset;
+    flex-flow: wrap;
   }
   .form-inline .checkbox {
     margin-top: 1px;
