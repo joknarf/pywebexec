@@ -205,6 +205,10 @@ window.addEventListener('click', (event) => {
     if (!commandInput.contains(event.target) && !commandListDiv.contains(event.target) && !showCommandListButton.contains(event.target)) {
         commandListDiv.style.display = 'none';
     }
+    if (!paramsContainer.contains(event.target) && !commandListDiv.contains(event.target) && !paramsInput.contains(event.target)) {
+        paramsContainer.style.display = 'none';
+    }
+
 });
 
 // window.addEventListener('keydown', (event) => {
@@ -261,7 +265,6 @@ paramsInput.addEventListener('focus', () => {
     paramsInput.name = currentCmd;
     if (gExecutables[currentCmd] && gExecutables[currentCmd].schema) {
         $('#schemaForm').html('');
-        console.log(gExecutables[currentCmd].schema);
         $('#schemaForm').jsonForm({
             schema: gExecutables[currentCmd].schema,
             onSubmit: async function (errors, values) {
@@ -320,3 +323,6 @@ paramsInput.addEventListener('blur', () => {
 window.addEventListener('resize', setHelpDivPosition);
 window.addEventListener('scroll', setHelpDivPosition);
 
+schemaForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+});
