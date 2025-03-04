@@ -21,10 +21,15 @@
             </div>
             <div id="commandList" class="command-list"></div>
             <input type="text" id="params" name="params" oninput="this.style.width = ((this.value.length + 1) * 8) + 'px';">
-            <div id="paramsHelp"></div>
         </div>
         <button type="submit">Run</button>
     </form>
+    <div id="paramsContainer">
+        <div id="schemaContainer">
+            <form id="schemaForm"></form>
+        </div>
+        <div id="paramsHelp"></div>
+    </div>
     <div class="table-container" id="tableContainer">
         <table>
             <thead>
@@ -61,7 +66,11 @@
     <script src="/static/js/xterm/addon-unicode-graphemes.js"></script>
     <script src="/static/js/xterm/addon-fit.js"></script>
     <script src="/static/js/marked/marked.min.js"></script>
+    <script type="text/javascript" src="/static/jsonform/deps/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/jsonform/deps/underscore.js"></script>
+    <script type="text/javascript" src="/static/jsonform/lib/jsonform.js"></script>
     <script type="text/javascript" src="/static/js/script.js"></script>
     <script type="text/javascript" src="/static/js/executables.js"></script>
+
 </body>
 </html>

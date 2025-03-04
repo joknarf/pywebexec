@@ -36,6 +36,7 @@ if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Secret key for session management
+app.json.sort_keys = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Add SameSite attribute to session cookies
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 auth = HTTPBasicAuth()
@@ -47,6 +48,7 @@ app.config['LDAP_BASE_DN'] = os.environ.get('PYWEBEXEC_LDAP_BASE_DN')
 app.config['LDAP_BIND_DN'] = os.environ.get('PYWEBEXEC_LDAP_BIND_DN')
 app.config['LDAP_BIND_PASSWORD'] = os.environ.get('PYWEBEXEC_LDAP_BIND_PASSWORD')
 
+app.config["JSON_SORT_KEYS"] = False
 
 # Get the Gunicorn error logger
 gunicorn_logger = logging.getLogger('gunicorn.error')
@@ -629,16 +631,27 @@ def log_error(fromip, user, message):
 def log_request(message):
     log_info(request.remote_addr, session.get('username', '-'), message)
 
+def get_executable(cmd):
+    if os.path.isfile(cmd) and os.access(cmd, os.X_OK):
+        help_file = f"{cmd}.help"
+        help_text = ""
+        if os.path.exists(help_file) and os.path.isfile(help_file):
+            with open(help_file, 'r') as hf:
+                help_text = hf.read()
+        schema_file = f"{cmd}.schema.yaml"
+        schema = None
+        if os.path.exists(schema_file):
+            with open(schema_file, 'r') as sf:
+                schema = yaml.safe_load(sf)
+        return {"command": cmd, "help": help_text, "schema": schema}
+    return None
+
 def get_executables():
     executables_list = []
     for f in os.listdir('.'):
-        if os.path.isfile(f) and os.access(f, os.X_OK):
-            help_file = f"{f}.help"
-            help_text = ""
-            if os.path.exists(help_file) and os.path.isfile(help_file):
-                with open(help_file, 'r') as hf:
-                    help_text = hf.read()
-            executables_list.append({"command": f, "help": help_text})
+            exe = get_executable(f)
+            if exe:
+                executables_list.append(exe)
     return sorted(executables_list, key=lambda x: x["command"])
 
 @app.route('/commands/<command_id>/stop', methods=['PATCH'])
@@ -782,13 +795,56 @@ def run_dynamic_command(cmd):
         data = request.json
     except Exception as e:
         data = {}
-    params = data.get('params', [])
-    rows = data.get('rows', tty_rows) or tty_rows
-    cols = data.get('cols', tty_cols) or tty_cols
+
+    # Convert received parameters to exec args.
+    # If schema defined for each para, value in data:
+    # - if value is True → --<key>
+    # - if value is a string → --<param> value
+    # - if value is an array → --<param> value1 value2 ...
+    # - if value is False → "" (omit)
+    # schema_options:
+    #   separator: " " (default) or "=" is the separator between --param and value
+    #   noprefix_params: ["param1", "param2"] or ["*"] to omit --param prefix
+    #   convert_params: {"param1": "param2"} to convert param1 to param2
+    exe = get_executable(cmd)
+    separator = exe.get("schema", {}).get("schema_options", {}).get("separator", " ")
+    noprefix = exe.get("schema", {}).get("schema_options", {}).get("noprefix_params", {})
+    convert_params = exe.get("schema", {}).get("schema_options", {}).get("convert_params", {})
+    if data.get('params') and isinstance(data['params'], dict):
+        params = ""
+        for param, value in data['params'].items():
+            if value is None:
+                continue
+            prefix = ""
+            if param in convert_params:
+                param = convert_params[param]
+                prefix = param
+                if param in ['--', '', None]:
+                    separator = ' '
+            elif "*" in noprefix or param in noprefix:
+                separator = ""
+            else:
+                prefix = f"--{param}"
+            if isinstance(value, bool):
+                if value:
+                    params += f"{prefix} "
+                continue
+            params += f"{prefix}{separator}"
+            if isinstance(value, list):
+                params += " ".join(value)
+            else:
+                params += str(value)
+            params += " "
+    else:
+        params = data.get("params", [])
+    if isinstance(params, str):
+        params = [params]
     try:
         params = shlex.split(' '.join(params)) if isinstance(params, list) else []
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+    rows = data.get('rows', tty_rows) or tty_rows
+    cols = data.get('cols', tty_cols) or tty_cols
     user = session.get('username', '-')
     command_id = str(uuid.uuid4())
     update_command_status(command_id, {
@@ -922,6 +978,18 @@ def swagger_yaml():
         # Add dynamic paths for each executable:
         for exe in executables:
             dynamic_path = "/commands/" + exe["command"]
+            cmd_schema = {
+                "type": "object",
+                "properties": {
+                    "params": {"type": "array", "items": {"type": "string"}, "default": []},
+                    "rows": {"type": "integer", "default": tty_rows},
+                    "cols": {"type": "integer", "default": tty_cols}
+                }
+            }
+            if exe["schema"]:
+                # if exec["schema"].get("schema_options"):
+                #     del exe["schema"]["schema_options"]
+                cmd_schema["properties"]["params"] = exe["schema"]
             swagger_spec.setdefault("paths", {})[dynamic_path] = {
                 "post": {
                     "summary": f"Run command {exe['command']}",
@@ -933,14 +1001,7 @@ def swagger_yaml():
                         {
                             "in": "body",
                             "name": "commandRequest",
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "params": {"type": "array", "items": {"type": "string"}, "default": []},
-                                    "rows": {"type": "integer", "default": tty_rows},
-                                    "cols": {"type": "integer", "default": tty_cols},
-                                }
-                            }
+                            "schema": cmd_schema
                         }
                     ],
                     "responses": {
