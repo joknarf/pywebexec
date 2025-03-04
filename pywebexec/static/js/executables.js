@@ -100,11 +100,13 @@ commandInput.addEventListener('input', (event) => {
 commandInput.addEventListener('keydown', (event) => {
     if (event.key === ' ' || event.key === 'ArrowRight' || event.key === 'Tab') {
         event.preventDefault();
+        paramsContainer.style.display = 'none';
         paramsInput.focus();
         paramsInput.setSelectionRange(0, paramsInput.value.length);
         commandListDiv.style.display = 'none'
     } else if (event.key === 'ArrowDown') {
         if (commandListDiv.children.length > 1) {
+            paramsContainer.style.display = 'none';
             commandListDiv.style.display = 'block';
             commandListDiv.children[firstVisibleItem].focus();
         }
@@ -263,8 +265,10 @@ async function fetchExecutables() {
 paramsInput.addEventListener('focus', () => {
     const currentCmd = commandInput.value;
     paramsInput.name = currentCmd;
-    if (gExecutables[currentCmd] && gExecutables[currentCmd].schema) {
+    if (paramsContainer.style.display == 'none') {
         $('#schemaForm').html('');
+    }
+    if (gExecutables[currentCmd] && gExecutables[currentCmd].schema && paramsContainer.style.display == 'none') {
         $('#schemaForm').jsonForm({
             schema: gExecutables[currentCmd].schema,
             onSubmit: async function (errors, values) {

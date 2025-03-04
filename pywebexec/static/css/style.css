@@ -6777,12 +6777,18 @@
     border-radius: 15px;
     line-height: unset;
   } 
-  .btn-primary, .btn-default {
+  .btn-primary {
+    position: relative;
     margin-bottom: 10px;
+    height: 24px;
+    top: 20px;
   }
+
   .btn-default {
-    background-color: #444;
-    color: #eee;
+    background-color: transparent;
+    padding: 3px 5px 2px 5px;
+    /* border: 1px solid #ccc; */
+    /* color: #eee; */
   }
   .jsonform-required > label:after {
     content: ' *';
@@ -6790,13 +6796,24 @@
   }
   label {
     color: #444;
+    margin-left: 5px;
   }
-  /* .form-inline {
+  .form-inline {
     align-items: unset;
-  } */
+  }
   .form-inline .checkbox {
     margin-top: 1px;
     margin-bottom: 3px;
+  }
+  li > div > label {
+    display: none;
+  }
+  ul {
+    padding: 0;
+    margin: 0;
+  }
+  li {
+    display: flex;
   }
 }
 
@@ -6900,7 +6917,7 @@ code {
     font-family: "CommitMono Nerd Font Mono", Consolas, "Courier New", monospace;
 }
 #paramsContainer {
-    max-width: 50%;
+    min-width: 300px;
     display: none;
     position: absolute;
     background-color: #efefff;
