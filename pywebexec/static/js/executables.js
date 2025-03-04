@@ -264,7 +264,7 @@ paramsInput.addEventListener('focus', () => {
         console.log(gExecutables[currentCmd].schema);
         $('#schemaForm').jsonForm({
             schema: gExecutables[currentCmd].schema,
-            onSubmit: function (errors, values) {
+            onSubmit: async function (errors, values) {
                 if (errors) {
                     console.log(errors);
                 } else {
@@ -285,8 +285,8 @@ paramsInput.addEventListener('focus', () => {
                         const data = await response.json();
                         viewOutput(data.command_id);
                         fetchCommands();
-                        commandInput.focus()
-                        commandInput.setSelectionRange(0, commandInput.value.length)
+                        commandInput.focus();
+                        commandInput.setSelectionRange(0, commandInput.value.length);
                     } catch (error) {
                         console.log('Error running command:', error);
                     }
@@ -296,7 +296,7 @@ paramsInput.addEventListener('focus', () => {
                 "*",
                 {
                     type: 'submit',
-                    title: 'Run'
+                    title: 'Run',
                 }
             ]
         });

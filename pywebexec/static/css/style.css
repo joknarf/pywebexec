@@ -6773,14 +6773,16 @@
   }
   .btn {
     padding: 3px 10px;
-    border: 0px solid transparent;
+    border: 1px solid transparent;
     border-radius: 15px;
-  }
-  .btn-primary {
+    line-height: unset;
+  } 
+  .btn-primary, .btn-default {
     margin-bottom: 10px;
   }
-  input[type="checkbox"] {
-    margin-bottom: 6px;
+  .btn-default {
+    background-color: #444;
+    color: #eee;
   }
 }
 
