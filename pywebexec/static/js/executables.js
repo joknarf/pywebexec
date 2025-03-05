@@ -313,6 +313,12 @@ paramsInput.addEventListener('focus', () => {
             input.addEventListener('input', () => adjustInputWidth(input));
         });
         paramsContainer.style.display = 'block';
+        const input1 = schemaForm.querySelector('input[type="text"]');
+        if (input1) {
+            input1.focus();
+        }
+    } else {
+        paramsContainer.style.display = 'none';
     }
     if (gExecutables[currentCmd] && gExecutables[currentCmd].help) {
         helpDiv.innerHTML = marked.parse(gExecutables[currentCmd].help);
