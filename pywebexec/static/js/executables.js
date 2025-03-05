@@ -56,8 +56,7 @@ function setHelpDivPosition() {
 
 function adjustInputWidth(input) {
     input.style.width = 'auto';
-    input.style.width = `${input.scrollWidth}px`;
-
+    input.style.width = `${input.scrollWidth + 3}px`;
 }
 
 paramsInput.addEventListener('input', () => adjustInputWidth(paramsInput));
@@ -309,6 +308,10 @@ paramsInput.addEventListener('focus', () => {
         });
         schemaForm.firstChild.classList.add('form-inline');
         setHelpDivPosition();
+        schemaForm.querySelectorAll('input[type="text"]').forEach(input => {
+            input.setAttribute('size', '12');
+            input.addEventListener('input', () => adjustInputWidth(input));
+        });
         paramsContainer.style.display = 'block';
     }
     if (gExecutables[currentCmd] && gExecutables[currentCmd].help) {
