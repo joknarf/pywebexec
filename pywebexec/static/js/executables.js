@@ -328,5 +328,6 @@ window.addEventListener('resize', setHelpDivPosition);
 window.addEventListener('scroll', setHelpDivPosition);
 
 schemaForm.addEventListener('submit', (event) => {
+    paramsContainer.style.display = 'none';
     event.preventDefault();
 });

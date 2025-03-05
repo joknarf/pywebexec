@@ -6800,7 +6800,6 @@
   }
   .form-inline {
     align-items: unset;
-    flex-flow: wrap;
   }
   .form-inline .checkbox {
     margin-top: 1px;
@@ -6893,6 +6892,7 @@ form {
 .form-inline {
     display: flex;
     align-items: center;
+    flex-flow: wrap;
     gap: 10px;
 }
 .status-icon {
@@ -6927,6 +6927,7 @@ code {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.40);
     border-radius: 10px;
     max-width: 80%;
+    max-height: 75%;
     z-index: 1000;
     overflow: auto;
 }
