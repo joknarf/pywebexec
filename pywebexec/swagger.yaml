@@ -53,18 +53,22 @@ paths:
             properties:
               command:
                 type: string
+                description: "Command to run"
                 # Enum will be added dynamically by the APIs
                 default: commandName
               params:
                 type: array
+                description: "Command parameters"
                 items:
                   type: string
                 default: []
               rows:
                 type: integer
+                description: "tty nb rows"
                 default: 24
               cols:
                 type: integer
+                description: "tty nb columns"
                 default: 125
             required:
               - command

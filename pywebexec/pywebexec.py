@@ -617,7 +617,7 @@ swaggerui_blueprint = get_swaggerui_blueprint(
     API_URL,
     config={
         'app_name': f"{args.title} API",
-        'layout': 'BaseLayout'
+        'layout': 'BaseLayout',
     }
 )
 app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
@@ -982,8 +982,8 @@ def swagger_yaml():
                 "type": "object",
                 "properties": {
                     "params": {"type": "array", "items": {"type": "string"}, "default": []},
-                    "rows": {"type": "integer", "default": tty_rows},
-                    "cols": {"type": "integer", "default": tty_cols}
+                    "rows": {"type": "integer", "description": "tty nb rows", "default": tty_rows},
+                    "cols": {"type": "integer", "description": "tty nb columns", "default": tty_cols}
                 }
             }
             if exe["schema"]:
