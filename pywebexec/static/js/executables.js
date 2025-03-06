@@ -9,6 +9,7 @@ let gExecutables = {};
 let helpDiv = document.getElementById('paramsHelp');
 let paramsContainer = document.getElementById('paramsContainer');
 let schemaForm = document.getElementById('schemaForm');
+let inputHandlers = [];
 
 function unfilterCommands() {
     const items = commandListDiv.children;
@@ -260,6 +261,17 @@ async function fetchExecutables() {
         document.getElementById('launchForm').style.display = 'none';
 
 }
+function formInputHandle() {
+    schemaForm.querySelectorAll('input[type="text"]').forEach(input => {
+        if (! inputHandlers.includes(input)) {
+            console.log('Adding input handler');
+            console.log(input);
+            input.setAttribute('size', '12');
+            input.addEventListener('input', () => adjustInputWidth(input));
+            inputHandlers.push(input);
+        }
+    });
+}
 
 paramsInput.addEventListener('focus', () => {
     const currentCmd = commandInput.value;
@@ -304,14 +316,18 @@ paramsInput.addEventListener('focus', () => {
                     type: 'submit',
                     title: 'Run',
                 }
-            ]
+            ],
+            // params: {
+            //     fieldHtmlClass: "input-small",
+            // }
         });
         schemaForm.firstChild.classList.add('form-inline');
-        setHelpDivPosition();
-        schemaForm.querySelectorAll('input[type="text"]').forEach(input => {
-            input.setAttribute('size', '12');
-            input.addEventListener('input', () => adjustInputWidth(input));
+        schemaForm.querySelectorAll('._jsonform-array-addmore').forEach(btn => {
+            btn.addEventListener('click', formInputHandle);
         });
+
+        setHelpDivPosition();
+        formInputHandle();
         paramsContainer.style.display = 'block';
         const input1 = schemaForm.querySelector('input[type="text"]');
         if (input1) {
