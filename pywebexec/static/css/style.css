@@ -7074,7 +7074,7 @@ code {
     background-color: white;
     cursor: pointer;
     height: 21px;
-    font-size: 15px;
+    /* font-size: 15px; */
     border-top: 1px solid #aaa;
     border-bottom: 1px solid #aaa;
     border-radius: 0px;
@@ -7091,7 +7091,7 @@ code {
     visibility: visible; /* Show arrow on hover */
 }
 
-#commandName:focus + .show-command-list-button .arrow {
+#command:focus + .show-command-list-button .arrow {
     visibility: visible; /* Show arrow when input has focus */
 }
 
