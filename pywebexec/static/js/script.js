@@ -171,8 +171,8 @@ async function fetchCommands(hide=false) {
                 <td>${formatTime(command.start_time)}</td>
                 <td>${command.status === 'running' ? formatDuration(command.start_time, new Date().toISOString()) : formatDuration(command.start_time, command.end_time)}</td>
                 <td><span class="status-icon status-${command.status}"></span>${command.status}${command.status === 'failed' ? ` (${command.exit_code})` : ''}</td>
-                <td>
-                    ${command.command.startsWith('term') ? '' : command.status === 'running' ? `<button onclick="stopCommand('${command.command_id}', event)">Stop</button>` : `<button onclick="relaunchCommand('${command.command_id}', event)">Run</button>`}
+                <td align="center">
+                    ${command.command.startsWith('term') ? '' : command.status === 'running' ? `<button class="stop" onclick="stopCommand('${command.command_id}', event)">Stop</button>` : `<button class="run" onclick="relaunchCommand('${command.command_id}', event)">Run</button>`}
                 </td>
                 <td class="system-font" title="${command.user == '-' ? '' : command.user}">${command.command.replace(/^\.\//, '')}</td>
                 <td class="monospace outcol">

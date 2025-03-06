@@ -6772,7 +6772,7 @@
     border-radius: 15px;
   }
   .btn {
-    padding: 3px 10px;
+    padding: 3px 13px;
     border: 1px solid transparent;
     border-radius: 15px;
     line-height: unset;
@@ -6835,7 +6835,7 @@ table {
     border-collapse: collapse;
 }
 th, td {
-    padding: 8px;
+    padding: 7px;
     text-align: left;
     border-bottom: 1px solid #ddd;
     white-space: nowrap;
@@ -6879,13 +6879,33 @@ button {
     border-radius: 15px;
     padding: 0px 13px;
     border: 1px #555 solid;
-    height: 22px;
-    font-size: 13px;
+    height: 24px;
+    font-size: 14px;
     outline: none;
     background-color: #eee;
     color: #000;
     font-weight: normal;
+    font-family: Arial, Helvetica, sans-serif;
 }
+button.run {
+  color: #fff;
+  background-color: #337ab7;
+  border-color: #2e6da4;  
+}
+button.run:hover {
+  background-color: #286090;
+  border-color: #204d74;
+}
+button.stop {
+  color: #fff;
+  background-color: #d9534f;
+  border-color: #d43f3a;
+}
+button.stop:hover {
+  background-color: #c9302c;
+  border-color: #ac2925;
+}
+
 form {
     padding-bottom: 15px;
 }
@@ -7035,7 +7055,7 @@ code {
     border-radius: 15px;
     padding: 3px;
     border: 1px #aaa solid;
-    height: 15px;
+    height: 16px;
     font-size: 15px;
     outline: none;
     background-color: white;
@@ -7073,7 +7093,7 @@ code {
 .show-command-list-button {
     background-color: white;
     cursor: pointer;
-    height: 21px;
+    height: 22px;
     /* font-size: 15px; */
     border-top: 1px solid #aaa;
     border-bottom: 1px solid #aaa;
