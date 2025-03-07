@@ -785,9 +785,69 @@ def list_executables():
     return jsonify({"commands": executables_list})
 
 
+    
 @app.route('/commands/<cmd>', methods=['POST'])
 def run_dynamic_command(cmd):
     # Validate that 'cmd' is an executable in the current directory
+
+    def parse_params(cmd, data_params):
+        if not data_params:
+            return []
+        # Convert received parameters to exec args.
+        # If schema defined for each para, value in data:
+        # - if value is True → --<key>
+        # - if value is a string → --<param> value
+        # - if value is an array → --<param> value1 value2 ...
+        # - if value is False → "" (omit)
+        # schema_options:
+        #   separator: " " (default) or "=" is the separator between --param and value
+        #   noprefix_params: ["param1", "param2"] or ["*"] to omit --param prefix
+        #   convert_params: {"param1": "param2"} to convert param1 to param2
+        exe = get_executable(cmd)
+        separator = exe.get("schema", {}).get("schema_options", {}).get("separator", " ")
+        noprefix = exe.get("schema", {}).get("schema_options", {}).get("noprefix_params", {})
+        convert_params = exe.get("schema", {}).get("schema_options", {}).get("convert_params", {})
+        schema_params = exe.get("schema", {}).get("properties", {})
+        if isinstance(data_params, dict) and not schema_params:
+            return None
+        if isinstance(data_params, dict):
+            params = ""
+            for param in schema_params.keys():
+                if not param in data_params:
+                    continue
+                value = data_params[param]
+                if value is None:
+                    continue
+                prefix = ""
+                if param in convert_params:
+                    param = convert_params[param]
+                    prefix = param
+                    if param in ['--', '', None]:
+                        separator = ' '
+                elif "*" in noprefix or param in noprefix:
+                    separator = ""
+                else:
+                    prefix = f"--{param}"
+                if isinstance(value, bool):
+                    if value:
+                        params += f"{prefix} "
+                    continue
+                params += f"{prefix}{separator}"
+                if isinstance(value, list):
+                    params += " ".join(value)
+                else:
+                    params += str(value)
+                params += " "
+        else:
+            params = data_params
+        if isinstance(params, str):
+            params = [params]
+        try:
+            params = shlex.split(' '.join(params)) if isinstance(params, list) else []
+        except Exception as e:
+            return None
+        return params
+
     cmd_path = os.path.join(".", os.path.basename(cmd))
     if not os.path.isfile(cmd_path) or not os.access(cmd_path, os.X_OK):
         return jsonify({'error': 'Command not found or not executable'}), 400
@@ -795,54 +855,9 @@ def run_dynamic_command(cmd):
         data = request.json
     except Exception as e:
         data = {}
-
-    # Convert received parameters to exec args.
-    # If schema defined for each para, value in data:
-    # - if value is True → --<key>
-    # - if value is a string → --<param> value
-    # - if value is an array → --<param> value1 value2 ...
-    # - if value is False → "" (omit)
-    # schema_options:
-    #   separator: " " (default) or "=" is the separator between --param and value
-    #   noprefix_params: ["param1", "param2"] or ["*"] to omit --param prefix
-    #   convert_params: {"param1": "param2"} to convert param1 to param2
-    exe = get_executable(cmd)
-    separator = exe.get("schema", {}).get("schema_options", {}).get("separator", " ")
-    noprefix = exe.get("schema", {}).get("schema_options", {}).get("noprefix_params", {})
-    convert_params = exe.get("schema", {}).get("schema_options", {}).get("convert_params", {})
-    if data.get('params') and isinstance(data['params'], dict):
-        params = ""
-        for param, value in data['params'].items():
-            if value is None:
-                continue
-            prefix = ""
-            if param in convert_params:
-                param = convert_params[param]
-                prefix = param
-                if param in ['--', '', None]:
-                    separator = ' '
-            elif "*" in noprefix or param in noprefix:
-                separator = ""
-            else:
-                prefix = f"--{param}"
-            if isinstance(value, bool):
-                if value:
-                    params += f"{prefix} "
-                continue
-            params += f"{prefix}{separator}"
-            if isinstance(value, list):
-                params += " ".join(value)
-            else:
-                params += str(value)
-            params += " "
-    else:
-        params = data.get("params", [])
-    if isinstance(params, str):
-        params = [params]
-    try:
-        params = shlex.split(' '.join(params)) if isinstance(params, list) else []
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+    params = parse_params(cmd, data.get('params'))
+    if params is None:
+        return jsonify({'error': 'Invalid parameters'}), 400
     rows = data.get('rows', tty_rows) or tty_rows
     cols = data.get('cols', tty_cols) or tty_cols
     user = session.get('username', '-')
