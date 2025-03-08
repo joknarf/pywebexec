@@ -875,7 +875,6 @@ def index():
 
 @app.route('/v0/documentation/')
 def swagger_ui():
-    print("swagger_ui")
     return render_template('swagger_ui.html', title=app.config.get('TITLE', 'PyWebExec API'))
 
 
