@@ -271,6 +271,24 @@ function formInputHandle() {
     });
 }
 
+function extractKeysAndPlaceholders(obj, prefix = '') {
+    let result = [];
+  
+    for (let key in obj.properties) {
+      if (obj.properties[key].type === 'object' && obj.properties[key].properties) {
+        // Si la propriété est un objet, appeler récursivement
+        result = result.concat(extractKeysAndPlaceholders(obj.properties[key], prefix ? `${prefix}.${key}` : key));
+      } else {
+        // Sinon, ajouter au résultat
+        result.push({
+          key: prefix ? `${prefix}.${key}` : key,
+          placeholder: obj.properties[key].example || null
+        });
+      }
+    }
+    return result;
+}
+
 paramsInput.addEventListener('focus', () => {
     const currentCmd = commandInput.value;
     paramsInput.name = currentCmd;
@@ -278,11 +296,8 @@ paramsInput.addEventListener('focus', () => {
         $('#schemaForm').html('');
     }
     if (gExecutables[currentCmd] && gExecutables[currentCmd].schema && paramsContainer.style.display == 'none') {
-        sProp = gExecutables[currentCmd].schema.properties;
-        const formDesc = Object.keys(sProp).map(key => ({
-            key: key,
-            placeholder: sProp[key].hasOwnProperty('example') ? sProp[key].example : null
-        }));
+        // sProp = gExecutables[currentCmd].schema.properties;
+        formDesc = extractKeysAndPlaceholders(gExecutables[currentCmd].schema);
         $('#schemaForm').jsonForm({
             schema: gExecutables[currentCmd].schema,
             onSubmit: async function (errors, values) {
