@@ -264,8 +264,6 @@ async function fetchExecutables() {
 function formInputHandle() {
     schemaForm.querySelectorAll('input[type="text"]').forEach(input => {
         if (! inputHandlers.includes(input)) {
-            console.log('Adding input handler');
-            console.log(input);
             input.setAttribute('size', '12');
             input.addEventListener('input', () => adjustInputWidth(input));
             inputHandlers.push(input);
@@ -280,6 +278,11 @@ paramsInput.addEventListener('focus', () => {
         $('#schemaForm').html('');
     }
     if (gExecutables[currentCmd] && gExecutables[currentCmd].schema && paramsContainer.style.display == 'none') {
+        sProp = gExecutables[currentCmd].schema.properties;
+        const formDesc = Object.keys(sProp).map(key => ({
+            key: key,
+            placeholder: sProp[key].hasOwnProperty('example') ? sProp[key].example : null
+        }));
         $('#schemaForm').jsonForm({
             schema: gExecutables[currentCmd].schema,
             onSubmit: async function (errors, values) {
@@ -310,13 +313,12 @@ paramsInput.addEventListener('focus', () => {
                     }
                 }
             },
-            form: [
-                "*",
+            form: formDesc.concat([
                 {
                     type: 'submit',
                     title: 'Run',
                 }
-            ],
+            ]),
             // params: {
             //     fieldHtmlClass: "input-small",
             // }
