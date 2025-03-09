@@ -8,8 +8,7 @@ let firstVisibleItem = 0;
 let gExecutables = {};
 let helpDiv = document.getElementById('paramsHelp');
 let paramsContainer = document.getElementById('paramsContainer');
-let schemaForm = document.getElementById('schemaForm');
-let inputHandlers = [];
+let schemaFormPW = document.getElementById('schemaForm');
 
 function unfilterCommands() {
     const items = commandListDiv.children;
@@ -53,11 +52,6 @@ function setHelpDivPosition() {
     const rect = commandInput.getBoundingClientRect();
     paramsContainer.style.left = `${rect.left}px`;
     paramsContainer.style.top = `${rect.bottom + 2}px`;
-}
-
-function adjustInputWidth(input) {
-    input.style.width = 'auto';
-    input.style.width = `${input.scrollWidth + 3}px`;
 }
 
 paramsInput.addEventListener('input', () => adjustInputWidth(paramsInput));
@@ -261,33 +255,7 @@ async function fetchExecutables() {
         document.getElementById('launchForm').style.display = 'none';
 
 }
-function formInputHandle() {
-    schemaForm.querySelectorAll('input[type="text"]').forEach(input => {
-        if (! inputHandlers.includes(input)) {
-            input.setAttribute('size', '12');
-            input.addEventListener('input', () => adjustInputWidth(input));
-            inputHandlers.push(input);
-        }
-    });
-}
 
-function extractKeysAndPlaceholders(obj, prefix = '') {
-    let result = [];
-  
-    for (let key in obj.properties) {
-      if (obj.properties[key].type === 'object' && obj.properties[key].properties) {
-        // Si la propriété est un objet, appeler récursivement
-        result = result.concat(extractKeysAndPlaceholders(obj.properties[key], prefix ? `${prefix}.${key}` : key));
-      } else {
-        // Sinon, ajouter au résultat
-        result.push({
-          key: prefix ? `${prefix}.${key}` : key,
-          placeholder: obj.properties[key].example || null
-        });
-      }
-    }
-    return result;
-}
 
 paramsInput.addEventListener('focus', () => {
     const currentCmd = commandInput.value;
@@ -297,56 +265,39 @@ paramsInput.addEventListener('focus', () => {
     }
     if (gExecutables[currentCmd] && gExecutables[currentCmd].schema && paramsContainer.style.display == 'none') {
         // sProp = gExecutables[currentCmd].schema.properties;
-        formDesc = extractKeysAndPlaceholders(gExecutables[currentCmd].schema);
-        $('#schemaForm').jsonForm({
-            schema: gExecutables[currentCmd].schema,
-            onSubmit: async function (errors, values) {
-                if (errors) {
-                    console.log(errors);
-                } else {
-                    const commandName = commandInput.value;
-                    fitAddon.fit();
-                    terminal.clear();
-                    try {
-                        const response = await fetch(`/commands/${commandName}`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ params: values, rows: terminal.rows, cols: terminal.cols })
-                        });
-                        if (!response.ok) {
-                             throw new Error('Failed to launch command');
-                        }
-                        const data = await response.json();
-                        viewOutput(data.command_id);
-                        fetchCommands();
-                        commandInput.focus();
-                        commandInput.setSelectionRange(0, commandInput.value.length);
-                    } catch (error) {
-                        console.log('Error running command:', error);
+        createSchemaForm($('#schemaForm'), gExecutables[currentCmd].schema, async function (errors, values) {
+            if (errors) {
+                console.log(errors);
+            } else {
+                const commandName = commandInput.value;
+                fitAddon.fit();
+                terminal.clear();
+                try {
+                    const response = await fetch(`/commands/${commandName}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ params: values, rows: terminal.rows, cols: terminal.cols })
+                    });
+        
+                    if (!response.ok) {
+                        throw new Error('Failed to launch command');
                     }
+        
+                    const data = await response.json();
+                    viewOutput(data.command_id);
+                    fetchCommands();
+                    commandInput.focus();
+                    commandInput.setSelectionRange(0, commandInput.value.length);
+                } catch (error) {
+                    console.log('Error running command:', error);
                 }
-            },
-            form: formDesc.concat([
-                {
-                    type: 'submit',
-                    title: 'Run',
-                }
-            ]),
-            // params: {
-            //     fieldHtmlClass: "input-small",
-            // }
+            }
         });
-        schemaForm.firstChild.classList.add('form-inline');
-        schemaForm.querySelectorAll('._jsonform-array-addmore').forEach(btn => {
-            btn.addEventListener('click', formInputHandle);
-        });
-
         setHelpDivPosition();
-        formInputHandle();
         paramsContainer.style.display = 'block';
-        const input1 = schemaForm.querySelector('input[type="text"]');
+        const input1 = schemaFormPW.querySelector('input[type="text"]');
         if (input1) {
             input1.focus();
         }
@@ -369,7 +320,7 @@ paramsInput.addEventListener('blur', () => {
 window.addEventListener('resize', setHelpDivPosition);
 window.addEventListener('scroll', setHelpDivPosition);
 
-schemaForm.addEventListener('submit', (event) => {
+schemaFormPW.addEventListener('submit', (event) => {
     paramsContainer.style.display = 'none';
     event.preventDefault();
 });

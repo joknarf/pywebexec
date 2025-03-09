@@ -877,7 +877,6 @@ def index():
 def swagger_ui():
     return render_template('swagger_ui.html', title=app.config.get('TITLE', 'PyWebExec API'))
 
-
 @app.route('/commands', methods=['GET'])
 def list_commands():
     commands = read_commands()
@@ -1027,7 +1026,7 @@ def swagger_yaml():
                 }
             }
         swagger_spec['info']['title'] = app.config.get('TITLE', 'PyWebExec API')
-        swagger_spec_str = yaml.dump(swagger_spec)
+        swagger_spec_str = yaml.dump(swagger_spec, sort_keys=False)
         return Response(swagger_spec_str, mimetype='application/yaml')
     except Exception as e:
         return Response(f"Error reading swagger spec: {e}", status=500)
