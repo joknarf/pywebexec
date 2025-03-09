@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
     <title>{{ title }}</title>
+    <link rel="stylesheet" href="/static/css/form.css">
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/markdown.css">
     <link rel="stylesheet" href="/static/css/xterm.css">
 </head>
 <body>
@@ -28,7 +30,7 @@
         <div id="schemaContainer">
             <form id="schemaForm"></form>
         </div>
-        <div id="paramsHelp"></div>
+        <div id="paramsHelp" class="markdown"></div>
     </div>
     <div class="table-container" id="tableContainer">
         <table>
@@ -71,6 +73,8 @@
     <script type="text/javascript" src="/static/jsonform/lib/jsonform.js"></script>
     <script type="text/javascript" src="/static/js/script.js"></script>
     <script type="text/javascript" src="/static/js/executables.js"></script>
+    <script type="text/javascript" src="/static/js/schemaform.js"></script>
+
 
 </body>
 </html>

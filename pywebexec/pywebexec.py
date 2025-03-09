@@ -28,7 +28,6 @@ import logging
 from pathlib import Path
 import pyte
 from . import host_ip
-from flask_swagger_ui import get_swaggerui_blueprint  # new import
 import yaml
 
 if os.environ.get('PYWEBEXEC_LDAP_SERVER'):
@@ -609,18 +608,6 @@ if args.cert:
     app.config['SESSION_COOKIE_SECURE'] = True
 app.config['TITLE'] = f"{args.title} API"
 
-# Register Swagger UI blueprint with safe token included in API_URL
-SWAGGER_URL = '/v0/documentation'
-API_URL = '/swagger.yaml'
-swaggerui_blueprint = get_swaggerui_blueprint(
-    SWAGGER_URL,
-    API_URL,
-    config={
-        'app_name': f"{args.title} API",
-        'layout': 'BaseLayout',
-    }
-)
-app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 def log_info(fromip, user, message):
     app.logger.info(f"{user} {fromip}: {message}")
@@ -653,6 +640,7 @@ def get_executables():
             if exe:
                 executables_list.append(exe)
     return sorted(executables_list, key=lambda x: x["command"])
+
 
 @app.route('/commands/<command_id>/stop', methods=['PATCH'])
 def stop_command(command_id):
@@ -885,6 +873,10 @@ def get_command_status(command_id):
 def index():
     return render_template('index.html', title=args.title)
 
+@app.route('/v0/documentation/')
+def swagger_ui():
+    return render_template('swagger_ui.html', title=app.config.get('TITLE', 'PyWebExec API'))
+
 @app.route('/commands', methods=['GET'])
 def list_commands():
     commands = read_commands()
@@ -1034,7 +1026,7 @@ def swagger_yaml():
                 }
             }
         swagger_spec['info']['title'] = app.config.get('TITLE', 'PyWebExec API')
-        swagger_spec_str = yaml.dump(swagger_spec)
+        swagger_spec_str = yaml.dump(swagger_spec, sort_keys=False)
         return Response(swagger_spec_str, mimetype='application/yaml')
     except Exception as e:
         return Response(f"Error reading swagger spec: {e}", status=500)
