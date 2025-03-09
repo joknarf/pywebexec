@@ -728,7 +728,9 @@ def verify_ldap(username, password):
 
 @app.route('/commands', methods=['POST'])
 def run_command_endpoint():
+    print(request.data)
     data = request.json
+    print(data)
     command = data.get('command')
     params = data.get('params', [])
     rows = data.get('rows', tty_rows)
