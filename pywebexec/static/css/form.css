@@ -6794,12 +6794,14 @@
     gap: 10px;
   }
   .form-inline .checkbox {
-    margin-top: 1px;
-    margin-bottom: 3px;
+    margin-top: 0px;
+    margin-bottom: 1px;
+    padding: 0;
   }
   input[type="checkbox"] {
     display: block;
     margin: 0;
+    top: 5px;
   }
   li > div > label {
     display: none;
