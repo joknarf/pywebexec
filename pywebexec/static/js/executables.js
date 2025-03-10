@@ -34,7 +34,7 @@ function filterCommands() {
             items[i].style.display = 'none';
         }
     }
-    if (nbVisibleItems > 1) {
+    if (nbVisibleItems > 1 || commandInput.value.length == 0) {
         commandListDiv.style.display = 'block';
     } else {
         commandListDiv.style.display = 'none';
