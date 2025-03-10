@@ -145,9 +145,56 @@ The help message is displayed:
 
 <img src="https://github.com/user-attachments/assets/2d69cef2-3371-4282-99bb-e994eb0c0b24" width="400"/>
 
+## Add schema to commands
+
+For each exposed command, you can add a schema by creating a file named `<command>.schema.yaml` in the same directory as the command. The schema must be written in yaml format.  
+The schema is used to generate a form in the web interface and in the swagger-ui in the `/commands/<command>` route.  
+The schema is also used to validate the input parameters when calling the API `/commands/<command>`.  
+The schema must be written in the openapi schema format.
+
+```yaml
+type: object
+properties:
+  param1:
+    type: string
+    description: "param1 description"
+    example: "value"
+  param2:
+    type: integer
+    description: "param2 description"
+    enum: [1, 2, 3]
+  param3:
+    type: array
+    items:
+      type: string
+    description: "param3 description"
+    example: ["value1", "value2"]
+required:
+  - param1
+  - param2
+```
+The payload will be converted to command line arguments when calling the command.
+```
+command --param1 value --param2 1 --param3 value1 value2
+```
+
+On the web inferface, and swagger-ui the form will be generated from the schema.
+
+
+
+## Schema options
+
+The schema options are used to customize the command line arguments generation, just add a `schema_options` section to the schema.
+```yaml
+schema_options:
+  separator: "=" # --param=value (default is " ") 
+  noprefix_params: ["param1", "param2"] # omit --param prefix, use "*" to omit all
+  convert_params: {"param1": "param2"} # convert param1 to param2
+```
+
 ## Swagger UI
 
-A swagger UI is available at `http[s]://<srv>/v0/documentation`
+A custom swagger UI is available at `http[s]://<srv>/v0/documentation` with enhanced markdown rendering and form generation for body parameters.
 
 <img src="https://github.com/user-attachments/assets/c80a341e-c04c-4606-9510-a57b473a74e5" width="400"/>
 
