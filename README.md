@@ -178,8 +178,9 @@ The payload will be converted to command line arguments when calling the command
 command --param1 value --param2 1 --param3 value1 value2
 ```
 
-On the web inferface, and swagger-ui the form will be generated from the schema.
+* On the web inferface, and swagger-ui the form will be generated from the schema.
 
+<img src="https://github.com/user-attachments/assets/c7cdf117-aa38-4366-97c7-1aa26e5ebf0d" width=400>
 
 
 ## Schema options
@@ -197,6 +198,9 @@ schema_options:
 A custom swagger UI is available at `http[s]://<srv>/v0/documentation` with enhanced markdown rendering and form generation for body parameters.
 
 <img src="https://github.com/user-attachments/assets/c80a341e-c04c-4606-9510-a57b473a74e5" width="400"/>
+
+<img src="https://github.com/user-attachments/assets/22261048-459e-4ace-8d04-c568d67bef37" width="400">
+
 
 ## API reference
 
