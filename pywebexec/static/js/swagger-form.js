@@ -69,14 +69,8 @@ window.onload = function() {
   const observer = new MutationObserver((mutations) => {
     mutations.forEach(mutation => {
       mutation.addedNodes.forEach(node => {
-        if (node.nodeType === Node.ELEMENT_NODE &&
-            node.classList.contains("body-param__text")) {
-          node.addEventListener("input", (e) => {
-            e.target.style.height = "0"
-            e.target.style.height = e.target.scrollHeight + "px";
-          });
-          node.style.height = "0"
-          node.style.height = node.scrollHeight + "px";
+        if (node.classList.contains("highlight-code") ||
+          node.classList.contains("body-param__text")) {
           // Retrieve the data-path attribute from the first opblock-summary-path element
           const routePath = $(node).closest('.opblock').find('.opblock-summary-path').first().attr('data-path');
           const routePathId = `schemaForm${routePath.replaceAll("/", "_")}`;
@@ -84,16 +78,24 @@ window.onload = function() {
           if (prevForm) {
             prevForm.remove();
           }
-          const form = document.createElement("form");
-          form.id = routePathId;
-          form.classList.add("schema-form");
-          jsform = createSchemaForm($(form), swaggerSchemas[routePath], null);
-          // form.addEventListener("input", formInput(node, jsform)); 
-          form.addEventListener("input", addFormInputListener(node, jsform));
-          node.parentNode.insertBefore(form, node.nextSibling);
-          item1 = form.querySelector("input, select");
-          if (item1) {
-            item1.focus();
+          if (node.classList.contains("body-param__text")) {
+            node.addEventListener("input", (e) => {
+              e.target.style.height = "0"
+              e.target.style.height = e.target.scrollHeight + "px";
+            });
+            node.style.height = "0"
+            node.style.height = node.scrollHeight + "px";
+            const form = document.createElement("form");
+            form.id = routePathId;
+            form.classList.add("schema-form");
+            jsform = createSchemaForm($(form), swaggerSchemas[routePath], null);
+            // form.addEventListener("input", formInput(node, jsform)); 
+            form.addEventListener("input", addFormInputListener(node, jsform));
+            node.parentNode.insertBefore(form, node.nextSibling);
+            item1 = form.querySelector("input, select");
+            if (item1) {
+              item1.focus();
+            }
           }
         }
       });
