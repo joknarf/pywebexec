@@ -6827,3 +6827,7 @@
   }
 }
 
+.swagger-ui textarea {
+  min-height: 130px;
+  overflow-y: hidden;
+}

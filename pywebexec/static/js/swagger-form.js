@@ -22,7 +22,7 @@ function addFormInputListener(textArea, jsform){
       // Call React's onChange directly
       fiber.memoizedProps.onChange(syntheticEvent);
     }
-
+    textArea.dispatchEvent(new Event('input', { bubbles: true }));
   };
 }
 
@@ -71,7 +71,12 @@ window.onload = function() {
       mutation.addedNodes.forEach(node => {
         if (node.nodeType === Node.ELEMENT_NODE &&
             node.classList.contains("body-param__text")) {
-
+          node.addEventListener("input", (e) => {
+            e.target.style.height = "0"
+            e.target.style.height = e.target.scrollHeight + "px";
+          });
+          node.style.height = "0"
+          node.style.height = node.scrollHeight + "px";
           // Retrieve the data-path attribute from the first opblock-summary-path element
           const routePath = $(node).closest('.opblock').find('.opblock-summary-path').first().attr('data-path');
           const routePathId = `schemaForm${routePath.replaceAll("/", "_")}`;
