@@ -47,7 +47,7 @@ paths:
         - application/json
       parameters:
         - in: body
-          name: commandRequest
+          name: requestBody
           schema:
             type: object
             properties:

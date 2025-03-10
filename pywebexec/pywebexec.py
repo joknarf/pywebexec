@@ -1007,7 +1007,7 @@ def swagger_yaml():
                     "parameters": [
                         {
                             "in": "body",
-                            "name": "commandRequest",
+                            "name": "reuqestBody",
                             "schema": cmd_schema
                         }
                     ],
