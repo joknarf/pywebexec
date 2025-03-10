@@ -85,7 +85,11 @@ window.onload = function() {
           jsform = createSchemaForm($(form), swaggerSchemas[routePath], null);
           // form.addEventListener("input", formInput(node, jsform)); 
           form.addEventListener("input", addFormInputListener(node, jsform));
-          node.parentNode.appendChild(form);
+          node.parentNode.insertBefore(form, node.nextSibling);
+          item1 = form.querySelector("input, select");
+          if (item1) {
+            item1.focus();
+          }
         }
       });
     });
