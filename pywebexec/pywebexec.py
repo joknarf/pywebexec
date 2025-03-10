@@ -626,7 +626,7 @@ def get_executable(cmd):
             with open(help_file, 'r') as hf:
                 help_text = hf.read()
         schema_file = f"{cmd}.schema.yaml"
-        schema = {}}
+        schema = {}
         if os.path.exists(schema_file):
             with open(schema_file, 'r') as sf:
                 schema = yaml.safe_load(sf)
