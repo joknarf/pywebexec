@@ -182,6 +182,10 @@ command --param1 value --param2 1 --param3 value1 value2
 
 <img src="https://github.com/user-attachments/assets/c7cdf117-aa38-4366-97c7-1aa26e5ebf0d" width=400>
 
+When using schema, the command can now be launched with:
+```
+$ curl -X POST http://<srv>/commands/<cmd> -H "Content-Type: application/json" -d '{"param1": "value", "param2": 1, "param3": ["value1", "value2"]}'
+```
 
 ## Schema options
 
