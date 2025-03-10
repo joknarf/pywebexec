@@ -69,6 +69,7 @@ font-size: 14px;
 }
 .form-control {
   font-size: 14px;
+  font-weight: normal;
   line-height: 1.42857143;
   color: #555;
   background-color: #fff;
