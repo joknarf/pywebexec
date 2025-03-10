@@ -66,8 +66,13 @@
         font-size: 14px;
         color: #333;
         background-color: #dfdfff;
-        padding: 1px 4px;
         border-radius: 5px;
+    }
+    code {
+        padding: 1px 4px;
+    }
+    pre code {
+        padding: 0;
     }
     pre {
         padding: 5px 10px;
