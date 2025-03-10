@@ -626,7 +626,7 @@ def get_executable(cmd):
             with open(help_file, 'r') as hf:
                 help_text = hf.read()
         schema_file = f"{cmd}.schema.yaml"
-        schema = None
+        schema = {}}
         if os.path.exists(schema_file):
             with open(schema_file, 'r') as sf:
                 schema = yaml.safe_load(sf)
@@ -636,9 +636,9 @@ def get_executable(cmd):
 def get_executables():
     executables_list = []
     for f in os.listdir('.'):
-            exe = get_executable(f)
-            if exe:
-                executables_list.append(exe)
+        exe = get_executable(f)
+        if exe:
+            executables_list.append(exe)
     return sorted(executables_list, key=lambda x: x["command"])
 
 
