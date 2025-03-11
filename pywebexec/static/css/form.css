@@ -36,6 +36,7 @@ font-size: 14px;
   padding: 3px 13px;
   border: 1px solid transparent;
   border-radius: 15px;
+  font-family: Arial, Helvetica, sans-serif;
 }
 .btn-primary {
   position: relative;
