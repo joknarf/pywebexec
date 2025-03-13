@@ -358,7 +358,8 @@ def parseargs():
     parser.add_argument("-g", "--gencert", action="store_true", help="https server self signed cert")
     parser.add_argument("-T", "--tokenurl", action="store_true", help="generate safe url to access")
     parser.add_argument("action", nargs="?", help="daemon action start/stop/restart/status/shareterm/term",
-                        choices=["start","stop","restart","status","shareterm", "term"])
+                        choices=["start","stop","restart","status","shareterm", "term", "run"])
+    parser.add_argument("command", nargs="*", help="command to run")    
 
     args = parser.parse_args()
     if not os.path.exists(CONFDIR):
@@ -378,6 +379,12 @@ def parseargs():
     if args.action == "term":
         COMMAND_STATUS_DIR = f"{os.getcwd()}/{COMMAND_STATUS_DIR}"
         sys.exit(start_term())
+    elif args.action == "run":
+        command = args.command[0]
+        params = args.command[1:]
+        command_id = term_command_id
+        exit_code = run_command("localhost", "-", command, params, command_id, tty_rows, tty_cols)
+        sys.exit(exit_code)
 
     (hostname, ip) = host_ip.get_host_ip(args.listen)
 
@@ -487,6 +494,8 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
         'command': command,
         'params': params,
         'start_time': start_time,
+        'status': 'running',
+        'from': fromip,
         'user': user,
         'cols': cols,
         'rows': rows,
@@ -539,7 +548,7 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
         with open(get_output_file_path(command_id), 'a') as output_file:
             output_file.write(str(e))
         app.logger.error(fromip, user, f'Error running command {command_id}: {e}')
-
+    return exit_code
 
 def command_str(command, params):
     try:
@@ -603,12 +612,6 @@ def check_processes():
                         'exit_code': -1,
                     })
 
-args = parseargs()
-if args.cert:
-    app.config['SESSION_COOKIE_SECURE'] = True
-app.config['TITLE'] = f"{args.title} API"
-
-
 def log_info(fromip, user, message):
     app.logger.info(f"{user} {fromip}: {message}")
 
@@ -617,6 +620,14 @@ def log_error(fromip, user, message):
 
 def log_request(message):
     log_info(request.remote_addr, session.get('username', '-'), message)
+
+
+args = parseargs()
+if args.cert:
+    app.config['SESSION_COOKIE_SECURE'] = True
+app.config['TITLE'] = f"{args.title} API"
+
+
 
 def get_executable(cmd):
     if os.path.isfile(cmd) and os.access(cmd, os.X_OK):
