@@ -383,7 +383,7 @@ def parseargs():
         command = args.command[0]
         params = args.command[1:]
         command_id = term_command_id
-        exit_code = run_command("localhost", "-", command, params, command_id, tty_rows, tty_cols)
+        exit_code = run_command("localhost", args.user, command, params, command_id, tty_rows, tty_cols)
         sys.exit(exit_code)
 
     (hostname, ip) = host_ip.get_host_ip(args.listen)
@@ -490,6 +490,8 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
     # app.logger.info(f'{fromip} run_command {command_id} {user}: {command} {params}')
     log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}')
     start_time = datetime.now(timezone.utc).isoformat()
+    if user:
+        os.environ['PYWEBEXEC_USER'] = user
     update_command_status(command_id, {
         'command': command,
         'params': params,
