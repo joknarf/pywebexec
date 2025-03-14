@@ -550,6 +550,7 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
         with open(get_output_file_path(command_id), 'a') as output_file:
             output_file.write(str(e))
         app.logger.error(fromip, user, f'Error running command {command_id}: {e}')
+        exit_code = 1
     return exit_code
 
 def command_str(command, params):
