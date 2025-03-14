@@ -297,7 +297,7 @@ paramsInput.addEventListener('focus', () => {
         });
         setHelpDivPosition();
         paramsContainer.style.display = 'block';
-        const input1 = schemaFormPW.querySelector('input[type="text"]');
+        const input1 = schemaFormPW.querySelector('input, select, textarea');
         if (input1) {
             input1.focus();
         }

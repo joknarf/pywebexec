@@ -92,7 +92,7 @@ window.onload = function() {
             // form.addEventListener("input", formInput(node, jsform)); 
             form.addEventListener("input", addFormInputListener(node, jsform));
             node.parentNode.insertBefore(form, node.nextSibling);
-            item1 = form.querySelector("input, select");
+            item1 = form.querySelector("input, select, textarea");
             if (item1) {
               item1.focus();
             }
