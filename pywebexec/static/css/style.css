@@ -442,7 +442,10 @@ body.dimmed * {
   font-size: 14px;
   display: inline-block;
 }
-
+.command-line:hover {
+    text-overflow: unset;
+    max-width: unset;
+}
 .nbrunning {
     display: inline-block;
     font-size: 13px;
