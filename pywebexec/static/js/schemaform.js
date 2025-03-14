@@ -58,6 +58,7 @@ function createSchemaForm(form, schema, onSubmit) {
     form[0].querySelectorAll('textarea').forEach(txt => {
       txt.style.height = "0";
       txt.style.height = txt.scrollHeight + "px";
+      txt.setAttribute("spellcheck", "false")
       txt.addEventListener("input", (e) => {
         e.target.style.height = "0";
         e.target.style.height = (e.target.scrollHeight+2) + "px";
