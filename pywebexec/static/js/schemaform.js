@@ -47,6 +47,27 @@ function createSchemaForm(form, schema, onSubmit) {
   formDesc = extractKeysAndPlaceholders(schema);
   schemaForm = form[0];
   if (onSubmit != null) {
+    console.log(schema.schema_options.batch_param)
+    if (schema && schema.schema_options && schema.schema_options.batch_param) {
+      schema.properties['parallel'] = {
+        type: 'integer',
+        default: 1,
+        minimum: 1,
+        maximum: 100,
+      };
+      schema.properties['delay'] = {
+        type: 'integer',
+        default: 1,
+        minimum: 0,
+      };
+      formDesc.push({
+        key: 'parallel',
+      });
+      formDesc.push({
+        key: 'delay',
+      });
+      console.log(schema)
+    }
     formDesc.push({
       type: 'submit',
       title: 'Run',

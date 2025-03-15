@@ -827,6 +827,8 @@ def run_dynamic_command(cmd):
         noprefix = exe.get("schema", {}).get("schema_options", {}).get("noprefix_params", {})
         convert_params = exe.get("schema", {}).get("schema_options", {}).get("convert_params", {})
         schema_params = exe.get("schema", {}).get("properties", {})
+        batch_param = exe.get("schema", {}).get("schema_options", {}).get("batch_param", None)
+        batch_values = []
         if isinstance(data_params, dict) and not schema_params:
             return None
         if isinstance(data_params, dict):
@@ -852,6 +854,10 @@ def run_dynamic_command(cmd):
                         params += f"{prefix} "
                     continue
                 params += f"{prefix}{separator}"
+                values = shlex.split(value) if isinstance(value, str) else value
+                if param == batch_param and len(values)>1:
+                    batch_values = values
+                    value="@1"
                 if isinstance(value, list):
                     params += " ".join(value)
                 else:
@@ -865,7 +871,7 @@ def run_dynamic_command(cmd):
             params = shlex.split(' '.join(params)) if isinstance(params, list) else []
         except Exception as e:
             return None
-        return params
+        return params, batch_values
 
     cmd_path = os.path.join(".", os.path.basename(cmd))
     if not os.path.isfile(cmd_path) or not os.access(cmd_path, os.X_OK):
@@ -874,11 +880,13 @@ def run_dynamic_command(cmd):
         data = request.json
     except Exception as e:
         data = {}
-    params = parse_params(cmd, data.get('params'))
+    params, batch_values = parse_params(cmd, data.get('params'))
     if params is None:
         return jsonify({'error': 'Invalid parameters'}), 400
     rows = data.get('rows', tty_rows) or tty_rows
     cols = data.get('cols', tty_cols) or tty_cols
+    parallel = data.get('parallel', 1)
+    delay = data.get('delay', 0)
     user = session.get('username', '-')
     command_id = str(uuid.uuid4())
     update_command_status(command_id, {
@@ -889,6 +897,10 @@ def run_dynamic_command(cmd):
         'from': request.remote_addr,
     })
     Path(get_output_file_path(command_id)).touch()
+    if batch_values:
+        params = ["-n", "-p", str(parallel), "-d", str(delay), "-P", *batch_values, '--', sys.argv[0], "-d", ".", "--", "run", cmd_path, *params]
+        cmd_path = shutil.which("run-para")
+        print(params)
     thread = threading.Thread(target=run_command, args=(request.remote_addr, user, cmd_path, params, command_id, rows, cols))
     thread.start()
     return jsonify({'message': 'Command is running', 'command_id': command_id})
@@ -1021,13 +1033,16 @@ def swagger_yaml():
                 "properties": {
                     "params": {"type": "array", "items": {"type": "string"}, "default": []},
                     "rows": {"type": "integer", "description": "tty nb rows", "default": tty_rows},
-                    "cols": {"type": "integer", "description": "tty nb columns", "default": tty_cols}
+                    "cols": {"type": "integer", "description": "tty nb columns", "default": tty_cols},
                 }
             }
             if exe["schema"]:
-                # if exec["schema"].get("schema_options"):
-                #     del exe["schema"]["schema_options"]
                 cmd_schema["properties"]["params"] = exe["schema"]
+                if exe["schema"].get("schema_options", {}).get("batch_param"):
+                  cmd_schema["properties"].update({
+                    "parallel": {"type": "integer", "description": 'nb parallel jobs', "default": 1},
+                    "delay": {"type": "number", "description": "delay jobs", "default": 10},
+                  })
             swagger_spec.setdefault("paths", {})[dynamic_path] = {
                 "post": {
                     "summary": f"Run command {exe['command']}",
@@ -1038,7 +1053,7 @@ def swagger_yaml():
                     "parameters": [
                         {
                             "in": "body",
-                            "name": "reuqestBody",
+                            "name": "requestBody",
                             "schema": cmd_schema
                         }
                     ],

@@ -272,13 +272,20 @@ paramsInput.addEventListener('focus', () => {
                 const commandName = commandInput.value;
                 fitAddon.fit();
                 terminal.clear();
+                payload = { params: values, rows: terminal.rows, cols: terminal.cols }
+                if ('parallel' in values) {
+                    payload['parallel'] = values['parallel'];
+                    payload['delay'] = values['delay'];
+                    delete payload['params']['parallel'];
+                    delete payload['params']['delay'];
+                }
                 try {
                     const response = await fetch(`/commands/${commandName}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ params: values, rows: terminal.rows, cols: terminal.cols })
+                        body: JSON.stringify(payload)
                     });
         
                     if (!response.ok) {
