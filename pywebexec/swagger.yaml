@@ -194,6 +194,39 @@ paths:
             properties:
               message:
                 type: string
+  /commands/{command_id}/run:
+    post:
+      summary: "Relaunch a command"
+      tags:
+        - commands
+      parameters:
+        - in: path
+          name: command_id
+          required: true
+          type: string
+        - in: body
+          name: requestBody
+          schema:
+            type: object
+            properties:
+              rows:
+                type: integer
+                description: "tty nb rows"
+                default: 24
+              cols:
+                type: integer
+                description: "tty nb columns" 
+                default: 125
+      responses:
+        "200":
+          description: "Command relaunched"
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              command_id:
+                type: string
   /commands/exposed:
     get:
       summary: "List available executable commands"

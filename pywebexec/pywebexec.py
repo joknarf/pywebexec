@@ -1077,6 +1077,40 @@ def swagger_yaml():
     except Exception as e:
         return Response(f"Error reading swagger spec: {e}", status=500)
 
+@app.route('/commands/<command_id>/run', methods=['POST'])
+def relaunch_command(command_id):
+    log_request(f"relaunch_command {command_id}")
+    status = read_command_status(command_id)
+    if not status:
+        return jsonify({'error': 'Invalid command_id'}), 404
+
+    data = request.json or {}
+    command = status['command']
+    params = status['params']
+    rows = data.get('rows', tty_rows)
+    cols = data.get('cols', tty_cols)
+
+    command_path = command
+    if not os.path.isfile(command_path) or not os.access(command_path, os.X_OK):
+        return jsonify({'error': 'Command not found or not executable'}), 400
+
+    # Get the user from the session
+    user = session.get('username', '-')
+    new_command_id = str(uuid.uuid4())
+    update_command_status(new_command_id, {
+        'status': 'running',
+        'command': command,
+        'params': params,
+        'user': user,
+        'from': request.remote_addr,
+    })
+
+    Path(get_output_file_path(new_command_id)).touch()
+    thread = threading.Thread(target=run_command, args=(request.remote_addr, user, command_path, params, new_command_id, rows, cols))
+    thread.start()
+
+    return jsonify({'message': 'Command is running', 'command_id': new_command_id})
+
 def main():
     global COMMAND_STATUS_DIR
     basef = f"{CONFDIR}/pywebexec_{args.listen}:{args.port}"

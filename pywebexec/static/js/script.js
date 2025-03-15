@@ -293,27 +293,16 @@ async function relaunchCommand(command_id, event) {
     event.stopPropagation();
     event.stopImmediatePropagation();
     try {
-        const response = await fetch(`/commands/${command_id}`);
-        if (!response.ok) {
-            throw new Error('Failed to fetch command status');
-        }
-        const data = await response.json();
-        if (data.error) {
-            alert(data.error);
-            return;
-        }
         fitAddon.fit();
         terminal.clear();
-        const relaunchResponse = await fetch(`/commands`, {
+        const relaunchResponse = await fetch(`/commands/${command_id}/run`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                command: data.command,
-                params: data.params,
                 rows: terminal.rows,
-                cols: terminal.cols,
+                cols: terminal.cols
             })
         });
         if (!relaunchResponse.ok) {
