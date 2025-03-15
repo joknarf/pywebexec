@@ -144,7 +144,7 @@ font-size: 14px;
     width: auto;
   }
   input[type="number"] {
-    /* max-width: 100px; */
+    max-width: 120px;
     text-align: right;
   }
   select {
