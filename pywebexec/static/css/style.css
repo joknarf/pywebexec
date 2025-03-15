@@ -17,7 +17,7 @@ body {
     overflow: hidden;
 }
 .table-container {
-    height: 150px;
+    height: 173px;
     overflow-y: auto;
     position: relative;
     border-radius: 10px;
@@ -29,12 +29,15 @@ table {
     border-collapse: collapse;
 }
 th, td {
-    padding: 7px;
     text-align: left;
     border-bottom: 1px solid #ddd;
     white-space: nowrap;
 }
-th { 
+td {
+    padding: 4px 7px;; /* 2px 7px; */
+}
+th {
+    padding: 7px; 
     background-color: #444;
     color: #eee;
     position: sticky;
@@ -431,6 +434,7 @@ body.dimmed * {
 }
 .command-line {
   padding: 5px 10px 6px 10px;
+  margin-top: 4px;
   background-color: #111;
   color: #eee;
   max-width: 300px;

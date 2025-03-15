@@ -18,10 +18,8 @@ function extractKeysAndPlaceholders(obj, prefix = '') {
   
     for (let key in obj.properties) {
       if (obj.properties[key].type === 'object' && obj.properties[key].properties) {
-        // Si la propriété est un objet, appeler récursivement
         result = result.concat(extractKeysAndPlaceholders(obj.properties[key], prefix ? `${prefix}.${key}` : key));
       } else {
-        // Sinon, ajouter au résultat
         result.push({
           key: prefix ? `${prefix}.${key}` : key,
           placeholder: obj.properties[key].example || null

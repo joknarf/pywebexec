@@ -6,6 +6,7 @@ import os
 import json
 import uuid
 import argparse
+import shutil
 import random
 import string
 from datetime import datetime, timezone, timedelta
@@ -358,7 +359,7 @@ def parseargs():
     parser.add_argument("-g", "--gencert", action="store_true", help="https server self signed cert")
     parser.add_argument("-T", "--tokenurl", action="store_true", help="generate safe url to access")
     parser.add_argument("action", nargs="?", help="daemon action start/stop/restart/status/shareterm/term",
-                        choices=["start","stop","restart","status","shareterm", "term", "run"])
+                        choices=["start","stop","restart","status","shareterm", "term", "run", "run-para"])
     parser.add_argument("command", nargs="*", help="command to run")    
 
     args = parser.parse_args()
@@ -383,8 +384,24 @@ def parseargs():
         command = args.command[0]
         params = args.command[1:]
         command_id = term_command_id
+        print("Command:", command_id, flush=True)
         exit_code = run_command("localhost", args.user, command, params, command_id, tty_rows, tty_cols)
         sys.exit(exit_code)
+    elif args.action == "run-para":
+        runpara = shutil.which("run-para")
+        if not runpara:
+            print("Error: run-para not found, install using pip install run-para", file=sys.stderr)
+            sys.exit(1)
+        args.command = sys.argv[sys.argv.index("run-para")+1:]
+        try:
+            commandindex = args.command.index("--")
+        except ValueError:
+            print("Error: run-para: No command supplied", file=sys.stderr)
+            sys.exit(1)
+        runparams = args.command[0:commandindex]
+        command = args.command[commandindex+1:]
+        result = subprocess.run([runpara, '-n', *runparams, "--", sys.argv[0], "-d", args.dir, "--", "run", *command], bufsize=0)
+        sys.exit(result.returncode)
 
     (hostname, ip) = host_ip.get_host_ip(args.listen)
 
