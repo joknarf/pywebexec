@@ -11,11 +11,16 @@ function adjustInputWidth(input) {
 function formInputHandle() {
   schemaForm.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
     if (! inputHandlers.includes(input)) {
-      if (input.value) {
-        input.setAttribute('size', Math.max(input.value.length - 2, 2));
+      val = input.value || input.placeholder;
+      if (val) {
+        size = Math.max(val.length - 2, 2)
+        if (input.type== 'number') {
+          size += 2;
+        }
       } else {
-        input.setAttribute('size', '12');
+        size = 12;
       }
+      input.setAttribute('size', size);
       input.addEventListener('input', () => adjustInputWidth(input));
       inputHandlers.push(input);
     }
