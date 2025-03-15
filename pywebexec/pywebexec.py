@@ -586,7 +586,14 @@ def read_commands():
             command_id = filename[:-5]
             status = read_command_status(command_id)
             if status:
-                command = command_str(status.get('command', '-'), status.get('params', []))
+                cmd = status.get('command', '-')
+                params = status.get('params', [])
+                if cmd.endswith('/run-para'):
+                    cmd = "batch"
+                    index = params.index('run')
+                    if index:
+                        params = params[index+1:]
+                command = command_str(cmd, params)
                 if status.get('status') == 'running' and status.get('last_update',0)<datetime.now().timestamp()-5:
                     output_file_path = get_output_file_path(command_id)
                     if os.path.exists(output_file_path):
