@@ -58,8 +58,8 @@ all commands output / statuses are available in the executables directory in sub
 * Uses gunicorn to serve http/https
 * Linux/MacOS compatible
 * Markdown help for commands
-* schema for commands parameters
-* batch/parallel command execution
+* YAML schema for commands parameters
+* Batch/parallel command execution
 
 ## Customize server
 ```shell
