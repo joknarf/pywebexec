@@ -49,6 +49,7 @@ function createSchemaForm(form, schema, onSubmit) {
   if (onSubmit != null) {
     console.log(schema.schema_options.batch_param)
     if (schema && schema.schema_options && schema.schema_options.batch_param) {
+      schema.properties[schema.schema_options.batch_param].required = true;
       if (!schema.properties.parallel) {
         schema.properties['parallel'] = {
           type: 'integer',
@@ -94,6 +95,7 @@ function createSchemaForm(form, schema, onSubmit) {
     });
   } else {
     if (schema && schema.properties && schema.properties.params.schema_options && schema.properties.params.schema_options.batch_param) {
+      schema.properties.params.properties[schema.properties.params.schema_options.batch_param].required = true;
       for (i = 0; i < formDesc.length; i++) {
         if (formDesc[i].key == 'params.' + schema.properties.params.schema_options.batch_param) {
           formDesc[i].type = 'textarea';
