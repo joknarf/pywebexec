@@ -56,6 +56,7 @@ function createSchemaForm(form, schema, onSubmit) {
           minimum: 1,
           maximum: 100,
           required: true,
+          description: "nb parallel jobs"
         };
         schema.properties['delay'] = {
           type: 'integer',
@@ -63,6 +64,7 @@ function createSchemaForm(form, schema, onSubmit) {
           minimum: 0,
           maximum: 600,
           required: true,
+          description: "initial delay in s between jobs"
         };
         formDesc.push({
           key: 'parallel',

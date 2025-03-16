@@ -6,8 +6,8 @@
 }
 
 #schemaForm, .schema-form {
-font-size: 14px;
-
+  font-size: 14px;
+  
   .glyphicon-plus-sign:before {
     content: "\e081";
   }
@@ -142,6 +142,7 @@ font-size: 14px;
     min-width: unset;
     max-width: unset;
     width: auto;
+    margin: 0;
   }
   input[type="number"] {
     max-width: 120px;

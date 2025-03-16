@@ -1049,7 +1049,7 @@ def swagger_yaml():
                 if exe["schema"].get("schema_options", {}).get("batch_param"):
                   cmd_schema["properties"].update({
                     "parallel": {"type": "integer", "description": 'nb parallel jobs', "default": 1, "required": True, "minimum": 1, "maximum": 100},
-                    "delay": {"type": "number", "description": "delay jobs", "default": 10, "required": True, "minimum": 0, "maximum": 600},
+                    "delay": {"type": "number", "description": "initial delay in s between jobs", "default": 10, "required": True, "minimum": 0, "maximum": 600},
                   })
             swagger_spec.setdefault("paths", {})[dynamic_path] = {
                 "post": {
