@@ -49,12 +49,6 @@ function createSchemaForm(form, schema, onSubmit) {
   if (onSubmit != null) {
     console.log(schema.schema_options.batch_param)
     if (schema && schema.schema_options && schema.schema_options.batch_param) {
-      for (i = 0; i < formDesc.length; i++) {
-        if (formDesc[i].key == schema.schema_options.batch_param) {
-          formDesc[i].type = 'textarea';
-          formDesc[i].required = true;
-        }
-      }
       if (!schema.properties.parallel) {
         schema.properties['parallel'] = {
           type: 'integer',
@@ -65,8 +59,9 @@ function createSchemaForm(form, schema, onSubmit) {
         };
         schema.properties['delay'] = {
           type: 'integer',
-          default: 1,
+          default: 10,
           minimum: 0,
+          maximum: 600,
           required: true,
         };
         formDesc.push({
@@ -75,6 +70,20 @@ function createSchemaForm(form, schema, onSubmit) {
         formDesc.push({
           key: 'delay',
         });
+      }
+      for (i = 0; i < formDesc.length; i++) {
+        if (formDesc[i].key == schema.schema_options.batch_param) {
+          formDesc[i].type = 'textarea';
+          formDesc[i].required = true;
+        }
+        if (formDesc[i].key == 'parallel') {
+          formDesc[i].type = 'range';
+          formDesc[i].indicator = true;
+        }
+        if (formDesc[i].key == 'delay') {
+          formDesc[i].type = 'range';
+          formDesc[i].indicator = true;
+        }
       }
     }
     formDesc.push({
@@ -87,6 +96,14 @@ function createSchemaForm(form, schema, onSubmit) {
         if (formDesc[i].key == 'params.' + schema.properties.params.schema_options.batch_param) {
           formDesc[i].type = 'textarea';
           formDesc[i].required = true;
+        }
+        if (formDesc[i].key == 'parallel') {
+          formDesc[i].type = 'range';
+          formDesc[i].indicator = true;
+        }
+        if (formDesc[i].key == 'delay') {
+          formDesc[i].type = 'range';
+          formDesc[i].indicator = true;
         }
       }
     }

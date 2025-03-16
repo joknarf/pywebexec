@@ -69,8 +69,8 @@ window.onload = function() {
   const observer = new MutationObserver((mutations) => {
     mutations.forEach(mutation => {
       mutation.addedNodes.forEach(node => {
-        if (node.classList.contains("highlight-code") ||
-          node.classList.contains("body-param__text")) {
+        if (node.classList && (node.classList.contains("highlight-code") ||
+          node.classList.contains("body-param__text"))) {
           // Retrieve the data-path attribute from the first opblock-summary-path element
           const routePath = $(node).closest('.opblock').find('.opblock-summary-path').first().attr('data-path');
           const routePathId = `schemaForm${routePath.replaceAll("/", "_")}`;
