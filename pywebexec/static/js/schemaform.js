@@ -48,32 +48,34 @@ function createSchemaForm(form, schema, onSubmit) {
   schemaForm = form[0];
   if (onSubmit != null) {
     console.log(schema.schema_options.batch_param)
-    if (schema && schema.schema_options && schema.schema_options.batch_param && !schema.properties.parallel) {
+    if (schema && schema.schema_options && schema.schema_options.batch_param) {
       for (i = 0; i < formDesc.length; i++) {
         if (formDesc[i].key == schema.schema_options.batch_param) {
           formDesc[i].type = 'textarea';
           formDesc[i].required = true;
         }
       }
-      schema.properties['parallel'] = {
-        type: 'integer',
-        default: 1,
-        minimum: 1,
-        maximum: 100,
-        required: true,
-      };
-      schema.properties['delay'] = {
-        type: 'integer',
-        default: 1,
-        minimum: 0,
-        required: true,
-      };
-      formDesc.push({
-        key: 'parallel',
-      });
-      formDesc.push({
-        key: 'delay',
-      });
+      if (!schema.properties.parallel) {
+        schema.properties['parallel'] = {
+          type: 'integer',
+          default: 1,
+          minimum: 1,
+          maximum: 100,
+          required: true,
+        };
+        schema.properties['delay'] = {
+          type: 'integer',
+          default: 1,
+          minimum: 0,
+          required: true,
+        };
+        formDesc.push({
+          key: 'parallel',
+        });
+        formDesc.push({
+          key: 'delay',
+        });
+      }
     }
     formDesc.push({
       type: 'submit',
