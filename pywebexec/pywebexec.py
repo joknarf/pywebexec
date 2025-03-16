@@ -906,7 +906,7 @@ def run_dynamic_command(cmd):
     })
     Path(get_output_file_path(command_id)).touch()
     if batch_values:
-        params = ["-n", "-p", str(parallel), "-d", str(delay), "-P", *batch_values, '--', sys.argv[0], "-d", ".", "--", "run", cmd_path, *params]
+        params = ["-n", "-p", str(parallel), "-D", str(delay), "-P", *batch_values, '--', sys.argv[0], "-d", ".", "--", "run", cmd_path, *params]
         cmd_path = shutil.which("run-para")
         print(params)
     thread = threading.Thread(target=run_command, args=(request.remote_addr, user, cmd_path, params, command_id, rows, cols))
