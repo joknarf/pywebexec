@@ -197,6 +197,15 @@ schema_options:
   convert_params: {"param1": "param2"} # convert param1 to param2
 ```
 
+## Batch commands/parallel execution
+
+Integration of [run-para](https://github.com/joknarf/run-para) to enable batch execution of commands:
+* In `schema_options` adding `batch_param` will enable batch mode for the command, the command will be executed for each value in the `batch_param` list.  
+* The `batch_param` is the name of the parameter that will be used to pass the different values for the parameter.  
+* The `batch_param` type will be transformed to textarea to provide list to use as parameter for the command.  
+* The range parameters `parallel` and `delay` is added to the command parameters to control the execution of the batch commands (nb jobs in parallel and initial delay between jobs). 
+
+
 ## Swagger UI
 
 A custom swagger UI is available at `http[s]://<srv>/v0/documentation` with enhanced markdown rendering and form generation for body parameters.
