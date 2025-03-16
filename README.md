@@ -180,7 +180,7 @@ command --param1 value --param2 1 --param3 value1 value2
 
 * On the web inferface, and swagger-ui the form will be generated from the schema.
 
-<img src="https://github.com/user-attachments/assets/c7cdf117-aa38-4366-97c7-1aa26e5ebf0d" width=400>
+<img src="https://github.com/user-attachments/assets/c7cdf117-aa38-4366-97c7-1aa26e5ebf0d" width="400">
 
 When using schema, the command can now be launched with:
 ```
@@ -204,6 +204,8 @@ Integration of [run-para](https://github.com/joknarf/run-para) to enable batch e
 * The `batch_param` is the name of the parameter that will be used to pass the different values for the parameter.  
 * The `batch_param` type will be transformed to textarea to provide list to use as parameter for the command.  
 * The range parameters `parallel` and `delay` is added to the command parameters to control the execution of the batch commands (nb jobs in parallel and initial delay between jobs). 
+
+<img src="https://github.com/user-attachments/assets/a25bf197-5c2e-4cec-9dd7-53f83c11656f" width="400">
 
 
 ## Swagger UI
