@@ -263,8 +263,7 @@ paramsInput.addEventListener('focus', () => {
     if (paramsContainer.style.display == 'none') {
         $('#schemaForm').html('');
     }
-    if (gExecutables[currentCmd] && gExecutables[currentCmd].schema && paramsContainer.style.display == 'none') {
-        // sProp = gExecutables[currentCmd].schema.properties;
+    if (gExecutables[currentCmd] && gExecutables[currentCmd].schema && gExecutables[currentCmd].schema.properties && paramsContainer.style.display == 'none') {
         createSchemaForm($('#schemaForm'), gExecutables[currentCmd].schema, async function (errors, values) {
             if (errors) {
                 console.log(errors);

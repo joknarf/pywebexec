@@ -593,6 +593,7 @@ def read_commands():
                     index = params.index('run')
                     if index:
                         params = params[index+1:]
+                        params[0] = os.path.basename(params[0])
                 command = command_str(cmd, params)
                 if status.get('status') == 'running' and status.get('last_update',0)<datetime.now().timestamp()-5:
                     output_file_path = get_output_file_path(command_id)
@@ -1047,8 +1048,8 @@ def swagger_yaml():
                 cmd_schema["properties"]["params"] = exe["schema"]
                 if exe["schema"].get("schema_options", {}).get("batch_param"):
                   cmd_schema["properties"].update({
-                    "parallel": {"type": "integer", "description": 'nb parallel jobs', "default": 1},
-                    "delay": {"type": "number", "description": "delay jobs", "default": 10},
+                    "parallel": {"type": "integer", "description": 'nb parallel jobs', "default": 1, "required": True},
+                    "delay": {"type": "number", "description": "delay jobs", "default": 10, "required": True},
                   })
             swagger_spec.setdefault("paths", {})[dynamic_path] = {
                 "post": {
