@@ -402,7 +402,8 @@ def parseargs():
             sys.exit(1)
         runparams = args.command[0:commandindex]
         command = args.command[commandindex+1:]
-        result = subprocess.run([runpara, '-n', *runparams, "--", sys.argv[0], "-d", args.dir, "--", "run", *command], bufsize=0)
+        result = subprocess.run([runpara, '-n', *runparams, "--", sys.argv[0], "-d", args.dir, "-u", args.user,
+                                 "-C", str(args.cols), "-R", str(args.rows), "--", "run", *command], bufsize=0)
         sys.exit(result.returncode)
 
     (hostname, ip) = host_ip.get_host_ip(args.listen)
