@@ -358,6 +358,8 @@ def parseargs():
     parser.add_argument("-k", "--key", type=str, help="Path to https certificate key")
     parser.add_argument("-g", "--gencert", action="store_true", help="https server self signed cert")
     parser.add_argument("-T", "--tokenurl", action="store_true", help="generate safe url to access")
+    parser.add_argument("-C", "--cols", type=int, default=tty_cols, help="terminal columns")
+    parser.add_argument("-R", "--rows", type=int, default=tty_rows, help="terminal rows")
     parser.add_argument("action", nargs="?", help="daemon action start/stop/restart/status/shareterm/term",
                         choices=["start","stop","restart","status","shareterm", "term", "run", "run-para"])
     parser.add_argument("command", nargs="*", help="command to run")    
@@ -385,7 +387,7 @@ def parseargs():
         params = args.command[1:]
         command_id = term_command_id
         print("Command:", command_id, flush=True)
-        exit_code = run_command("localhost", args.user, command, params, command_id, tty_rows, tty_cols)
+        exit_code = run_command("localhost", args.user, command, params, command_id, args.rows, args.cols)
         sys.exit(exit_code)
     elif args.action == "run-para":
         runpara = shutil.which("run-para")
@@ -906,7 +908,8 @@ def run_dynamic_command(cmd):
     })
     Path(get_output_file_path(command_id)).touch()
     if batch_values:
-        params = ["-n", "-p", str(parallel), "-D", str(delay), "-P", *batch_values, '--', sys.argv[0], "-d", ".", "-u", user, "--", "run", cmd_path, *params]
+        params = ["-n", "-p", str(parallel), "-D", str(delay), "-P", *batch_values, '--', 
+                  sys.argv[0], "-d", ".", "-u", user, "-C", str(cols), "-R", str(rows), "--", "run", cmd_path, *params]
         cmd_path = shutil.which("run-para")
     thread = threading.Thread(target=run_command, args=(request.remote_addr, user, cmd_path, params, command_id, rows, cols))
     thread.start()
