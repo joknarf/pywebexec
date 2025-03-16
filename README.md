@@ -7,6 +7,10 @@
 # pywebexec
 Simple Python HTTP(S) API/Web Server Command Launcher and Terminal sharing
 
+* build a Restfull API/swagger-ui powered application in no time exposing simple commands/parameters.
+* create a toolbox with batch management/parallel execution of commands
+* share a terminal in one command
+  
 ## Install
 ```
 $ pip install pywebexec
