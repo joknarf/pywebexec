@@ -198,7 +198,7 @@ $ curl -X POST http://<srv>/commands/<cmd> -H "Content-Type: application/json" -
 The schema options are used to customize the command line arguments generation, just add a `schema_options` section to the schema.
 ```yaml
 schema_options:
-  separator: "=" # --param=value (default is " ") 
+  separator_params: {"*": " ", "param2": "="}}"=" # --param2=value (default is " ") 
   noprefix_params: ["param1", "param2"] # omit --param prefix, use "*" to omit all
   convert_params: {"param1": "param2"} # convert param1 to param2
 ```

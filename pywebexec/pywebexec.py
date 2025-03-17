@@ -834,7 +834,7 @@ def run_dynamic_command(cmd):
         #   noprefix_params: ["param1", "param2"] or ["*"] to omit --param prefix
         #   convert_params: {"param1": "param2"} to convert param1 to param2
         exe = get_executable(cmd)
-        separator = exe.get("schema", {}).get("schema_options", {}).get("separator", " ")
+        separator_params = exe.get("schema", {}).get("schema_options", {}).get("separator_params", {})
         noprefix = exe.get("schema", {}).get("schema_options", {}).get("noprefix_params", {})
         convert_params = exe.get("schema", {}).get("schema_options", {}).get("convert_params", {})
         schema_params = exe.get("schema", {}).get("properties", {})
@@ -851,6 +851,11 @@ def run_dynamic_command(cmd):
                 if value is None:
                     continue
                 prefix = ""
+                separator = " "
+                if '*' in separator_params:
+                    separator = separator_params['*']
+                if param in separator_params:
+                    separator = separator_params[param]
                 if param in convert_params:
                     param = convert_params[param]
                     prefix = param
