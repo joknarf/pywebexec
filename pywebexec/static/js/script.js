@@ -262,7 +262,7 @@ async function viewOutput(command_id) {
         const commandInfo = document.getElementById('commandInfo');
         const command = `${data.command.replace(/^\.\//, '')} ${data.params.join(' ')}`;
         setCommandStatus(data.status)
-        commandInfo.innerText = command;
+        commandInfo.innerHTML = command;
         commandInfo.setAttribute('title', command);
         if (data.command == 'term')
             terminal.options.cursorInactiveStyle = 'outline';

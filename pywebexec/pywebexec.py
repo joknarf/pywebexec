@@ -871,7 +871,7 @@ def run_dynamic_command(cmd):
                         params += f"{prefix} "
                     continue
                 if isinstance(value, dict) or convert_values.get(param, None) == "json":
-                    value = shlex.quote(json.dumps(value))
+                    value = shlex.quote(json.dumps(value, indent=2, sort_keys=False))
                 elif convert_values.get(param, None) == "quote":
                     value = shlex.quote(str(value))
                 else:

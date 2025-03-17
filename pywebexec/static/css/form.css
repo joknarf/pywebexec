@@ -209,6 +209,7 @@
   }
   ._jsonform-array-addmore, ._jsonform-array-deletecurrent {
     box-shadow: unset;
+    outline: 0;
   }
 }
 

@@ -267,6 +267,8 @@ paramsInput.addEventListener('focus', () => {
         createSchemaForm($('#schemaForm'), gExecutables[currentCmd].schema, async function (errors, values) {
             if (errors) {
                 console.log(errors);
+                alert(errors[0].message);
+                return false;
             } else {
                 const commandName = commandInput.value;
                 fitAddon.fit();
