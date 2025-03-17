@@ -47,7 +47,6 @@ function createSchemaForm(form, schema, onSubmit) {
   formDesc = extractKeysAndPlaceholders(schema);
   schemaForm = form[0];
   if (onSubmit != null) {
-    console.log(schema.schema_options.batch_param)
     if (schema && schema.schema_options && schema.schema_options.batch_param) {
       schema.properties[schema.schema_options.batch_param].required = true;
       if (!schema.properties.parallel) {
