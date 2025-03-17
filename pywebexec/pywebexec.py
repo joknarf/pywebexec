@@ -837,6 +837,7 @@ def run_dynamic_command(cmd):
         separator_params = exe.get("schema", {}).get("schema_options", {}).get("separator_params", {})
         noprefix = exe.get("schema", {}).get("schema_options", {}).get("noprefix_params", {})
         convert_params = exe.get("schema", {}).get("schema_options", {}).get("convert_params", {})
+        convert_values = exe.get("schema", {}).get("schema_options", {}).get("convert_values", {})
         schema_params = exe.get("schema", {}).get("properties", {})
         batch_param = exe.get("schema", {}).get("schema_options", {}).get("batch_param", None)
         batch_values = []
@@ -865,14 +866,17 @@ def run_dynamic_command(cmd):
                     separator = ""
                 else:
                     prefix = f"--{param}"
-                if isinstance(value, bool):
+                if isinstance(value, bool) and convert_params.get(param, None) is None:
                     if value:
                         params += f"{prefix} "
                     continue
-                if isinstance(value, dict):
+                if isinstance(value, dict) or convert_values.get(param, None) == "json":
                     value = shlex.quote(json.dumps(value))
+                elif convert_values.get(param, None) == "quote":
+                    value = shlex.quote(str(value))
+                else:
+                    values = shlex.split(value) if isinstance(value, str) else value
                 params += f"{prefix}{separator}"
-                values = shlex.split(value) if isinstance(value, str) else value
                 if param == batch_param and len(values)>1:
                     batch_values = values
                     value="@1"

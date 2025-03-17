@@ -13,7 +13,7 @@ function formInputHandle() {
     if (! inputHandlers.includes(input)) {
       val = input.value || input.placeholder;
       if (val) {
-        size = Math.max(val.length - 2, 2)
+        size = Math.max(val.length, 2)
         if (input.type== 'number') {
           size += 2;
         }
@@ -27,16 +27,22 @@ function formInputHandle() {
   });
 }
 
-function extractKeysAndPlaceholders(obj, prefix = '') {
+function extractKeysAndPlaceholders(obj, formoptions, prefix = '') {
     let result = [];
   
     for (let key in obj.properties) {
       if (obj.properties[key].type === 'object' && obj.properties[key].properties) {
-        result = result.concat(extractKeysAndPlaceholders(obj.properties[key], prefix ? `${prefix}.${key}` : key));
+        result = result.concat(extractKeysAndPlaceholders(obj.properties[key], formoptions, prefix ? `${prefix}.${key}` : key));
       } else {
+        if (formoptions[`${prefix}.${key}`]) {
+          foptions = formoptions[`${prefix}.${key}`];
+        } else {
+          foptions = {};
+        }
         result.push({
           key: prefix ? `${prefix}.${key}` : key,
-          placeholder: obj.properties[key].example || null
+          placeholder: obj.properties[key].example || null,
+          ... foptions
         });
       }
     }
@@ -44,11 +50,30 @@ function extractKeysAndPlaceholders(obj, prefix = '') {
 }
 
 function createSchemaForm(form, schema, onSubmit) {
-  formDesc = extractKeysAndPlaceholders(schema);
+  if (schema && schema.schema_options) {
+    schema_options = schema.schema_options;
+  } else {
+    schema_options = {};
+  }
+  if (schema && schema.properties && schema.properties.params && schema.properties.params.schema_options) {
+    schema_params_options = schema.properties.params.schema_options;
+  } else {
+    schema_params_options = {};
+  }
+
+  formoptions = {};
+  if (schema_options && schema_options.form) {
+    formoptions = schema.schema_options.form;
+  } else if (schema_params_options && schema_params_options.form) {
+    for (let key in schema_params_options.form) {
+      formoptions[`params.${key}`] = schema_params_options.form[key];
+    }
+  }
+  formDesc = extractKeysAndPlaceholders(schema, formoptions);
   schemaForm = form[0];
   if (onSubmit != null) {
-    if (schema && schema.schema_options && schema.schema_options.batch_param) {
-      schema.properties[schema.schema_options.batch_param].required = true;
+    if (schema_options && schema_options.batch_param) {
+      schema.properties[schema_options.batch_param].required = true;
       if (!schema.properties.parallel) {
         schema.properties['parallel'] = {
           type: 'integer',
@@ -74,7 +99,7 @@ function createSchemaForm(form, schema, onSubmit) {
         });
       }
       for (i = 0; i < formDesc.length; i++) {
-        if (formDesc[i].key == schema.schema_options.batch_param) {
+        if (formDesc[i].key == schema_options.batch_param) {
           formDesc[i].type = 'textarea';
           formDesc[i].required = true;
         }
@@ -93,10 +118,10 @@ function createSchemaForm(form, schema, onSubmit) {
       title: 'Run',
     });
   } else {
-    if (schema && schema.properties && schema.properties.params.schema_options && schema.properties.params.schema_options.batch_param) {
-      schema.properties.params.properties[schema.properties.params.schema_options.batch_param].required = true;
+    if (schema_params_options && schema_params_options.batch_param) {
+      schema.properties.params.properties[schema_params_options.batch_param].required = true;
       for (i = 0; i < formDesc.length; i++) {
-        if (formDesc[i].key == 'params.' + schema.properties.params.schema_options.batch_param) {
+        if (formDesc[i].key == 'params.' + schema_params_options.batch_param) {
           formDesc[i].type = 'textarea';
           formDesc[i].required = true;
         }
