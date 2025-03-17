@@ -869,6 +869,8 @@ def run_dynamic_command(cmd):
                     if value:
                         params += f"{prefix} "
                     continue
+                if isinstance(value, dict):
+                    value = f"'{json.dumps(value)}'"
                 params += f"{prefix}{separator}"
                 values = shlex.split(value) if isinstance(value, str) else value
                 if param == batch_param and len(values)>1:
