@@ -260,7 +260,12 @@ async function viewOutput(command_id) {
         }
         const data = await response.json();
         const commandInfo = document.getElementById('commandInfo');
-        const command = `${data.command.replace(/^\.\//, '')} ${data.params.join(' ')}`;
+        if (data.command.endsWith('/run-para')) {
+            command = `${data.params.join(' ').replace(/^.* -- run .\//, 'batch ')}`;
+        } else {
+            command = `${data.command.replace(/^\.\//, '')} ${data.params.join(' ')}`;
+        }
+        console.log(command);
         setCommandStatus(data.status)
         commandInfo.innerHTML = command;
         commandInfo.setAttribute('title', command);
