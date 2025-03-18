@@ -1,4 +1,4 @@
-swagger: "2.0"
+openapi: "3.0.0"
 info:
   title: PyWebExec API
   version: "1.0"
@@ -11,77 +11,79 @@ paths:
       responses:
         "200":
           description: "List of all commands status"
-          schema:
-            type: object
-            properties:
-              commands:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    command_id:
-                      type: string
-                    command:
-                      type: string
-                    status:
-                      type: string
-                    start_time:
-                      type: string
-                      format: date-time
-                    end_time:
-                      type: string
-                      format: date-time
-                    exit_code:
-                      type: integer
-                    last_output_line:
-                      type: string
-                    user:
-                      type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  commands:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        command_id:
+                          type: string
+                        command:
+                          type: string
+                        status:
+                          type: string
+                        start_time:
+                          type: string
+                          format: date-time
+                        end_time:
+                          type: string
+                          format: date-time
+                        exit_code:
+                          type: integer
+                        last_output_line:
+                          type: string
+                        user:
+                          type: string
     post:
       summary: "Run a command"
       tags:
         - commands
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: requestBody
-          schema:
-            type: object
-            properties:
-              command:
-                type: string
-                description: "Command to run"
-                # Enum will be added dynamically by the APIs
-                default: commandName
-              params:
-                type: array
-                description: "Command parameters"
-                items:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
                   type: string
-                default: []
-              rows:
-                type: integer
-                description: "tty nb rows"
-                default: 24
-              cols:
-                type: integer
-                description: "tty nb columns"
-                default: 125
-            required:
-              - command
+                  description: "Command to run"
+                  # Enum will be added dynamically by the APIs
+                  default: commandName
+                params:
+                  type: array
+                  description: "Command parameters"
+                  items:
+                    type: string
+                  default: []
+                rows:
+                  type: integer
+                  description: "tty nb rows"
+                  default: 24
+                cols:
+                  type: integer
+                  description: "tty nb columns"
+                  default: 125
+              required:
+                - command
       responses:
         "200":
           description: "Command started"
-          schema:
-            type: object
-            properties:
-              command_id:
-                type: string
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  command_id:
+                    type: string
+                  message:
+                    type: string
+
   /commands/{command_id}:
     get:
       summary: "Get command status"
@@ -91,43 +93,46 @@ paths:
         - in: path
           name: command_id
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         "200":
           description: "Command status returned"
-          schema:
-            type: object
-            properties:
-              command_id:
-                type: string
-              command:
-                type: string
-              params:
-                type: array
-                items:
-                  type: string
-              status:
-                type: string
-              start_time:
-                type: string
-                format: date-time
-              end_time:
-                type: string
-                format: date-time
-              exit_code:
-                type: integer
-              last_output_line:
-                type: string
-              cols:
-                type: integer
-              rows:
-                type: integer
-              user:
-                type: string
-              from:
-                type: string
-              pid:
-                type: integer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  command_id:
+                    type: string
+                  command:
+                    type: string
+                  params:
+                    type: array
+                    items:
+                      type: string
+                  status:
+                    type: string
+                  start_time:
+                    type: string
+                    format: date-time
+                  end_time:
+                    type: string
+                    format: date-time
+                  exit_code:
+                    type: integer
+                  last_output_line:
+                    type: string
+                  cols:
+                    type: integer
+                  rows:
+                    type: integer
+                  user:
+                    type: string
+                  from:
+                    type: string
+                  pid:
+                    type: integer
 
   /commands/{command_id}/output:
     get:
@@ -138,44 +143,49 @@ paths:
         - in: path
           name: command_id
           required: true
-          type: string
+          schema:
+            type: string
         - in: query
           name: offset
-          type: integer
-          default: 0
+          schema:
+            type: integer
+            default: 0
         - in: query
           name: maxsize
-          type: integer
-          default: 10485760
+          schema:
+            type: integer
+            default: 10485760
         - in: query
           name: maxlines
-          type: integer
-          default: 5000
-      consumes:
-        - application/json
-      produces:
-        - application/json
-        - text/plain
+          schema:
+            type: integer
+            default: 5000
       responses:
         "200":
           description: "Command output returned"
-          schema:
-            type: object
-            properties:
-              output:
-                type: string
-              status:
-                type: string
-              rows:
-                type: integer
-              cols:
-                type: integer
-              links:
+          content:
+            application/json:
+              schema:
                 type: object
                 properties:
-                  next:
+                  output:
                     type: string
-                    format: uri
+                  status:
+                    type: string
+                  rows:
+                    type: integer
+                  cols:
+                    type: integer
+                  links:
+                    type: object
+                    properties:
+                      next:
+                        type: string
+                        format: uri
+            text/plain:
+              schema:
+                type: string
+
   /commands/{command_id}/stop:
     patch:
       summary: "Stop a running command"
@@ -185,15 +195,19 @@ paths:
         - in: path
           name: command_id
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         "200":
           description: "Command stopped successfully"
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
   /commands/{command_id}/run:
     post:
       summary: "Relaunch a command"
@@ -203,56 +217,61 @@ paths:
         - in: path
           name: command_id
           required: true
-          type: string
-        - in: body
-          name: requestBody
           schema:
-            type: object
-            properties:
-              rows:
-                type: integer
-                description: "tty nb rows"
-                default: 24
-              cols:
-                type: integer
-                description: "tty nb columns" 
-                default: 125
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rows:
+                  type: integer
+                  description: "tty nb rows"
+                  default: 24
+                cols:
+                  type: integer
+                  description: "tty nb columns" 
+                  default: 125
       responses:
         "200":
           description: "Command relaunched"
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-              command_id:
-                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  command_id:
+                    type: string
+
   /commands/exposed:
     get:
       summary: "List available executable commands"
       tags:
         - commands
-      produces:
-        - application/json
       responses:
         "200":
           description: "List of commands with markdown help"
-          schema:
-            type: object
-            properties:
-              commands:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    command:
-                      type: string
-                    help:
-                      type: string
-          examples:
+          content:
             application/json:
-              commands:
-                - command: ls
-                  help: "List directory contents \n**params**:\n* `<ls_params>`"
-                - command: cat
-                  help: "Concatenate and display files \n**params**:\n* `<cat_params>`"
+              schema:
+                type: object
+                properties:
+                  commands:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        command:
+                          type: string
+                        help:
+                          type: string
+              example:
+                commands:
+                  - command: ls
+                    help: "List directory contents \n**params**:\n* `<ls_params>`"
+                  - command: cat
+                    help: "Concatenate and display files \n**params**:\n* `<cat_params>`"

@@ -1038,15 +1038,12 @@ def swagger_yaml():
         swagger_spec = yaml.safe_load(swagger_spec_str)
         # Update existing POST /commands enum if present
         executables = get_executables()
-        post_cmd = swagger_spec.get('paths', {}).get('/commands', {}).get('post')
-        if post_cmd:
-            params_list = post_cmd.get('parameters', [])
-            for param in params_list:
-                if param.get('in') == 'body' and 'schema' in param:
-                    props = param['schema'].get('properties', {})
-                    if 'command' in props:
-                        props['command']['enum'] = [e['command'] for e in executables]
-        # Add dynamic paths for each 
+        post_cmd = swagger_spec.get('paths', {}).get('/commands', {}).get('post', {})
+        if post_cmd and 'requestBody' in post_cmd:
+            schema = post_cmd['requestBody'].get('content', {}).get('application/json', {}).get('schema', {})
+            if 'properties' in schema and 'command' in schema['properties']:
+                schema['properties']['command']['enum'] = [e['command'] for e in executables]
+
         # Add dynamic paths for each executable:
         for exe in executables:
             dynamic_path = "/commands/" + exe["command"]
@@ -1065,28 +1062,32 @@ def swagger_yaml():
                     "parallel": {"type": "integer", "description": 'nb parallel jobs', "default": 1, "required": True, "minimum": 1, "maximum": 100},
                     "delay": {"type": "number", "description": "initial delay in s between jobs", "default": 10, "required": True, "minimum": 0, "maximum": 600},
                   })
+
             swagger_spec.setdefault("paths", {})[dynamic_path] = {
                 "post": {
                     "summary": f"Run command {exe['command']}",
                     "tags": ["run_commands"],
                     "description": f"{exe['help']}",
-                    "consumes": ["application/json"],
-                    "produces": ["application/json"],
-                    "parameters": [
-                        {
-                            "in": "body",
-                            "name": "requestBody",
-                            "schema": cmd_schema
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": cmd_schema
+                            }
                         }
-                    ],
+                    },
                     "responses": {
                         "200": {
                             "description": "Command started",
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "message": {"type": "string"},
-                                    "command_id": {"type": "string"}
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "message": {"type": "string"},
+                                            "command_id": {"type": "string"}
+                                        }
+                                    }
                                 }
                             }
                         }

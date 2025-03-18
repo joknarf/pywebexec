@@ -26,6 +26,28 @@ function addFormInputListener(textArea, jsform){
   };
 }
 
+async function getPostParametersSchema() {
+  const swaggerSpec = await getSwaggerSpec();
+  const result = {};
+  for (const path in swaggerSpec.paths) {
+    const pathItem = swaggerSpec.paths[path];
+    if (pathItem.post) {
+      const postDef = pathItem.post;
+      // Look for requestBody with JSON schema in OpenAPI 3.0
+      if (postDef.requestBody && postDef.requestBody.content && postDef.requestBody.content['application/json']) {
+        result[path] = postDef.requestBody.content['application/json'].schema;
+      } else {
+        result[path] = null;
+      }
+    }
+  }
+  return result;
+}
+function adjustTxtHeight(paramtext) {
+  paramtext.style.height = "0";
+  paramtext.style.height = `${paramtext.scrollHeight+delta}px`;
+}
+
 window.onload = function() {
   ui = SwaggerUIBundle({
     url: "/swagger.yaml",
@@ -69,29 +91,26 @@ window.onload = function() {
   const observer = new MutationObserver((mutations) => {
     mutations.forEach(mutation => {
       mutation.addedNodes.forEach(node => {
-        if (node.classList && (node.classList.contains("highlight-code") ||
-          node.classList.contains("body-param__text"))) {
-          // Retrieve the data-path attribute from the first opblock-summary-path element
-          const routePath = $(node).closest('.opblock').find('.opblock-summary-path').first().attr('data-path');
-          const routePathId = `schemaForm${routePath.replaceAll("/", "_")}`;
-          const prevForm = node.parentNode.querySelector(`#${routePathId}`)
-          if (prevForm) {
-            prevForm.remove();
-          }
-          if (node.classList.contains("body-param__text")) {
-            node.addEventListener("input", (e) => {
-              e.target.style.height = "0"
-              e.target.style.height = e.target.scrollHeight + "px";
-            });
-            node.style.height = "0"
-            node.style.height = node.scrollHeight + "px";
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          paramtext = node.querySelector(".body-param__text");
+          if (paramtext) {
+            // Retrieve the data-path attribute from the first opblock-summary-path element
+            const routePath = $(node).closest('.opblock').find('.opblock-summary-path').first().attr('data-path');
+            const routePathId = `schemaForm${routePath.replaceAll("/", "_")}`;
+            const prevForm = paramtext.parentNode.querySelector(`#${routePathId}`)
+            if (prevForm) {
+              prevForm.remove();
+            }
+            console.log(paramtext);
+            paramtext.addEventListener("input", () => adjustTxtHeight(paramtext));
+            // setTimeout(() => adjustTxtHeight(paramtext), 100);
             const form = document.createElement("form");
             form.id = routePathId;
             form.classList.add("schema-form");
             jsform = createSchemaForm($(form), swaggerSchemas[routePath], null, routePath);
             // form.addEventListener("input", formInput(node, jsform)); 
-            form.addEventListener("input", addFormInputListener(node, jsform));
-            node.parentNode.insertBefore(form, node.nextSibling);
+            form.addEventListener("input", addFormInputListener(paramtext, jsform));
+            paramtext.parentNode.insertBefore(form, paramtext.nextSibling);
             item1 = form.querySelector("input, select, textarea");
             if (item1) {
               item1.focus();
