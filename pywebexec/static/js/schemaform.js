@@ -35,16 +35,17 @@ function extractKeysAndPlaceholders(obj, formoptions, prefix = '') {
     let result = [];
   
     for (let key in obj.properties) {
+      k = prefix ? `${prefix}.${key}` : key;
       if (obj.properties[key].type === 'object' && obj.properties[key].properties) {
-        result = result.concat(extractKeysAndPlaceholders(obj.properties[key], formoptions, prefix ? `${prefix}.${key}` : key));
+        result = result.concat(extractKeysAndPlaceholders(obj.properties[key], formoptions, k));
       } else {
-        if (formoptions[`${prefix}.${key}`]) {
-          foptions = formoptions[`${prefix}.${key}`];
+        if (formoptions[k]) {
+          foptions = formoptions[k];
         } else {
           foptions = {};
         }
         result.push({
-          key: prefix ? `${prefix}.${key}` : key,
+          key: k,
           placeholder: obj.properties[key].example || null,
           ... foptions
         });
