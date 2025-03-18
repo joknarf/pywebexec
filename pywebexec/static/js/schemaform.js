@@ -49,7 +49,7 @@ function extractKeysAndPlaceholders(obj, formoptions, prefix = '') {
     return result;
 }
 
-function createSchemaForm(form, schema, onSubmit) {
+function createSchemaForm(form, schema, onSubmit, value={}) {
   if (schema && schema.schema_options) {
     schema_options = schema.schema_options;
   } else {
@@ -141,6 +141,7 @@ function createSchemaForm(form, schema, onSubmit) {
     schema: schema,
     onSubmit: onSubmit,
     form: formDesc,
+    value: value,
     // params: {
     //     fieldHtmlClass: "input-small",
     // }

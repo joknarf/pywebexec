@@ -256,6 +256,7 @@ async function fetchExecutables() {
 
 }
 
+let schemaValues = {};
 
 paramsInput.addEventListener('focus', () => {
     const currentCmd = commandInput.value;
@@ -266,6 +267,8 @@ paramsInput.addEventListener('focus', () => {
     if (gExecutables[currentCmd] && gExecutables[currentCmd].schema && gExecutables[currentCmd].schema.properties && paramsContainer.style.display == 'none') {
         createSchemaForm($('#schemaForm'), gExecutables[currentCmd].schema, async function (errors, values) {
             if (errors) {
+                schemaValues[currentCmd] = values;
+
                 console.log(errors);
                 alert(errors[0].message);
                 return false;
@@ -273,6 +276,7 @@ paramsInput.addEventListener('focus', () => {
                 const commandName = commandInput.value;
                 fitAddon.fit();
                 terminal.clear();
+                schemaValues[currentCmd] = values;
                 payload = { params: values, rows: terminal.rows, cols: terminal.cols }
                 if ('parallel' in values) {
                     payload['parallel'] = values['parallel'];
@@ -302,7 +306,7 @@ paramsInput.addEventListener('focus', () => {
                     console.log('Error running command:', error);
                 }
             }
-        });
+        }, schemaValues[currentCmd]);
         setHelpDivPosition();
         paramsContainer.style.display = 'block';
         const input1 = schemaFormPW.querySelector('input, select, textarea');
