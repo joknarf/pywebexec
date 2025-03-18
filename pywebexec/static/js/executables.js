@@ -301,7 +301,7 @@ paramsInput.addEventListener('focus', () => {
                     console.log('Error running command:', error);
                 }
             }
-        }, currentCmd.toString());
+        }, currentCmd);
         setHelpDivPosition();
         paramsContainer.style.display = 'block';
         const input1 = schemaFormPW.querySelector('input, select, textarea');

@@ -11,7 +11,7 @@ function adjustInputWidth(input) {
 function formInputHandle() {
   schemaForm.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
     if (! inputHandlers.includes(input)) {
-      val = input.value || input.placeholder;
+      val = input.placeholder;
       if (val) {
         size = Math.max(val.length, 2)
         if (input.type== 'number') {
@@ -168,6 +168,7 @@ function createSchemaForm(form, schema, onSubmit, schemaName) {
     txt.setAttribute("spellcheck", "false");
     txt.addEventListener("input", () => adjustTxtHeight(txt));
   });
+
   form[0].addEventListener('input', () => {
     schemaValues[schemaName] = jsform.root.getFormValues();
     localStorage.setItem('schemaValues', JSON.stringify(schemaValues));
@@ -176,8 +177,13 @@ function createSchemaForm(form, schema, onSubmit, schemaName) {
   return jsform;
 }
 function adjustTxtHeight(txt) {
+  if (txt.value.includes('\n')) {
+    delta = 2;
+  } else {
+    delta = 0;
+  }
   txt.style.height = "0";
-  txt.style.height = txt.scrollHeight + "px";
+  txt.style.height = `${txt.scrollHeight+delta}px`;
 }
 async function getSwaggerSpec() {
   const response = await fetch('/swagger.yaml');
