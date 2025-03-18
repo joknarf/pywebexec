@@ -43,9 +43,9 @@ async function getPostParametersSchema() {
   }
   return result;
 }
-function adjustTxtHeight(paramtext) {
+function adjustTxtHeight2(paramtext) {
   paramtext.style.height = "0";
-  paramtext.style.height = `${paramtext.scrollHeight+delta}px`;
+  paramtext.style.height = `${paramtext.scrollHeight+2}px`;
 }
 
 window.onload = function() {
@@ -92,7 +92,7 @@ window.onload = function() {
     mutations.forEach(mutation => {
       mutation.addedNodes.forEach(node => {
         if (node.nodeType === Node.ELEMENT_NODE) {
-          paramtext = node.querySelector(".body-param__text");
+          const paramtext = node.querySelector(".body-param__text");
           if (paramtext) {
             // Retrieve the data-path attribute from the first opblock-summary-path element
             const routePath = $(node).closest('.opblock').find('.opblock-summary-path').first().attr('data-path');
@@ -101,9 +101,8 @@ window.onload = function() {
             if (prevForm) {
               prevForm.remove();
             }
-            console.log(paramtext);
-            paramtext.addEventListener("input", () => adjustTxtHeight(paramtext));
-            // setTimeout(() => adjustTxtHeight(paramtext), 100);
+            paramtext.addEventListener("input", () => adjustTxtHeight2(paramtext));
+            setTimeout(() => adjustTxtHeight2(paramtext), 100);
             const form = document.createElement("form");
             form.id = routePathId;
             form.classList.add("schema-form");
