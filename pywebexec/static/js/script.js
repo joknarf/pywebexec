@@ -7,11 +7,11 @@ let fullOutput = '';
 let outputLength = 0;
 const maxScrollback = 99999;
 const maxSize = 10485760; // 10MB
-let fontSize = 14;
+let fontSize = +localStorage.getItem('fontSize') || 14;
 let isPaused = false;
 let showRunningOnly = false;
 let hiddenCommandIds = [];
-let fitWindow = false;
+let fitWindow = localStorage.getItem('fitWindow') === 'false' ? false : true;
 let cols = 0;
 let rows = 0;
 
@@ -420,12 +420,14 @@ slider.addEventListener('input', sliderUpdateOutput);
 document.getElementById('decreaseFontSize').addEventListener('click', () => {
     fontSize = Math.max(8, fontSize - 1);
     terminal.options.fontSize = fontSize;
+    localStorage.setItem('fontSize', fontSize);
     autoFit();
 });
 
 document.getElementById('increaseFontSize').addEventListener('click', () => {
     fontSize = Math.min(32, fontSize + 1);
     terminal.options.fontSize = fontSize;
+    localStorage.setItem('fontSize', fontSize);
     autoFit();
 });
 
@@ -456,21 +458,31 @@ function toggleFetchOutput() {
     }
     isPaused = !isPaused;
 }
-function toggleFit() {
-    fitWindow = ! fitWindow;
+
+function setFitIcon()
+{
     if (fitWindow) {
+        toggleFitButton.classList.remove('fit-window');
         toggleFitButton.classList.add('fit-tty');
         toggleFitButton.setAttribute('title', 'terminal fit tty');
     } else {
         toggleFitButton.classList.remove('fit-tty');
+        toggleFitButton.classList.add('fit-window');
         toggleFitButton.setAttribute('title', 'terminal fit window');
-    }
+    }     
+}
+
+function toggleFit() {
+    fitWindow = ! fitWindow;
+    setFitIcon();
+    localStorage.setItem('fitWindow', fitWindow);
     autoFit();
     viewOutput(currentCommandId);
 }
 
 toggleButton.addEventListener('click', toggleFetchOutput);
 toggleFitButton.addEventListener('click', toggleFit);
+setFitIcon();
 
 document.getElementById('thStatus').addEventListener('click', () => {
     showRunningOnly = !showRunningOnly;

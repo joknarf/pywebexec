@@ -449,6 +449,7 @@ body.dimmed * {
 .command-line:hover {
     text-overflow: unset;
     max-width: unset;
+    white-space: pre;
 }
 .nbrunning {
     display: inline-block;

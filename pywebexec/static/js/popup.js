@@ -1,6 +1,6 @@
 const maxScrollback = 99999;
 const maxSize = 10485760; // 10MB
-let fontSize = 14;
+let fontSize = +localStorage.getItem('popupFontSize') || 14;
 let terminal = new Terminal({
     cursorBlink: false,
     cursorInactiveStyle: 'none',
@@ -75,8 +75,8 @@ let slider = null;
 let isPaused = false;
 let cols = 0;
 let rows = 0;
-let fitWindow = false;
-
+let fitWindow = localStorage.getItem('popupFitWindow') === 'false' ? false : true;
+console.log(localStorage.getItem('popupFitWindow'));
 const toggleButton = document.getElementById('toggleFetch');
 const pausedMessage = document.getElementById('pausedMessage');
 const toggleFitButton = document.getElementById('toggleFit');
@@ -169,9 +169,13 @@ async function viewOutput(command_id) {
         }
         const data = await response.json();
         const commandInfo = document.getElementById('commandInfo');
-        const command = `${data.command.replace(/^\.\//, '')} ${data.params.join(' ')}`;
+        if (data.command.endsWith('/run-para')) {
+            command = `${data.params.join(' ').replace(/^.* -- run .\//, 'batch ')}`;
+        } else {
+            command = `${data.command.replace(/^\.\//, '')} ${data.params.join(' ')}`;
+        }
         setCommandStatus(data.status);
-        commandInfo.innerText = command;
+        commandInfo.innerHTML = command;
         commandInfo.setAttribute('title', command);
         document.title = `${data.command} ${data.params.join(' ')} - [${data.status}]`;
         if (data.command == 'term')
@@ -232,21 +236,31 @@ function toggleFetchOutput() {
     }
     isPaused = !isPaused;
 }
-function toggleFit() {
-    fitWindow = ! fitWindow;
+function setFitIcon()
+{
+    console.log(fitWindow);
     if (fitWindow) {
+        toggleFitButton.classList.remove('fit-window');
         toggleFitButton.classList.add('fit-tty');
         toggleFitButton.setAttribute('title', 'terminal fit tty');
     } else {
         toggleFitButton.classList.remove('fit-tty');
+        toggleFitButton.classList.add('fit-window');
         toggleFitButton.setAttribute('title', 'terminal fit window');
-    }
+    }     
+}
+
+function toggleFit() {
+    fitWindow = ! fitWindow;
+    setFitIcon();
+    localStorage.setItem('popupFitWindow', fitWindow);
     autoFit();
     viewOutput(currentCommandId);
 }
 
 toggleButton.addEventListener('click', toggleFetchOutput);
 toggleFitButton.addEventListener('click', toggleFit);
+setFitIcon();
 window.addEventListener('resize', adjustOutputHeight);
 window.addEventListener('load', () => {
     slider = document.getElementById('outputSlider');
@@ -259,11 +273,13 @@ window.addEventListener('load', () => {
 document.getElementById('decreaseFontSize').addEventListener('click', () => {
     fontSize = Math.max(8, fontSize - 1);
     terminal.options.fontSize = fontSize;
+    localStorage.setItem('popupFontSize', fontSize);
     autoFit();
 });
 
 document.getElementById('increaseFontSize').addEventListener('click', () => {
     fontSize = Math.min(32, fontSize + 1);
     terminal.options.fontSize = fontSize;
+    localStorage.setItem('popupFontSize', fontSize);
     autoFit();
 });
