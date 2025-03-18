@@ -88,7 +88,7 @@ window.onload = function() {
             const form = document.createElement("form");
             form.id = routePathId;
             form.classList.add("schema-form");
-            jsform = createSchemaForm($(form), swaggerSchemas[routePath], null);
+            jsform = createSchemaForm($(form), swaggerSchemas[routePath], null, routePath);
             // form.addEventListener("input", formInput(node, jsform)); 
             form.addEventListener("input", addFormInputListener(node, jsform));
             node.parentNode.insertBefore(form, node.nextSibling);

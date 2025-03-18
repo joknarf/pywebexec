@@ -52,8 +52,13 @@ function extractKeysAndPlaceholders(obj, formoptions, prefix = '') {
     }
     return result;
 }
-
-function createSchemaForm(form, schema, onSubmit, value={}) {
+let schemaValues = {};
+function createSchemaForm(form, schema, onSubmit, schemaName) {
+  if (schemaValues[schemaName]) {
+    value = schemaValues[schemaName];
+  } else {
+    value = {};
+  }
   if (schema && schema.schema_options) {
     schema_options = schema.schema_options;
   } else {
@@ -162,7 +167,11 @@ function createSchemaForm(form, schema, onSubmit, value={}) {
     txt.setAttribute("spellcheck", "false");
     txt.addEventListener("input", () => adjustTxtHeight(txt));
   });
-    
+  form[0].addEventListener('input', () => {
+    schemaValues[schemaName] = jsform.root.getFormValues();
+    // localStorage.setItem('schemaValues', JSON.stringify(schemaValues));
+  });
+  
   return jsform;
 }
 function adjustTxtHeight(txt) {
