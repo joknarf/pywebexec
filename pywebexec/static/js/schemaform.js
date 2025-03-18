@@ -53,7 +53,7 @@ function extractKeysAndPlaceholders(obj, formoptions, prefix = '') {
     }
     return result;
 }
-let schemaValues = {};
+
 function createSchemaForm(form, schema, onSubmit, schemaName) {
   if (schemaValues[schemaName]) {
     value = schemaValues[schemaName];
@@ -170,7 +170,7 @@ function createSchemaForm(form, schema, onSubmit, schemaName) {
   });
   form[0].addEventListener('input', () => {
     schemaValues[schemaName] = jsform.root.getFormValues();
-    // localStorage.setItem('schemaValues', JSON.stringify(schemaValues));
+    localStorage.setItem('schemaValues', JSON.stringify(schemaValues));
   });
   
   return jsform;
@@ -210,5 +210,6 @@ async function getPostParametersSchema() {
 
 let schemaForm;
 let inputHandlers = [];
+let schemaValues = JSON.parse(localStorage.getItem('schemaValues')) || {};
 
 
