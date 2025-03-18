@@ -55,6 +55,7 @@ paths:
                   description: "Command to run"
                   # Enum will be added dynamically by the APIs
                   default: commandName
+                  required: true
                 params:
                   type: array
                   description: "Command parameters"
