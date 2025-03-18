@@ -20,7 +20,11 @@ function formInputHandle() {
       } else {
         size = 12;
       }
+      if (input.value) {
+        size = 2;
+      }
       input.setAttribute('size', size);
+      setTimeout(() => adjustInputWidth(input), 1);
       input.addEventListener('input', () => adjustInputWidth(input));
       inputHandlers.push(input);
     }
@@ -153,18 +157,18 @@ function createSchemaForm(form, schema, onSubmit, value={}) {
   formInputHandle();
 
   form[0].querySelectorAll('textarea').forEach(txt => {
-    txt.style.height = "0";
-    txt.style.height = txt.scrollHeight + "px";
-    txt.setAttribute("spellcheck", "false")
-    txt.addEventListener("input", (e) => {
-      e.target.style.height = "0";
-      e.target.style.height = (e.target.scrollHeight+2) + "px";
-    });
+    txt.style.height = "0";  
+    setTimeout(() => adjustTxtHeight(txt), 1);
+    txt.setAttribute("spellcheck", "false");
+    txt.addEventListener("input", () => adjustTxtHeight(txt));
   });
     
   return jsform;
 }
-
+function adjustTxtHeight(txt) {
+  txt.style.height = "0";
+  txt.style.height = txt.scrollHeight + "px";
+}
 async function getSwaggerSpec() {
   const response = await fetch('/swagger.yaml');
   if (!response.ok) {
