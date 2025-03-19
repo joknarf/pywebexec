@@ -149,7 +149,13 @@ function createSchemaForm(form, schema, onSubmit, schemaName) {
   form[0].classList.add('form-inline');
   jsform = form.jsonForm({
     schema: schema,
-    onSubmit: onSubmit,
+    onSubmit: function (errors, values) {
+      if (errors) {
+        alert(errors[0].message);
+        return false;
+      }
+      onSubmit(errors,values);
+    },
     form: formDesc,
     value: value,
     // params: {
