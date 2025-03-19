@@ -54,12 +54,46 @@ function extractKeysAndPlaceholders(obj, formoptions, prefix = '') {
     return result;
 }
 
-function createSchemaForm(form, schema, onSubmit, schemaName) {
-  if (schemaValues[schemaName]) {
-    value = schemaValues[schemaName];
-  } else {
-    value = {};
+// ...existing code...
+
+function convertTextareaToArray(values, formDesc, schema) {
+  // Helper function to get schema type for a key path
+  function getSchemaType(schema, keyPath) {
+    const keys = keyPath.split('.');
+    let current = schema.properties;
+    for (const key of keys) {
+      if (!current || !current[key] || !current[key].properties) {
+        return current?.[key]?.type;
+      }
+      current = current[key].properties;
+    }
+    return null;
   }
+
+  // Convert textarea values to arrays if schema type matches
+  for (let i = 0; i < formDesc.length; i++) {
+    if (formDesc[i].type == 'textarea') {
+      const schemaType = getSchemaType(schema, formDesc[i].key);
+      if (schemaType === 'array') {
+        const keys = formDesc[i].key.split('.');
+        let obj = values;
+        for (let j = 0; j < keys.length - 1; j++) {
+          obj = obj[keys[j]];
+        }
+        const lastKey = keys[keys.length - 1];
+        const val = obj[lastKey];
+        if (val) {
+          obj[lastKey] = val.trim().split(/[\s\r,]+/).filter(x => x);
+        }
+      }
+    }
+  }
+  return values;
+}
+
+// ...existing code...
+
+function createSchemaForm(form, schema, onSubmit, schemaName) {
   if (schema && schema.schema_options) {
     schema_options = schema.schema_options;
   } else {
@@ -80,6 +114,33 @@ function createSchemaForm(form, schema, onSubmit, schemaName) {
     }
   }
   formDesc = extractKeysAndPlaceholders(schema, formoptions);
+  if (schemaValues[schemaName]) {
+    value = schemaValues[schemaName];
+    // convert array for textarea formDesc type to string separated by newlines
+    // if in formDesc a key has type textarea, convert the value to string separated by newlines
+    // formDesc=[{key: 'db.sid', type: 'textarea'}]
+    // value = {db: {sid: ['AA', 'BB']}}
+    // convert to
+    // value = {db: {sid: 'AA\nBB'}}
+    for (let i = 0; i < formDesc.length; i++) {
+      if (formDesc[i].type === 'textarea') {
+        const keys = formDesc[i].key.split('.');
+        let obj = value;
+        for (let j = 0; j < keys.length - 1; j++) {
+          if (!(keys[j] in obj)) obj[keys[j]] = {};
+          obj = obj[keys[j]];
+        }
+        const lastKey = keys[keys.length - 1];
+        const val = obj[lastKey];
+        if (val && Array.isArray(val)) {
+          obj[lastKey] = val.join('\n');
+        }
+      }
+    }
+  } else {
+    value = {};
+  }
+
   schemaForm = form[0];
   if (onSubmit != null) {
     if (schema_options && schema_options.batch_param) {
@@ -150,14 +211,19 @@ function createSchemaForm(form, schema, onSubmit, schemaName) {
   jsform = form.jsonForm({
     schema: schema,
     onSubmit: function (errors, values) {
-      if (errors) {
+      convertTextareaToArray(values, formDesc, schema);
+      env = JSV.createEnvironment();
+      report = env.validate(values, schema);
+      errors = report.errors;
+      if (errors.length > 0) {
         alert(errors[0].message);
         return false;
       }
-      onSubmit(errors,values);
+      onSubmit(errors, values);
     },
     form: formDesc,
     value: value,
+    validate: false,
     // params: {
     //     fieldHtmlClass: "input-small",
     // }
@@ -174,9 +240,8 @@ function createSchemaForm(form, schema, onSubmit, schemaName) {
     txt.setAttribute("spellcheck", "false");
     txt.addEventListener("input", () => adjustTxtHeight(txt));
   });
-
   form[0].addEventListener('input', () => {
-    schemaValues[schemaName] = jsform.root.getFormValues();
+    schemaValues[schemaName] = convertTextareaToArray(jsform.root.getFormValues(), formDesc, schema);
     localStorage.setItem('schemaValues', JSON.stringify(schemaValues));
   });
   

@@ -264,42 +264,36 @@ paramsInput.addEventListener('focus', () => {
     }
     if (gExecutables[currentCmd] && gExecutables[currentCmd].schema && gExecutables[currentCmd].schema.properties && paramsContainer.style.display == 'none') {
         createSchemaForm($('#schemaForm'), gExecutables[currentCmd].schema, async function (errors, values) {
-            if (errors) {
-                console.log(errors);
-                alert(errors[0].message);
-                return false;
-            } else {
-                const commandName = commandInput.value;
-                fitAddon.fit();
-                terminal.clear();
-                payload = { params: values, rows: terminal.rows, cols: terminal.cols }
-                if ('parallel' in values) {
-                    payload['parallel'] = values['parallel'];
-                    payload['delay'] = values['delay'];
-                    delete payload['params']['parallel'];
-                    delete payload['params']['delay'];
+            const commandName = commandInput.value;
+            fitAddon.fit();
+            terminal.clear();
+            payload = { params: values, rows: terminal.rows, cols: terminal.cols }
+            if ('parallel' in values) {
+                payload['parallel'] = values['parallel'];
+                payload['delay'] = values['delay'];
+                delete payload['params']['parallel'];
+                delete payload['params']['delay'];
+            }
+            try {
+                const response = await fetch(`/commands/${commandName}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+    
+                if (!response.ok) {
+                    throw new Error('Failed to launch command');
                 }
-                try {
-                    const response = await fetch(`/commands/${commandName}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-        
-                    if (!response.ok) {
-                        throw new Error('Failed to launch command');
-                    }
-        
-                    const data = await response.json();
-                    viewOutput(data.command_id);
-                    fetchCommands();
-                    commandInput.focus();
-                    commandInput.setSelectionRange(0, commandInput.value.length);
-                } catch (error) {
-                    console.log('Error running command:', error);
-                }
+    
+                const data = await response.json();
+                viewOutput(data.command_id);
+                fetchCommands();
+                commandInput.focus();
+                commandInput.setSelectionRange(0, commandInput.value.length);
+            } catch (error) {
+                console.log('Error running command:', error);
             }
         }, currentCmd);
         setHelpDivPosition();

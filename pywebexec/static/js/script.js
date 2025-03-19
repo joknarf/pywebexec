@@ -265,7 +265,6 @@ async function viewOutput(command_id) {
         } else {
             command = `${data.command.replace(/^\.\//, '')} ${data.params.join(' ')}`;
         }
-        console.log(command);
         setCommandStatus(data.status)
         commandInfo.innerHTML = command;
         commandInfo.setAttribute('title', command);

@@ -1,8 +1,9 @@
 let ui;
 let swaggerSchemas = {};
+
 function addFormInputListener(textArea, jsform){
   return function (event) {
-    jsonString = JSON.stringify(jsform.root.getFormValues(), null, 2);
+    jsonString = JSON.stringify(convertTextareaToArray(jsform.root.getFormValues(), jsform.formDesc.form, jsform.formDesc.schema), null, 2);
     textArea.value = jsonString;
 
     // Find the React fiber node
@@ -107,7 +108,8 @@ window.onload = function() {
             form.id = routePathId;
             form.classList.add("schema-form");
             jsform = createSchemaForm($(form), swaggerSchemas[routePath], null, routePath);
-            // form.addEventListener("input", formInput(node, jsform)); 
+            // form.addEventListener("input", formInput(node, jsform));
+            setTimeout(() => addFormInputListener(paramtext, jsform)(), 100);
             form.addEventListener("input", addFormInputListener(paramtext, jsform));
             paramtext.parentNode.insertBefore(form, paramtext.nextSibling);
             item1 = form.querySelector("input, select, textarea");
