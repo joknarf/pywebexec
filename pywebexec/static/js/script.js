@@ -384,7 +384,9 @@ function initResizer() {
     const resizer = document.getElementById('resizer');
     const tableContainer = document.getElementById('tableContainer');
     let startY, startHeight;
-
+    tableContainer.style.height = localStorage.getItem('tableHeight');
+    adjustOutputHeight();
+    
     resizer.addEventListener('mousedown', (e) => {
         startY = e.clientY;
         startHeight = parseInt(document.defaultView.getComputedStyle(tableContainer).height, 10);
@@ -394,6 +396,7 @@ function initResizer() {
 
     function doDrag(e) {
         tableContainer.style.height = `${startHeight + e.clientY - startY}px`;
+        localStorage.setItem('tableHeight', tableContainer.style.height);
         adjustOutputHeight();
     }
 
