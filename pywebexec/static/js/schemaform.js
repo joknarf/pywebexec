@@ -251,7 +251,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   err.classList.add('alert');
   err.style.display = 'none';
   schemaForm.appendChild(err);
-  validateSchemaForm(schemaForm, formDesc, schema, value, schemaName);
+  validateSchemaForm(schemaForm, formDesc, schema, jsform.root.getFormValues(), schemaName);
   schemaForm.querySelectorAll('textarea').forEach(txt => {
     txt.style.height = "0";  
     setTimeout(() => adjustTxtHeight(txt), 1);
