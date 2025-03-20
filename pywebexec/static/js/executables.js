@@ -260,7 +260,7 @@ paramsInput.addEventListener('focus', () => {
     const currentCmd = commandInput.value;
     paramsInput.name = currentCmd;
     if (gExecutables[currentCmd] && gExecutables[currentCmd].schema && gExecutables[currentCmd].schema.properties && paramsContainer.style.display == 'none') {
-        createSchemaForm($('#schemaForm'), gExecutables[currentCmd].schema, async function (errors, values) {
+        jsForm = createSchemaForm($('#schemaForm'), gExecutables[currentCmd].schema, async function (errors, values) {
             const commandName = commandInput.value;
             fitAddon.fit();
             terminal.clear();
@@ -293,12 +293,18 @@ paramsInput.addEventListener('focus', () => {
                 console.log('Error running command:', error);
             }
         }, currentCmd);
+        schemaFormPW = jsForm.root.ownerTree.domRoot;
         setHelpDivPosition();
         paramsContainer.style.display = 'block';
         const input1 = schemaFormPW.querySelector('input, select, textarea');
         if (input1) {
             input1.focus();
         }
+        schemaFormPW.addEventListener('submit', (event) => {
+            console.log('Form submitted');
+            paramsContainer.style.display = 'none';
+            event.preventDefault();
+        });
     } else {
         paramsContainer.style.display = 'none';
     }
@@ -318,7 +324,3 @@ paramsInput.addEventListener('blur', () => {
 window.addEventListener('resize', setHelpDivPosition);
 window.addEventListener('scroll', setHelpDivPosition);
 
-schemaFormPW.addEventListener('submit', (event) => {
-    paramsContainer.style.display = 'none';
-    event.preventDefault();
-});

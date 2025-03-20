@@ -92,8 +92,20 @@ function convertTextareaToArray(values, formDesc, schema) {
   return values;
 }
 
-// ...existing code...
-
+function validateSchemaForm(form, formDesc, schema, values) {
+  err = form.querySelector('.alert');
+  err.style.display = 'none';
+  convertTextareaToArray(values, formDesc, schema);
+  env = JSV.createEnvironment();
+  report = env.validate(values, schema);
+  errors = report.errors;
+  if (errors.length > 0) {
+    err.innerText = errors[0].uri.split('#')[1].slice(1).replaceAll('/', '.') + ': ' + errors[0].message + ': ' + errors[0].details;
+    err.style.display = 'block';
+    return false;
+  }
+  return true;
+}
 function createSchemaForm($form, schema, onSubmit, schemaName) {
   if (schema && schema.schema_options) {
     schema_options = schema.schema_options;
@@ -214,16 +226,14 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
       }
     }
   }
-  schemaForm.classList.add('form-inline');
+  // schemaForm.classList.add('form-inline');
   jsform = $form.jsonForm({
     schema: schema,
     onSubmit: function (errors, values) {
-      convertTextareaToArray(values, formDesc, schema);
-      env = JSV.createEnvironment();
-      report = env.validate(values, schema);
-      errors = report.errors;
-      if (errors.length > 0) {
-        alert(errors[0].message);
+      if (! validateSchemaForm(event.target, formDesc, schema, values)) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
         return false;
       }
       onSubmit(errors, values);
@@ -236,6 +246,11 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
     // }
   });
   schemaForm.firstChild.classList.add('form-inline');
+  err = document.createElement('div');
+  err.classList.add('alert');
+  err.style.display = 'none';
+  schemaForm.appendChild(err);
+  validateSchemaForm(schemaForm, formDesc, schema, value);
   schemaForm.querySelectorAll('textarea').forEach(txt => {
     txt.style.height = "0";  
     setTimeout(() => adjustTxtHeight(txt), 1);
@@ -248,6 +263,9 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
     if (e.target.tagName === 'INPUT' && e.target.type === 'text') {
       adjustInputWidth(e.target);
     }
+  });
+  schemaForm.addEventListener('change', (e) => {
+    validateSchemaForm(schemaForm, formDesc, schema, jsform.root.getFormValues());
   });
   formInputHandle();
   return jsform;

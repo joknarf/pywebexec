@@ -226,6 +226,17 @@
       margin-right: 4px;
     }
   }
+  .alert {
+    padding: 5px 10px;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+    border-radius: 15px;
+    font-size: 14px;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #ebccd1;  
+  }
 }
 
 .swagger-ui textarea {
