@@ -84,6 +84,8 @@ function convertTextareaToArray(values, formDesc, schema) {
         const val = obj[lastKey];
         if (val) {
           obj[lastKey] = val.trim().split(/[\s\r,]+/).filter(x => x);
+        } else {
+          delete obj[lastKey];
         }
       }
     }
