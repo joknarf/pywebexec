@@ -107,12 +107,12 @@ window.onload = function() {
             const form = document.createElement("form");
             form.id = routePathId;
             form.classList.add("schema-form");
-            jsform = createSchemaForm($(form), swaggerSchemas[routePath], null, routePath);
-            // form.addEventListener("input", formInput(node, jsform));
-            setTimeout(() => addFormInputListener(paramtext, jsform)(), 100);
-            form.addEventListener("input", addFormInputListener(paramtext, jsform));
             paramtext.parentNode.insertBefore(form, paramtext.nextSibling);
-            item1 = form.querySelector("input, select, textarea");
+            jsform = createSchemaForm($(form), swaggerSchemas[routePath], null, routePath);
+            newForm = jsform.root.ownerTree.domRoot;
+            setTimeout(() => addFormInputListener(paramtext, jsform)(), 100);
+            newForm.addEventListener("input", addFormInputListener(paramtext, jsform));
+            item1 = newForm.querySelector("input, select, textarea");
             if (item1) {
               item1.focus();
             }
