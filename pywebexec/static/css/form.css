@@ -140,10 +140,10 @@
   li {
     display: flex;
   }
-  input, select {
+  .controls input, select {
     min-width: unset;
     max-width: unset;
-    width: auto;
+    width: 110px;
     margin: 0;
   }
   input[type="number"] {

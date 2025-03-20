@@ -1,4 +1,7 @@
 function adjustInputWidth(input) {
+  if (!input.getAttribute('size')) {
+    input.setAttribute('size', 9);
+  }
   input.style.width = 'auto';
   if (input.type === 'number') {
     delta = 30;
@@ -240,7 +243,6 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
     txt.addEventListener("input", () => adjustTxtHeight(txt));
   });
   schemaForm.addEventListener('input', (e) => {
-    console.log(schemaName);
     schemaValues[schemaName] = convertTextareaToArray(jsform.root.getFormValues(), formDesc, schema);
     localStorage.setItem('schemaValues', JSON.stringify(schemaValues));
     if (e.target.tagName === 'INPUT' && e.target.type === 'text') {
