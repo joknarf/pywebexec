@@ -143,8 +143,10 @@
   .controls input, select {
     min-width: unset;
     max-width: unset;
-    width: 110px;
     margin: 0;
+  }
+  .controls input[type="text"] {
+    width: 110px;;
   }
   input[type="number"] {
     max-width: 120px;
