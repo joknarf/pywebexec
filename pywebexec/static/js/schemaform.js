@@ -10,24 +10,20 @@ function adjustInputWidth(input) {
 
 function formInputHandle() {
   schemaForm.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
-    if (! inputHandlers.includes(input)) {
-      val = input.placeholder;
-      if (val) {
-        size = Math.max(val.length, 2)
-        if (input.type== 'number') {
-          size += 2;
-        }
-      } else {
-        size = 12;
+    val = input.placeholder;
+    if (val) {
+      size = Math.max(val.length, 2)
+      if (input.type== 'number') {
+        size += 2;
       }
-      if (input.value) {
-        size = 2;
-      }
-      input.setAttribute('size', size);
-      setTimeout(() => adjustInputWidth(input), 1);
-      input.addEventListener('input', () => adjustInputWidth(input));
-      inputHandlers.push(input);
+    } else {
+      size = 12;
     }
+    if (input.value) {
+      size = 2;
+    }
+    input.setAttribute('size', size);
+    setTimeout(() => adjustInputWidth(input), 1);
   });
 }
 
@@ -95,7 +91,7 @@ function convertTextareaToArray(values, formDesc, schema) {
 
 // ...existing code...
 
-function createSchemaForm(form, schema, onSubmit, schemaName) {
+function createSchemaForm($form, schema, onSubmit, schemaName) {
   if (schema && schema.schema_options) {
     schema_options = schema.schema_options;
   } else {
@@ -142,8 +138,14 @@ function createSchemaForm(form, schema, onSubmit, schemaName) {
   } else {
     value = {};
   }
-
-  schemaForm = form[0];
+  // recreate form to remove event listeners
+  $form.off();
+  $form.empty();
+  $form.html('');
+  $newform = $form.clone();
+  $form.replaceWith($newform);
+  $form = $newform;
+  schemaForm = $form[0];
   if (onSubmit != null) {
     if (schema_options && schema_options.batch_param) {
       schema.properties[schema_options.batch_param].required = true;
@@ -209,8 +211,8 @@ function createSchemaForm(form, schema, onSubmit, schemaName) {
       }
     }
   }
-  form[0].classList.add('form-inline');
-  jsform = form.jsonForm({
+  schemaForm.classList.add('form-inline');
+  jsform = $form.jsonForm({
     schema: schema,
     onSubmit: function (errors, values) {
       convertTextareaToArray(values, formDesc, schema);
@@ -230,23 +232,22 @@ function createSchemaForm(form, schema, onSubmit, schemaName) {
     //     fieldHtmlClass: "input-small",
     // }
   });
-  form[0].firstChild.classList.add('form-inline');
-  form[0].querySelectorAll('._jsonform-array-addmore').forEach(btn => {
-    btn.addEventListener('click', formInputHandle);
-  });
-  formInputHandle();
-
-  form[0].querySelectorAll('textarea').forEach(txt => {
+  schemaForm.firstChild.classList.add('form-inline');
+  schemaForm.querySelectorAll('textarea').forEach(txt => {
     txt.style.height = "0";  
     setTimeout(() => adjustTxtHeight(txt), 1);
     txt.setAttribute("spellcheck", "false");
     txt.addEventListener("input", () => adjustTxtHeight(txt));
   });
-  form[0].addEventListener('input', () => {
+  schemaForm.addEventListener('input', (e) => {
+    console.log(schemaName);
     schemaValues[schemaName] = convertTextareaToArray(jsform.root.getFormValues(), formDesc, schema);
     localStorage.setItem('schemaValues', JSON.stringify(schemaValues));
+    if (e.target.tagName === 'INPUT' && e.target.type === 'text') {
+      adjustInputWidth(e.target);
+    }
   });
-  
+  formInputHandle();
   return jsform;
 }
 function adjustTxtHeight(txt) {
@@ -288,7 +289,7 @@ async function getPostParametersSchema() {
 }
 
 let schemaForm;
-let inputHandlers = [];
+// let inputHandlers = [];
 let schemaValues = JSON.parse(localStorage.getItem('schemaValues')) || {};
 
 

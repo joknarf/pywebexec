@@ -259,9 +259,6 @@ async function fetchExecutables() {
 paramsInput.addEventListener('focus', () => {
     const currentCmd = commandInput.value;
     paramsInput.name = currentCmd;
-    if (paramsContainer.style.display == 'none') {
-        $('#schemaForm').html('');
-    }
     if (gExecutables[currentCmd] && gExecutables[currentCmd].schema && gExecutables[currentCmd].schema.properties && paramsContainer.style.display == 'none') {
         createSchemaForm($('#schemaForm'), gExecutables[currentCmd].schema, async function (errors, values) {
             const commandName = commandInput.value;
