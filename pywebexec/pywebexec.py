@@ -846,6 +846,8 @@ def run_dynamic_command(cmd):
         if isinstance(data_params, dict):
             params = ""
             for param in schema_params.keys():
+                if not data_params.get(param, None) and schema_params[param].get("type", None) == "object":
+                    data_params[param] = '{}'
                 if not param in data_params:
                     continue
                 value = data_params[param]
