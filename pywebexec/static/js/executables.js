@@ -260,12 +260,13 @@ paramsInput.addEventListener('focus', () => {
     const currentCmd = commandInput.value;
     paramsInput.name = currentCmd;
     if (gExecutables[currentCmd] && gExecutables[currentCmd].schema && gExecutables[currentCmd].schema.properties && paramsContainer.style.display == 'none') {
+        const schema = gExecutables[currentCmd].schema;
         jsForm = createSchemaForm($('#schemaForm'), gExecutables[currentCmd].schema, async function (errors, values) {
             const commandName = commandInput.value;
             fitAddon.fit();
             terminal.clear();
             payload = { params: values, rows: terminal.rows, cols: terminal.cols }
-            if ('parallel' in values) {
+            if (schema.schema_options && schema.schema_options.batch_param && 'parallel' in values) {
                 payload['parallel'] = values['parallel'];
                 payload['delay'] = values['delay'];
                 delete payload['params']['parallel'];
@@ -301,7 +302,6 @@ paramsInput.addEventListener('focus', () => {
             input1.focus();
         }
         schemaFormPW.addEventListener('submit', (event) => {
-            console.log('Form submitted');
             paramsContainer.style.display = 'none';
             event.preventDefault();
         });

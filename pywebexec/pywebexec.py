@@ -12,17 +12,23 @@ import string
 from datetime import datetime, timezone, timedelta
 import time
 import shlex
-from gunicorn.app.base import Application
+import platform
+import pexpect
+
+if platform.system() != 'Windows':
+    from gunicorn.app.base import Application
+    import pwd
+    import fcntl
+    import termios
+else:
+    from waitress import serve
+    import winpty
 import ipaddress
 from socket import socket, AF_INET, SOCK_STREAM
 import ssl
 import re
-import pwd
 from secrets import token_urlsafe
-import pexpect
 import signal
-import fcntl
-import termios
 import struct
 import subprocess
 import logging
@@ -138,24 +144,24 @@ def generate_selfsigned_cert(hostname, ip_addresses=None, key=None):
 
     return cert_pem, key_pem
 
+if platform.system() != 'Windows':
+    class PyWebExec(Application):
 
-class PyWebExec(Application):
+        def __init__(self, app, options=None):
+            self.options = options or {}
+            self.application = app
+            super().__init__()
 
-    def __init__(self, app, options=None):
-        self.options = options or {}
-        self.application = app
-        super().__init__()
+        def load_config(self):
+            config = {
+                key: value for key, value in self.options.items()
+                if key in self.cfg.settings and value is not None
+            }
+            for key, value in config.items():
+                self.cfg.set(key.lower(), value)
 
-    def load_config(self):
-        config = {
-            key: value for key, value in self.options.items()
-            if key in self.cfg.settings and value is not None
-        }
-        for key, value in config.items():
-            self.cfg.set(key.lower(), value)
-
-    def load(self):
-        return self.application
+        def load(self):
+            return self.application
                                                                                                     #38;2;66;59;165m
 ANSI_ESCAPE = re.compile(br'(?:\x1B[@-Z\\-_]|\x1B([(]B|>)|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B\[([0-9]{1,2};){0,4}[0-9]{1,3}[m|K]|\x1B\[[0-9;]*[mGKHF]|[\x00-\x1F\x7F])')
 ANSI_ESCAPE = re.compile(br'(?:\x1B[@-Z\\-_]|\x1B([(]B|>)|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~]|\x1B\[([0-9]{1,2};){0,4}[0-9]{1,3}[m|K]|\x1B\[[0-9;]*[mGKHF])')
@@ -455,7 +461,7 @@ def update_command_status(command_id, updates):
         del status['last_read']
     with open(status_file_path, 'w') as f:
         json.dump(status, f)
-    os.sync()
+        os.fsync(f)
     status_cache[command_id] = status
 
 
@@ -507,7 +513,6 @@ def script(output_file):
 
 
 def run_command(fromip, user, command, params, command_id, rows, cols):
-    # app.logger.info(f'{fromip} run_command {command_id} {user}: {command} {params}')
     log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}')
     start_time = datetime.now(timezone.utc).isoformat()
     if user:
@@ -524,41 +529,68 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
     })
     output_file_path = get_output_file_path(command_id)
     try:
-        with open(output_file_path, 'wb') as fd:
-            p = pexpect.spawn(command, params, ignore_sighup=True, timeout=None, dimensions=(rows, cols))
-            update_command_status(command_id, {
-                'pid': p.pid,
-            })
-            p.logfile = fd
-            p.expect(pexpect.EOF)
-            fd.flush()
-            status = p.wait()
-            end_time = datetime.now(timezone.utc).isoformat()
-            # Update the status based on the result
-            if status is None:
-                exit_code = -15
+        if platform.system() == 'Windows':
+            # On Windows, use winpty
+            cmdline = f"{sys.executable} -u {command} " + " ".join(shlex.quote(p) for p in params)
+            with open(output_file_path, 'wb', buffering=0) as fd:
+                p = winpty.PTY(cols, rows)
+                p.spawn(cmdline)
+                pid = p.pid
                 update_command_status(command_id, {
-                    'status': 'aborted',
+                    'pid': pid,
+                })
+                while True:
+                    try:
+                        if not p.isalive():
+                            time.sleep(1)
+                        data = p.read(10485760, blocking=False)
+                        fd.write(data.encode())
+                        if not p.isalive():
+                            break
+                        time.sleep(0.1)
+                    except (EOFError, winpty.WinptyError):
+                        break
+                status = p.get_exitstatus()
+                del p
+                print("end", status)
+        else:
+            # On Unix, use pexpect
+            with open(output_file_path, 'wb') as fd:
+                p = pexpect.spawn(command, params, ignore_sighup=True, timeout=None, dimensions=(rows, cols))
+                update_command_status(command_id, {
+                    'pid': p.pid,
+                })
+                p.logfile = fd
+                p.expect(pexpect.EOF)
+                fd.flush()
+                status = p.wait()
+
+        end_time = datetime.now(timezone.utc).isoformat()
+        # Update the status based on the result
+        if status is None:
+            exit_code = -15
+            update_command_status(command_id, {
+                'status': 'aborted',
+                'end_time': end_time,
+                'exit_code': exit_code,
+            })
+            log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: command aborted')
+        else:
+            exit_code = status
+            if exit_code == 0:
+                update_command_status(command_id, {
+                    'status': 'success',
                     'end_time': end_time,
                     'exit_code': exit_code,
                 })
-                log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: command aborted')
+                log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: completed successfully')
             else:
-                exit_code = status
-                if exit_code == 0:
-                    update_command_status(command_id, {
-                        'status': 'success',
-                        'end_time': end_time,
-                        'exit_code': exit_code,
-                    })
-                    log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: completed successfully')
-                else:
-                    update_command_status(command_id, {
-                        'status': 'failed',
-                        'end_time': end_time,
-                        'exit_code': exit_code,
-                    })
-                    log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: exit code {exit_code}')
+                update_command_status(command_id, {
+                    'status': 'failed',
+                    'end_time': end_time,
+                    'exit_code': exit_code,
+                })
+                log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: exit code {exit_code}')
 
     except Exception as e:
         end_time = datetime.now(timezone.utc).isoformat()
@@ -661,7 +693,7 @@ app.config['TITLE'] = f"{args.title} API"
 
 
 def get_executable(cmd):
-    if os.path.isfile(cmd) and os.access(cmd, os.X_OK):
+    if os.path.isfile(cmd) and os.access(cmd, os.X_OK) and Path(cmd).suffix not in [".help", ".yaml", ".env", ".swp"]:
         help_file = f"{cmd}.help"
         help_text = ""
         if os.path.exists(help_file) and os.path.isfile(help_file):
@@ -688,14 +720,17 @@ def get_executables():
 def stop_command(command_id):
     log_request(f"stop_command {command_id}")
     status = read_command_status(command_id)
+    user = session.get('username', '-')
     if not status or 'pid' not in status:
         return jsonify({'error': 'Invalid command_id or command not running'}), 400
 
     pid = status['pid']
     end_time = datetime.now(timezone.utc).isoformat()
     try:
-        os.killpg(os.getpgid(pid), 15)  # Send SIGTERM to the process group
-        return jsonify({'message': 'Command aborted'})
+        try:
+            os.killpg(os.getpgid(pid), signal.SIGTERM)  # Send SIGTERM to the process group
+        except:
+            os.kill(pid, signal.SIGINT)  # Send SIGTERM to the process
     except Exception as e:
         update_command_status(command_id, {
             'status': 'aborted',
@@ -703,6 +738,10 @@ def stop_command(command_id):
             'exit_code': -15,
         })
         return jsonify({'error': 'Failed to terminate command'}), 500
+    output_file = get_output_file_path(command_id)
+    with open(output_file, 'a') as f:
+        f.write(f"\n\nCommand aborted by user {user} at {end_time}\n")
+    return jsonify({'message': 'Command aborted'})
 
 
 @app.before_request
@@ -1162,6 +1201,15 @@ def main():
             pywebexec.terminate()
         sys.exit(res)
 
+    if platform.system() == 'Windows':
+        # Use waitress on Windows
+        ssl_context = None
+        if args.cert:
+            ssl_context = (args.cert, args.key)
+        serve(app, host=args.listen, port=args.port, url_scheme='https' if args.cert else 'http', threads=8)
+        return 0
+
+    # Use gunicorn on Unix-like systems
     if args.action == "start":
         return start_gunicorn(daemonized=True, baselog=basef)
     if args.action:

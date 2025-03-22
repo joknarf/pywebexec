@@ -9,16 +9,18 @@ maintainers = [
 
 description = "Simple Python HTTP Exec Server"
 dependencies = [
-  "python-daemon>=2.3.2",
+  "python-daemon>=2.3.2; platform_system != 'Windows'",
   "cryptography>=40.0.2",
   "Flask>=2.0.3",
   "Flask-HTTPAuth>=4.8.0",
   "pexpect>=4.9.0",
-  "gunicorn>=21.2.0",
+  "gunicorn>=21.2.0; platform_system != 'Windows'",
   "ldap3>=2.9.1",
   "pyte>=0.8.1",
   "PyYAML>=6.0.1",
   "run-para>=1.0.2",
+  "waitress>=3.0.2; platform_system == 'Windows'",
+  "pywinpty>=2.0.15; platform_system == 'Windows'",
 ]
 dynamic=["version"]
 readme = "README.md"
