@@ -545,7 +545,7 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
         elif platform.system() == 'Windows':
             # On Windows, use winpty
             with open(output_file_path, 'wb', buffering=0) as fd:
-                p = PtyProcess.spawn([sys.execurable, "-u", command, *params], dimensions=(rows, cols))
+                p = PtyProcess.spawn([sys.executable, "-u", command, *params], dimensions=(rows, cols))
                 pid = p.pid
                 update_command_status(command_id, {
                     'pid': pid,
