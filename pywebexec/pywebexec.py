@@ -72,6 +72,7 @@ CONFDIR += "/.pywebexec"
 term_command_id = str(uuid.uuid4())
 tty_cols = 125
 tty_rows = 30
+os.environ["PYWEBEXEC"] = "true"
 
 # In-memory cache for command statuses
 status_cache = {}
