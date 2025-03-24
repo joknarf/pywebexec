@@ -196,13 +196,16 @@ async function fetchCommands(hide=false) {
     }
 }
 
+function extractHtml(text) {
+    const match = text.match(/<html[\s\S]*?<\/html>/);
+    return match ? match[0] : null;
+}
+
 async function fetchOutput(url) {
     if (isPaused) return;
     try {
         const response = await fetch(url);
-        if (!response.ok) {
-            return;
-        }
+        if (!response.ok) return;
         const data = await response.json();
         if (data.error) {
             terminal.write(data.error);
@@ -216,12 +219,30 @@ async function fetchOutput(url) {
             fullOutput += data.output;
             if (fullOutput.length > maxSize)
                 fullOutput = fullOutput.slice(-maxSize);
-            if (slider.value == 1000)
-                terminal.write(data.output);
-            else {
-                percentage = Math.round((outputLength * 1000)/fullOutput.length);
-                slider.value = percentage;
-                outputPercentage.innerText = `${Math.floor(percentage/10)}%`;
+
+            if (data.status != 'running') {
+                const htmlContent = extractHtml(fullOutput);
+                if (htmlContent) {
+                    document.getElementById('output').innerHTML = htmlContent;
+                    document.getElementById('output').classList.add('outputhtml');
+                } else {
+                    document.getElementById('output').classList.remove('outputhtml');
+                    if (slider.value == 1000)
+                        terminal.write(data.output);
+                    else {
+                        percentage = Math.round((outputLength * 1000)/fullOutput.length);
+                        slider.value = percentage;
+                        outputPercentage.innerText = `${Math.floor(percentage/10)}%`;
+                    }
+                }
+            } else {
+                if (slider.value == 1000)
+                    terminal.write(data.output);
+                else {
+                    percentage = Math.round((outputLength * 1000)/fullOutput.length);
+                    slider.value = percentage;
+                    outputPercentage.innerText = `${Math.floor(percentage/10)}%`;
+                }
             }
             nextOutputLink = data.links.next;
             if (data.status != 'running') {
@@ -276,8 +297,22 @@ async function viewOutput(command_id) {
             fetchOutput(nextOutputLink);
             outputInterval = setInterval(() => fetchOutput(nextOutputLink), 500);
             toggleButton.style.display = 'block';
+            document.getElementById('output').innerHTML = '';
+            document.getElementById('output').appendChild(terminal.element);
         } else {
-            fetchOutput(nextOutputLink);
+            const outputResponse = await fetch(nextOutputLink);
+            const outputData = await outputResponse.json();
+            const output = outputData.output;
+            const htmlContent = extractHtml(output);
+            if (htmlContent) {
+                document.getElementById('output').innerHTML = htmlContent;
+                document.getElementById('output').classList.add('outputhtml');
+            } else {
+                document.getElementById('output').classList.remove('outputhtml');
+                document.getElementById('output').innerHTML = '';
+                document.getElementById('output').appendChild(terminal.element);
+                terminal.write(output);
+            }
             toggleButton.style.display = 'none';
         }
         fetchCommands(); // Refresh the command list to highlight the current command

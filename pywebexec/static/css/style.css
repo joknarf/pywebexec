@@ -55,6 +55,16 @@ th {
     overflow-y: hidden;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.60);
 }
+.outputhtml {
+    background: #fff;
+    padding: 0;
+    overflow: auto;
+    ul {
+        margin: 0;
+        padding: 0 15px;
+        width: fit-content;
+    }
+}
 .copy-icon {
     cursor: pointer;
 }
