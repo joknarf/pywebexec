@@ -22,7 +22,7 @@ if platform.system() != 'Windows':
     import termios
 else:
     from waitress import serve
-    import winpty
+    from winpty import PtyProcess, WinptyError
 import ipaddress
 from socket import socket, AF_INET, SOCK_STREAM
 import ssl
@@ -531,10 +531,8 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
     try:
         if platform.system() == 'Windows':
             # On Windows, use winpty
-            cmdline = f"{sys.executable} -u {command} " + " ".join(shlex.quote(p) for p in params)
             with open(output_file_path, 'wb', buffering=0) as fd:
-                p = winpty.PTY(cols, rows)
-                p.spawn(cmdline)
+                p = PtyProcess.spawn([sys.execurable, "-u", command, *params], dimensions=(rows, cols))
                 pid = p.pid
                 update_command_status(command_id, {
                     'pid': pid,
@@ -543,16 +541,15 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
                     try:
                         if not p.isalive():
                             time.sleep(1)
-                        data = p.read(10485760, blocking=False)
+                        data = p.read(10485760)
                         fd.write(data.encode())
                         if not p.isalive():
                             break
                         time.sleep(0.1)
-                    except (EOFError, winpty.WinptyError):
+                    except (EOFError, WinptyError):
                         break
-                status = p.get_exitstatus()
+                status = p.exitstatus
                 del p
-                print("end", status)
         else:
             # On Unix, use pexpect
             with open(output_file_path, 'wb') as fd:
