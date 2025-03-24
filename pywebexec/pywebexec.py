@@ -364,6 +364,7 @@ def parseargs():
     parser.add_argument("-k", "--key", type=str, help="Path to https certificate key")
     parser.add_argument("-g", "--gencert", action="store_true", help="https server self signed cert")
     parser.add_argument("-T", "--tokenurl", action="store_true", help="generate safe url to access")
+    parser.add_argument("-n", "--notty", action="store_true", help="no span commands in tty")
     parser.add_argument("-C", "--cols", type=int, default=tty_cols, help="terminal columns")
     parser.add_argument("-R", "--rows", type=int, default=tty_rows, help="terminal rows")
     parser.add_argument("action", nargs="?", help="daemon action start/stop/restart/status/shareterm/term",
@@ -529,7 +530,18 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
     })
     output_file_path = get_output_file_path(command_id)
     try:
-        if platform.system() == 'Windows':
+        if args.notty:
+            os.environ["PYTHONIOENCODING"] = "utf-8"
+            os.environ["PYTHONLEGACYWINDOWSSTDIO"] = "utf-8"
+            with open(output_file_path, 'wb', buffering=0) as fd:
+                p = subprocess.Popen([sys.executable, "-u", command, *params], stdout=fd, stderr=fd, bufsize=1, text=False)
+                pid = p.pid
+                update_command_status(command_id, {
+                    'pid': pid,
+                })
+                p.wait()
+                status = p.returncode
+        elif platform.system() == 'Windows':
             # On Windows, use winpty
             with open(output_file_path, 'wb', buffering=0) as fd:
                 p = PtyProcess.spawn([sys.execurable, "-u", command, *params], dimensions=(rows, cols))
@@ -549,7 +561,7 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
                     except (EOFError, WinptyError):
                         break
                 status = p.exitstatus
-                del p
+                p.close()
         else:
             # On Unix, use pexpect
             with open(output_file_path, 'wb') as fd:
