@@ -41,6 +41,8 @@ def resolve(host_or_ip):
 def get_host_ip(host_or_ip='0.0.0.0'):
     if host_or_ip == '0.0.0.0':
         return resolve(gethostname())
+    if host_or_ip in ('localhost', '127.0.0.1'):
+        return ('localhost', '127.0.0.1')
     return resolve(host_or_ip)
 
 if __name__ == '__main__':
