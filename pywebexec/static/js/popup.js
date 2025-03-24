@@ -104,6 +104,10 @@ function setCommandStatus(status) {
     document.getElementById("commandStatus").className = `status-icon status-${status}`;
 }
 
+function extractHtml(text) {
+    const match = text.match(/<html[\s\S]*?<\/html>/);
+    return match ? match[0] : null;
+}
 
 async function fetchOutput(url) {
     if (isPaused) return;
@@ -123,16 +127,33 @@ async function fetchOutput(url) {
                 rows = data.rows;
                 autoFit(false);
             }
-            percentage = slider.value;
             fullOutput += data.output;
             if (fullOutput.length > maxSize)
                 fullOutput = fullOutput.slice(-maxSize);
-            if (percentage == 1000)
-                terminal.write(data.output);
-            else {
-                percentage = Math.round((outputLength * 1000)/fullOutput.length);
-                slider.value = percentage;
-                document.getElementById('outputPercentage').innerText = `${Math.floor(percentage/10)}%`;
+
+            if (data.status != 'running') {
+                const htmlContent = extractHtml(fullOutput);
+                if (htmlContent) {
+                    document.getElementById('output').innerHTML = htmlContent;
+                    document.getElementById('output').classList.add('outputhtml');
+                } else {
+                    document.getElementById('output').classList.remove('outputhtml');
+                    if (slider.value == 1000)
+                        terminal.write(data.output);
+                    else {
+                        percentage = Math.round((outputLength * 1000)/fullOutput.length);
+                        slider.value = percentage;
+                        document.getElementById('outputPercentage').innerText = `${Math.floor(percentage/10)}%`;
+                    }
+                }
+            } else {
+                if (slider.value == 1000)
+                    terminal.write(data.output);
+                else {
+                    percentage = Math.round((outputLength * 1000)/fullOutput.length);
+                    slider.value = percentage;
+                    document.getElementById('outputPercentage').innerText = `${Math.floor(percentage/10)}%`;
+                }
             }
             nextOutputLink = data.links.next;
             if (data.status != 'running') {
@@ -162,7 +183,6 @@ async function viewOutput(command_id) {
     terminal.reset();
     fullOutput = '';
     try {
-        // Updated endpoint below:
         const response = await fetch(`/commands/${command_id}`);
         if (!response.ok) {
             return;
@@ -186,8 +206,22 @@ async function viewOutput(command_id) {
             fetchOutput(nextOutputLink);
             outputInterval = setInterval(() => fetchOutput(nextOutputLink), 500);
             toggleButton.style.display = 'block';
+            document.getElementById('output').innerHTML = '';
+            document.getElementById('output').appendChild(terminal.element);
         } else {
-            fetchOutput(nextOutputLink);
+            const outputResponse = await fetch(nextOutputLink);
+            const outputData = await outputResponse.json();
+            const output = outputData.output;
+            const htmlContent = extractHtml(output);
+            if (htmlContent) {
+                document.getElementById('output').innerHTML = htmlContent;
+                document.getElementById('output').classList.add('outputhtml');
+            } else {
+                document.getElementById('output').classList.remove('outputhtml');
+                document.getElementById('output').innerHTML = '';
+                document.getElementById('output').appendChild(terminal.element);
+                terminal.write(output);
+            }
             toggleButton.style.display = 'none';
         }
     } catch (error) {
