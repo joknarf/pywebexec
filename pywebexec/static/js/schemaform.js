@@ -205,8 +205,27 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
       }
     }
     formDesc.push({
-      type: 'submit',
-      title: 'Run',
+      type: 'actions',
+      items: [
+        {
+          type: 'submit',
+          title: 'Run',
+          id: 'run-form',
+        },
+        {
+          type: 'button',
+          title: 'Reset',
+          id: 'reset-form',
+          onClick: function (evt) {
+            console.log('reset');
+            evt.preventDefault();
+            evt.stopPropagation();
+            evt.stopImmediatePropagation();
+            schemaValues[schemaName] = {};
+            createSchemaForm($form, schema, onSubmit, schemaName);
+          },
+        },
+      ],
     });
   } else {
     if (schema_params_options && schema_params_options.batch_param) {

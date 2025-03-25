@@ -921,6 +921,8 @@ def run_dynamic_command(cmd):
                     if value:
                         params += f"{prefix} "
                     continue
+                if prefix and not value: # skip empty params with prefix
+                    continue
                 if isinstance(value, dict) or convert_values.get(param, None) == "json":
                     value = shlex.quote(json.dumps(value, indent=2, sort_keys=False))
                 elif convert_values.get(param, None) == "quote":

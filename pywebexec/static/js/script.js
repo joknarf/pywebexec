@@ -222,10 +222,20 @@ async function fetchOutput(url) {
                 fullOutput = fullOutput.slice(-maxSize);
 
             if (data.status != 'running') {
-                const htmlContent = extractHtml(fullOutput);
-                if (htmlContent) {
-                    document.getElementById('output').innerHTML = htmlContent;
-                    document.getElementById('output').classList.add('outputhtml');
+                if (data.status === 'success') {
+                    const htmlContent = extractHtml(fullOutput);
+                    if (htmlContent) {
+                        document.getElementById('output').innerHTML = htmlContent;
+                        document.getElementById('output').classList.add('outputhtml');
+                    } else {
+                        if (slider.value == 1000)
+                            terminal.write(data.output);
+                        else {
+                            percentage = Math.round((outputLength * 1000)/fullOutput.length);
+                            slider.value = percentage;
+                            outputPercentage.innerText = `${Math.floor(percentage/10)}%`;
+                        }
+                    }
                 } else {
                     if (slider.value == 1000)
                         terminal.write(data.output);
@@ -303,14 +313,18 @@ async function viewOutput(command_id) {
             const outputResponse = await fetch(nextOutputLink);
             const outputData = await outputResponse.json();
             const output = outputData.output;
-            const htmlContent = extractHtml(output);
-            if (htmlContent) {
-                document.getElementById('output').innerHTML = htmlContent;
-                document.getElementById('output').classList.add('outputhtml');
+            document.getElementById('output').classList.remove('outputhtml');
+            document.getElementById('output').innerHTML = '';
+            document.getElementById('output').appendChild(terminal.element);
+            if (data.status === 'success') {
+                const htmlContent = extractHtml(output);
+                if (htmlContent) {
+                    document.getElementById('output').innerHTML = htmlContent;
+                    document.getElementById('output').classList.add('outputhtml');
+                } else {
+                    terminal.write(output);
+                }
             } else {
-                document.getElementById('output').classList.remove('outputhtml');
-                document.getElementById('output').innerHTML = '';
-                document.getElementById('output').appendChild(terminal.element);
                 terminal.write(output);
             }
             toggleButton.style.display = 'none';
