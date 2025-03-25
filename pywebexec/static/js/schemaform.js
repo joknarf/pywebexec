@@ -53,7 +53,34 @@ function extractKeysAndPlaceholders(obj, formoptions, prefix = '') {
     return result;
 }
 
-// ...existing code...
+
+// Convert objects to JSON strings where schema type is object without properties
+function convertObjectsToJsonStrings(obj, schema, prefix = '') {
+  // Helper function to get schema type and check for properties
+  function getSchemaTypeForKey(schema, keyPath) {
+    const keys = keyPath.split('.');
+    let current = schema.properties;
+    for (const key of keys) {
+      if (!current || !current[key]) return null;
+      current = current[key];
+    }
+    return current;
+  }
+
+  for (const key in obj) {
+    const keyPath = prefix ? `${prefix}.${key}` : key;
+    const schemaType = getSchemaTypeForKey(schema, keyPath);
+    
+    if (schemaType && schemaType.type === 'object' && !schemaType.properties) {
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        obj[key] = JSON.stringify(obj[key], null, 2);
+      }
+    } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+      convertObjectsToJsonStrings(obj[key], schema, keyPath);
+    }
+  }
+}
+
 
 function convertTextareaToArray(values, formDesc, schema) {
   // Helper function to get schema type for a key path
@@ -107,6 +134,7 @@ function validateSchemaForm(form, formDesc, schema, values, schemaName) {
   err.style.display = 'none';
   return true;
 }
+
 function createSchemaForm($form, schema, onSubmit, schemaName) {
   if (schema && schema.schema_options) {
     schema_options = schema.schema_options;
@@ -151,6 +179,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
         }
       }
     }
+    convertObjectsToJsonStrings(value, schema);
   } else {
     value = {};
   }
@@ -327,5 +356,3 @@ async function getPostParametersSchema() {
 let schemaForm;
 // let inputHandlers = [];
 let schemaValues = JSON.parse(localStorage.getItem('schemaValues')) || {};
-
-
