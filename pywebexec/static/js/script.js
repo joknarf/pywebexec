@@ -163,7 +163,7 @@ async function fetchCommands(hide=false) {
             const commandRow = document.createElement('tr');
             commandRow.className = `clickable-row ${command.command_id === currentCommandId ? 'currentcommand' : ''}`;
             commandRow.onclick = () => viewOutput(command.command_id);
-            if (command.status === 'running') runningCommands.push(command.command.replace(/^\.\//, ''));
+            if (command.status === 'running') runningCommands.push(command.command.replace(/^\.[\\/]/, ''));
             commandRow.innerHTML = `
                 <td class="monospace">
                     ${navigator.clipboard == undefined ? `${command.command_id.slice(0, 8)}` : `<span class="copy_clip" onclick="copyToClipboard('${command.command_id}', this, event)">${command.command_id.slice(0, 8)}</span>`}
@@ -174,7 +174,7 @@ async function fetchCommands(hide=false) {
                 <td align="center">
                     ${command.command.startsWith('term') ? '' : command.status === 'running' ? `<button class="stop" onclick="stopCommand('${command.command_id}', event)">Stop</button>` : `<button class="run" onclick="relaunchCommand('${command.command_id}', event)">Run</button>`}
                 </td>
-                <td title="${command.user == '-' ? '' : command.user}"><span class="command-line">${command.command.replace(/^\.\//, '')}</span></td>
+                <td title="${command.user == '-' ? '' : command.user}"><span class="command-line">${command.command.replace(/^\.[\\/]/, '')}</span></td>
                 <td class="monospace outcol">
                     <button class="popup-button" onclick="openPopup('${command.command_id}', event)"></button>
                     ${command.last_output_line || ''}
@@ -204,6 +204,7 @@ function extractHtml(text) {
 async function fetchOutput(url) {
     if (isPaused) return;
     try {
+        document.getElementById('output').classList.remove('outputhtml');
         const response = await fetch(url);
         if (!response.ok) return;
         const data = await response.json();
@@ -226,7 +227,6 @@ async function fetchOutput(url) {
                     document.getElementById('output').innerHTML = htmlContent;
                     document.getElementById('output').classList.add('outputhtml');
                 } else {
-                    document.getElementById('output').classList.remove('outputhtml');
                     if (slider.value == 1000)
                         terminal.write(data.output);
                     else {
@@ -284,7 +284,7 @@ async function viewOutput(command_id) {
         if (data.command.endsWith('/run-para')) {
             command = `${data.params.join(' ').replace(/^.* -- run .\//, 'batch ')}`;
         } else {
-            command = `${data.command.replace(/^\.\//, '')} ${data.params.join(' ')}`;
+            command = `${data.command.replace(/^\.[\\/]/, '')} ${data.params.join(' ')}`;
         }
         setCommandStatus(data.status)
         commandInfo.innerHTML = command;
