@@ -149,6 +149,7 @@
   .controls input[type="text"] {
     width: 110px;;
   }
+
   .controls > div:not([id]) { /* for checkboxes */
     scrollbar-width: thin;
     scrollbar-gutter: stable;
@@ -158,9 +159,11 @@
     border-radius: 5px;
     padding: 5px 2px;
   }
-  .contols > .range {
-    overflow: hidden;
+  .controls > div.range {
+    overflow-y: hidden;
+    padding: 0px 5px;
   }
+
   input[type="number"] {
     max-width: 120px;
     text-align: right;
@@ -214,9 +217,13 @@
   ._jsonform-array-deletelast {
     display: none;
   }
-  ._jsonform-array-buttons {
+  ul ~ ._jsonform-array-buttons {
     display: block;
     width: 100%;
+  }
+  ._jsonform-array-buttons {
+    /* display: block; */
+    /* width: 100%; */
     text-align: right;
   }
   i[title="Delete current"] {
@@ -269,6 +276,7 @@
     border: 1px solid #ccc;
     border-radius: 5px;
     padding-top: 9px;
+    width: 100%;
     label {
       padding-right: 5px;
     }
