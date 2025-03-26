@@ -8,7 +8,12 @@ function adjustInputWidth(input) {
   } else {
     delta = 3;
   }
-  input.style.width = `${input.scrollWidth + delta}px`;
+  if (input.scrollWidth > 0) {
+    input.style.width = `${input.scrollWidth + delta}px`;
+  } else {
+    input.style.width = `${input.value.length * 11 + delta}px`;
+  }
+  
 }
 
 function formInputHandle() {
@@ -30,16 +35,19 @@ function formInputHandle() {
   });
 }
 
-function extractKeysAndPlaceholders(obj, formoptions, prefix = '') {
+function extractKeysAndPlaceholders(obj, formkeys, formoptions, prefix = '') {
     let result = [];
   
     for (let key in obj.properties) {
       k = prefix ? `${prefix}.${key}` : key;
+      if (formoptions[k]) {
+        continue;
+      }
       if (obj.properties[key].type === 'object' && obj.properties[key].properties) {
-        result = result.concat(extractKeysAndPlaceholders(obj.properties[key], formoptions, k));
+        result = result.concat(extractKeysAndPlaceholders(obj.properties[key], formkeys, formoptions, k));
       } else {
-        if (formoptions[k]) {
-          foptions = formoptions[k];
+        if (formkeys[k]) {
+          foptions = formkeys[k];
         } else {
           foptions = {};
         }
@@ -147,15 +155,25 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
     schema_params_options = {};
   }
 
+  formkeys = {};
   formoptions = {};
-  if (schema_options && schema_options.form) {
-    formoptions = schema.schema_options.form;
-  } else if (schema_params_options && schema_params_options.form) {
-    for (let key in schema_params_options.form) {
-      formoptions[`params.${key}`] = schema_params_options.form[key];
+  if (schema_options) {
+    formkeys = schema.schema_options.form || {};
+    formoptions = schema.schema_options.formoptions || {};
+  } else { 
+    if (schema_params_options) {
+      let fkeys = schema_params_options.form || {};
+      let foptions = schema_params_options.formoptions || {};
+      for (let key in fkeys) {
+        formkeys[`params.${key}`] = fkeys[key];
+      }
+      for (let key in foptions) {
+        formoptions[`params.${key}`] = foptions[key];
+      }
     }
   }
-  formDesc = extractKeysAndPlaceholders(schema, formoptions);
+
+  formDesc = extractKeysAndPlaceholders(schema, formkeys, formoptions);
   if (schemaValues[schemaName]) {
     value = schemaValues[schemaName];
     // convert array for textarea formDesc type to string separated by newlines
@@ -233,6 +251,22 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
         }
       }
     }
+    if (formoptions) {
+      items = [];
+      for (let key in formoptions) {
+        items.push({
+          key: key,
+          ... formoptions[key],
+        });
+      }
+      formDesc.push({
+        type: 'fieldset',
+        title: 'Options',
+        fieldHtmlClass: 'fieldsetoptions',
+        expandable: true,
+        items: items,
+      });
+    }
     formDesc.push({
       type: 'actions',
       items: [
@@ -246,7 +280,6 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
           title: 'Reset',
           id: 'reset-form',
           onClick: function (evt) {
-            console.log('reset');
             evt.preventDefault();
             evt.stopPropagation();
             evt.stopImmediatePropagation();
@@ -312,6 +345,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
       adjustInputWidth(e.target);
     }
   });
+  divopt = schemaForm.querySelector("fieldset.expandable > div");
   formInputHandle();
   return jsform;
 }

@@ -277,17 +277,33 @@
     color: #333;
     padding: 3px 13px;
   }
+  legend {
+    font-weight: bold;
+  }
+  .expandable > legend::before {
+    content: '\25B8';
+    padding-right: 5px;
+  }
+  .expanded > legend::before {
+    content: '\25BE';
+  }
+
   fieldset {
     border: 1px solid #ccc;
     border-radius: 5px;
     padding-top: 9px;
-    width: 100%;
+    /* width: 100%; */
     label {
       padding-right: 5px;
     }
   }
   fieldset > div {
     /* display: block ruby; */
+    padding-bottom: 5px;
+  }
+  fieldset.expandable > div {
+    display: inline-flex;
+    gap: 0px 5px;
     padding-bottom: 5px;
   }
 }

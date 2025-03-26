@@ -1,0 +1,85 @@
+import os
+import sys
+import msvcrt
+import shutil
+import time
+import signal
+from datetime import datetime   
+from winpty import PTY, WinptyError
+
+class CmdInteractive:
+    def __init__(self, logfile=None):
+        self.logfile = logfile
+        cols, rows = shutil.get_terminal_size()
+        self.pty = PTY(cols, rows)
+        # Set up Ctrl+C handling
+        signal.signal(signal.SIGINT, self._handle_sigint)
+        self.pid = self.pty.spawn('cmd.exe')
+        if not self.pid:
+            raise RuntimeError("Failed to spawn cmd.exe")
+
+    def _handle_sigint(self, signum, frame):
+        """Handle Ctrl+C by forwarding it to the child process"""
+        try:
+            self.pty.write('\x03')
+        except:
+            pass
+
+    def log(self, text, direction='>>'):
+        if self.logfile:
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+            with open(self.logfile, 'a', encoding='utf-8') as f:
+                f.write(f'{timestamp} {direction} {text}')
+
+    def interact(self):
+        try:
+            while True:
+                try:
+                    try:
+                        output = self.pty.read()
+                        if output:
+                            if isinstance(output, str):
+                                output = output.encode('utf-8')
+                            sys.stdout.buffer.write(output)
+                            sys.stdout.buffer.flush()
+                            self.log(output.decode('utf-8', errors='replace'), '>>')
+                    except (EOFError, WinptyError):
+                        break
+
+                    if msvcrt.kbhit():
+                        char = msvcrt.getch()
+                        if char == b'\x03':  # Ctrl+C
+                            # Forward Ctrl+C to child process
+                            self.pty.write('\x03')
+                            continue
+                        if char == b'\x1d':  # Ctrl+]
+                            break
+                        if isinstance(char, bytes):
+                            char = char.decode('cp437', errors='replace')
+                        try:
+                            self.pty.write(char)
+                            self.log(char, '<<')
+                        except (EOFError, WinptyError):
+                            break
+
+                except (IOError, OSError) as e:
+                    if "handle is closed" in str(e):
+                        break
+                    raise
+
+        except KeyboardInterrupt:
+            pass
+        finally:
+            self.close()
+
+    def close(self):
+        if hasattr(self, 'pty'):
+            del self.pty
+
+if __name__ == '__main__':
+    log_file = 'cmd_session.log'
+    try:
+        cmd = CmdInteractive(log_file)
+        cmd.interact()
+    except ImportError:
+        print("Please install pywinpty: pip install pywinpty")
