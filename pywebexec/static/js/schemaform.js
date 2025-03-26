@@ -156,17 +156,15 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   formkeys = {};
   formoptions = {};
   if (schema_options) {
-    formkeys = schema_options.form || undefined
-    formoptions = schema_options.formoptions || undefined;
+    formkeys = schema_options.form || {}
+    formoptions = schema_options.formoptions || {};
   } else if (schema_params_options) {
     let fkeys = schema_params_options.form || {};
     let foptions = schema_params_options.formoptions || {};
     for (let key in fkeys) {
-      formkeys = formkeys || {};
       formkeys[`params.${key}`] = fkeys[key];
     }
     for (let key in foptions) {
-      formoptions = formoptions || {};
       formoptions[`params.${key}`] = foptions[key];
     }
   }
@@ -248,7 +246,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
         }
       }
     }
-    if (formoptions) {
+    if (Object.keys(formoptions).length) {
       items = [];
       for (let key in formoptions) {
         items.push({
