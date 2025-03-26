@@ -241,7 +241,7 @@
   .controls > .checkbox input {
     top: 5px;
   }
-  .checkbox {
+  .checkbox, .radio {
     label {
       font-weight: normal;
     }
