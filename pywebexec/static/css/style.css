@@ -16,6 +16,9 @@ body {
     font-family: Arial, sans-serif;
     overflow: hidden;
 }
+div {
+    scrollbar-width: thin;
+}
 .table-container {
     height: 173px;
     overflow-y: auto;
