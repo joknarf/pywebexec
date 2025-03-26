@@ -224,12 +224,16 @@
   }
   ul ~ ._jsonform-array-buttons {
     display: block;
+  }
+  li > fieldset {
     width: 100%;
+    margin-bottom: 3px;
   }
   ._jsonform-array-buttons {
-    /* display: block; */
-    width: 100%;
     text-align: right;
+  }
+  ul._jsonform-array-ul > li > div.form-group {
+    width: 100%;
   }
   i[title="Delete current"] {
     top: 5px;
