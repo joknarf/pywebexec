@@ -11,7 +11,7 @@ function adjustInputWidth(input) {
   if (input.scrollWidth > 0) {
     input.style.width = `${input.scrollWidth + delta}px`;
   } else {
-    input.style.width = `${input.value.length * 11 + delta}px`;
+    input.style.width = `${input.value.length * 10 + 20}px`;
   }
   
 }
@@ -144,35 +144,32 @@ function validateSchemaForm(form, formDesc, schema, values, schemaName) {
 }
 
 function createSchemaForm($form, schema, onSubmit, schemaName) {
+  schema_options = undefined;
+  schema_params_options = undefined;
   if (schema && schema.schema_options) {
     schema_options = schema.schema_options;
-  } else {
-    schema_options = {};
   }
   if (schema && schema.properties && schema.properties.params && schema.properties.params.schema_options) {
     schema_params_options = schema.properties.params.schema_options;
-  } else {
-    schema_params_options = {};
   }
 
   formkeys = {};
   formoptions = {};
   if (schema_options) {
-    formkeys = schema.schema_options.form || {};
-    formoptions = schema.schema_options.formoptions || {};
-  } else { 
-    if (schema_params_options) {
-      let fkeys = schema_params_options.form || {};
-      let foptions = schema_params_options.formoptions || {};
-      for (let key in fkeys) {
-        formkeys[`params.${key}`] = fkeys[key];
-      }
-      for (let key in foptions) {
-        formoptions[`params.${key}`] = foptions[key];
-      }
+    formkeys = schema_options.form || undefined
+    formoptions = schema_options.formoptions || undefined;
+  } else if (schema_params_options) {
+    let fkeys = schema_params_options.form || {};
+    let foptions = schema_params_options.formoptions || {};
+    for (let key in fkeys) {
+      formkeys = formkeys || {};
+      formkeys[`params.${key}`] = fkeys[key];
+    }
+    for (let key in foptions) {
+      formoptions = formoptions || {};
+      formoptions[`params.${key}`] = foptions[key];
     }
   }
-
   formDesc = extractKeysAndPlaceholders(schema, formkeys, formoptions);
   if (schemaValues[schemaName]) {
     value = schemaValues[schemaName];
@@ -306,6 +303,22 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
           formDesc[i].indicator = true;
         }
       }
+    }
+    if (formoptions) {
+      items = [];
+      for (let key in formoptions) {
+        items.push({
+          key: key,
+          ... formoptions[key],
+        });
+      }
+      formDesc.push({
+        type: 'fieldset',
+        title: 'Options',
+        fieldHtmlClass: 'fieldsetoptions',
+        expandable: true,
+        items: items,
+      });
     }
   }
   // schemaForm.classList.add('form-inline');
