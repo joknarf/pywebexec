@@ -356,6 +356,10 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
       adjustInputWidth(e.target);
     }
   });
+  schemaForm.addEventListener('mouseup', (e) => {
+    // save form values when clicking on array buttons
+    setTimeout(() => validateSchemaForm(schemaForm, formDesc, schema, jsform.root.getFormValues(), schemaName), 1);
+  });
   divopt = schemaForm.querySelector("fieldset.expandable > div");
   formInputHandle();
   return jsform;
