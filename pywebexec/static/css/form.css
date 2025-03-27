@@ -296,10 +296,12 @@
     border: 1px solid #ccc;
     border-radius: 5px;
     padding-top: 9px;
+    height: fit-content;
     /* width: 100%; */
     label {
       padding-right: 5px;
     }
+  
   }
   fieldset > div {
     /* display: block ruby; */
