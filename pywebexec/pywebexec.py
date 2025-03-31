@@ -552,13 +552,10 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
                 })
                 while True:
                     try:
-                        if not p.isalive():
-                            time.sleep(1)
-                        data = p.read(10485760)
-                        fd.write(data.encode())
-                        if not p.isalive():
+                        data = p.fileobj.recv(10485760)
+                        if not data:
                             break
-                        time.sleep(0.1)
+                        fd.write(data)
                     except (EOFError, WinptyError):
                         break
                 status = p.exitstatus
