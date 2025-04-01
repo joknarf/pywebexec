@@ -22,7 +22,7 @@ if platform.system() != 'Windows':
     import termios
 else:
     from waitress import serve
-    from winpty import PtyProcess, WinptyError
+    from winpty import PTY, WinptyError
 import ipaddress
 from socket import socket, AF_INET, SOCK_STREAM
 import ssl
@@ -513,7 +513,6 @@ def script(output_file):
         signal.signal(signal.SIGWINCH, sigwinch_passthrough)
         p.interact()
 
-
 def run_command(fromip, user, command, params, command_id, rows, cols):
     log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}')
     start_time = datetime.now(timezone.utc).isoformat()
@@ -545,21 +544,25 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
         elif platform.system() == 'Windows':
             # On Windows, use winpty
             with open(output_file_path, 'wb', buffering=0) as fd:
-                p = PtyProcess.spawn([sys.executable, "-u", command, *params], dimensions=(rows, cols))
-                pid = p.pid
+                p = PTY(cols, rows)
+                p.spawn(subprocess.list2cmdline([sys.executable, "-u", command, *params]))
                 update_command_status(command_id, {
-                    'pid': pid,
+                    'pid': p.pid,
                 })
                 while True:
                     try:
-                        data = p.fileobj.recv(10485760)
-                        if not data:
+                        # sleep less than 0.1s to get full output after command ends
+                        # pty won't be readable 0.1s after command ends
+                        time.sleep(0.09)
+                        # cannot use blocking read as it will block forever if no output at end of commandgit d
+                        data = p.read(10485760, blocking=False)
+                        fd.write(data.encode())
+                        if not p.isalive():
                             break
-                        fd.write(data)
                     except (EOFError, WinptyError):
                         break
-                status = p.exitstatus
-                p.close()
+                status = p.get_exitstatus()
+                del p
         else:
             # On Unix, use pexpect
             with open(output_file_path, 'wb') as fd:
@@ -575,29 +578,29 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
         end_time = datetime.now(timezone.utc).isoformat()
         # Update the status based on the result
         if status is None:
-            exit_code = -15
+            status = -15
+        if status in [15, -15] :
             update_command_status(command_id, {
                 'status': 'aborted',
                 'end_time': end_time,
-                'exit_code': exit_code,
+                'exit_code': status,
             })
             log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: command aborted')
         else:
-            exit_code = status
-            if exit_code == 0:
+            if status == 0:
                 update_command_status(command_id, {
                     'status': 'success',
                     'end_time': end_time,
-                    'exit_code': exit_code,
+                    'exit_code': status,
                 })
                 log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: completed successfully')
             else:
                 update_command_status(command_id, {
                     'status': 'failed',
                     'end_time': end_time,
-                    'exit_code': exit_code,
+                    'exit_code': status,
                 })
-                log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: exit code {exit_code}')
+                log_info(fromip, user, f'run_command {command_id}: {command_str(command, params)}: exit code {status}')
 
     except Exception as e:
         end_time = datetime.now(timezone.utc).isoformat()
@@ -609,8 +612,8 @@ def run_command(fromip, user, command, params, command_id, rows, cols):
         with open(get_output_file_path(command_id), 'a') as output_file:
             output_file.write(str(e))
         app.logger.error(fromip, user, f'Error running command {command_id}: {e}')
-        exit_code = 1
-    return exit_code
+        status = 1
+    return status
 
 def command_str(command, params):
     try:
@@ -735,9 +738,9 @@ def stop_command(command_id):
     end_time = datetime.now(timezone.utc).isoformat()
     try:
         try:
-            os.killpg(os.getpgid(pid), signal.SIGTERM)  # Send SIGTERM to the process group
+            os.killpg(os.getpgid(pid), signal.SIGTERM)
         except:
-            os.kill(pid, signal.SIGINT)  # Send SIGTERM to the process
+            os.kill(pid, signal.SIGTERM)
     except Exception as e:
         update_command_status(command_id, {
             'status': 'aborted',
