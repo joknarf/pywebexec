@@ -181,14 +181,19 @@ async function fetchCommands(hide=false) {
                 </td>
             `;
             commandsTbody.appendChild(commandRow);
+            const commandsTable = document.getElementById('commandsTable');
         });
         if (runningCommands.length) {
-            document.getElementById('thStatus').innerHTML=`<span class="status-icon status-running"></span>Running <span class="system-font nbrunning">${runningCommands.length}</span>`;
-            document.getElementById('thStatus').setAttribute('title', runningCommands.join("\n"));
+            const thStatus = document.getElementById('statusRunning');
+            thStatus.innerHTML = `<span class="status-icon status-running"></span>Running <span class="system-font nbrunning">${runningCommands.length}</span>`;
+            thStatus.setAttribute('title', runningCommands.join("\n"));
         } else {
-            document.getElementById('thStatus').innerHTML=`<span class="status-icon status-norun"></span>Status`;
-            document.getElementById('thStatus').setAttribute('title', "no command running");
+            const thStatus = document.getElementById('statusRunning');
+            thStatus.innerHTML = `<span class="status-icon status-norun"></span>Status`;
+            thStatus.setAttribute('title', "no command running");
         }
+        // Apply filters after table update
+        applyFilters();
         document.getElementById('dimmer').style.display = 'none';
     } catch (error) {
         console.log('Error fetching commands:', error);
@@ -535,7 +540,7 @@ toggleButton.addEventListener('click', toggleFetchOutput);
 toggleFitButton.addEventListener('click', toggleFit);
 setFitIcon();
 
-document.getElementById('thStatus').addEventListener('click', () => {
+document.getElementById('statusRunning').addEventListener('click', () => {
     showRunningOnly = !showRunningOnly;
     hiddenCommandIds = [];
     fetchCommands(showRunningOnly);

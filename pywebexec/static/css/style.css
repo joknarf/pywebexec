@@ -46,6 +46,8 @@ th {
     position: sticky;
     top: 0;
     z-index: 1;
+    vertical-align: top;
+    text-align: center;
 }
 .outcol {
     width: 100%;
@@ -483,4 +485,25 @@ body.dimmed * {
 .swaggerlink {
     text-decoration: none;
     font-size: 10px;
+}
+
+.column-filter {
+    display: block;
+    width: 90%;
+    margin: 5px auto;
+    padding: 2px 5px;
+    text-indent: 5px;
+    border: 1px solid #ccc;
+    border-radius: 15px;
+    font-size: 12px;
+    background: #a5a5a5;
+}
+
+.column-filter:focus {
+    outline: none;
+    border-color: #666;
+    background: #fff;
+}
+#statusRunning > span {
+    vertical-align: text-top;
 }
