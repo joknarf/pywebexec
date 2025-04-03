@@ -25,9 +25,6 @@ function initTableFilters(table) {
             if (index === headers.length - 1) {
                 const rowCount = document.createElement('span');
                 rowCount.className = 'row-count';
-                rowCount.style.marginLeft = 'auto';
-                rowCount.style.fontSize = '11px';
-                rowCount.style.color = '#aaa';
                 rowCount.classList.add('system-font');
                 contentSpan.appendChild(rowCount);
             }

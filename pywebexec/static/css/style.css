@@ -523,13 +523,14 @@ body.dimmed * {
 }
 .row-count {
     display: inline-block;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: normal;
     border: 1px solid #aaa;
     border-radius: 17px;
     /* min-width: 17px; */
     text-align: center;
     padding: 0px 4px;
+    margin-left: auto;
 }
 
 .xterm-accessibility {
