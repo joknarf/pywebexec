@@ -55,19 +55,19 @@ th {
     white-space: nowrap;
 }
 .sort-btn {
-    color: #fff;
+    color: #aaa;
     font-size: 14px;
     user-select: none;
     display: inline-block;
-    width: 14px;
+    width: 7px;
     text-align: center;
     flex-shrink: 0;
 }
 .sort-btn[data-sort-order="asc"] {
-    color: #9f9;
+    color: #5a5;
 }
 .sort-btn[data-sort-order="desc"] {
-    color: #9f9;
+    color: #5a5;
 }
 .column-filter {
     display: block;

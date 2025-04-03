@@ -551,7 +551,6 @@ toggleFitButton.addEventListener('click', toggleFit);
 setFitIcon();
 
 document.getElementById('statusRunning').addEventListener('click', () => {
-    console.log('showRunningOnly');
     showRunningOnly = !showRunningOnly;
     hiddenCommandIds = [];
     fetchCommands(showRunningOnly);

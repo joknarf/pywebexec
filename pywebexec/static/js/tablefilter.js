@@ -2,7 +2,7 @@ function initTableFilters(table) {
     const headers = table.querySelectorAll('thead th');
     headers.forEach((header, index) => {
         if (index !== 4 || table!==commandsTable) { // Skip Action column
-            const headerContent = header.innerHTML;
+            // Create wrapper span while preserving existing content
             const contentSpan = document.createElement('span');
             contentSpan.className = 'th-content';
             
@@ -13,14 +13,15 @@ function initTableFilters(table) {
             sortBtn.style.cursor = 'pointer';
             sortBtn.setAttribute('data-sort-order', '');
             sortBtn.onclick = () => toggleSort(table, index, sortBtn);
-            contentSpan.appendChild(sortBtn);
             
-            // Add header content after sort button
-            const textSpan = document.createElement('span');
-            textSpan.innerHTML = headerContent;
-            contentSpan.appendChild(textSpan);
+            // Move existing elements into the content span
+            while (header.firstChild) {
+                contentSpan.appendChild(header.firstChild);
+            }
             
-            header.innerHTML = '';
+            // Add sort button at the beginning
+            contentSpan.insertBefore(sortBtn, contentSpan.firstChild);
+            
             header.appendChild(contentSpan);
             
             // Add filter input
@@ -63,48 +64,50 @@ function toggleSort(table, colIndex, sortBtn) {
 function applyFilters(table) {
     const rows = Array.from(table.querySelectorAll('tbody tr'));
     const filters = Array.from(table.querySelectorAll('.column-filter'))
-        .map(filter => {
-            let regexp = null;
-            if (filter.value) {
+        .map(filter => ({
+            value: filter.value.toLowerCase(),
+            index: filter.parentElement.cellIndex,
+            regexp: filter.value ? (() => {
                 try {
-                    new RegExp(filter.value);
-                    regexp = filter.value;
+                    return new RegExp(filter.value, 'i');
                 } catch(e) {
-                    regexp = null;
+                    return null;
                 }
-            }
-            return {
-                value: filter.value,
-                index: filter.parentElement.cellIndex,
-                regexp: regexp
-            };
-        });
+            })() : null
+        }));
 
     // First apply filters
     const filteredRows = rows.filter(row => {
+        // If no filters are active, show all rows
+        if (filters.every(f => !f.value)) {
+            row.style.display = '';
+            return true;
+        }
+
         const cells = row.cells;
-        return !filters.some(filter => {
+        const shouldShow = !filters.some(filter => {
             if (!filter.value) return false;
             const cellText = cells[filter.index]?.innerText || '';
             if (filter.regexp) {
-                return !new RegExp(filter.regexp, 'i').test(cellText);
+                return !filter.regexp.test(cellText);
             }
-            return !cellText.toLowerCase().includes(filter.value.toLowerCase());
+            return !cellText.toLowerCase().includes(filter.value);
         });
+
+        row.style.display = shouldShow ? '' : 'none';
+        return shouldShow;
     });
 
-    // Then apply sorting
+    // Then apply sorting if active
     const sortBtn = table.querySelector('.sort-btn[data-sort-order]:not([data-sort-order=""])');
     if (sortBtn) {
-        const colIndex = parseInt(sortBtn.getAttribute('data-col-index')); // Get stored column index
+        const colIndex = parseInt(sortBtn.getAttribute('data-col-index'));
         const sortOrder = sortBtn.getAttribute('data-sort-order');
         
         filteredRows.sort((a, b) => {
-            if (!a.cells[colIndex] || !b.cells[colIndex]) return 0;
-            let aVal = a.cells[colIndex].innerText;
-            let bVal = b.cells[colIndex].innerText;
+            let aVal = a.cells[colIndex]?.innerText || '';
+            let bVal = b.cells[colIndex]?.innerText || '';
             
-            // Try to convert to numbers if possible
             const aNum = parseFloat(aVal);
             const bNum = parseFloat(bVal);
             if (!isNaN(aNum) && !isNaN(bNum)) {
@@ -116,12 +119,11 @@ function applyFilters(table) {
             if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
             return 0;
         });
-    }
 
-    // Update table body
-    const tbody = table.querySelector('tbody');
-    tbody.innerHTML = '';
-    filteredRows.forEach(row => tbody.appendChild(row));
+        // Reorder visible rows
+        const tbody = table.querySelector('tbody');
+        filteredRows.forEach(row => tbody.appendChild(row));
+    }
 }
 
 let commandsTable = document.querySelector('#commandsTable');
