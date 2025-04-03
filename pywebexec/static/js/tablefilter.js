@@ -68,11 +68,8 @@ function applyFilters(table) {
             value: filter.value.toLowerCase(),
             index: filter.parentElement.cellIndex,
             regexp: filter.value ? (() => {
-                try {
-                    return new RegExp(filter.value, 'i');
-                } catch(e) {
-                    return null;
-                }
+                try { return new RegExp(filter.value, 'i'); } 
+                catch(e) { return null; }
             })() : null
         }));
 
@@ -83,17 +80,13 @@ function applyFilters(table) {
             row.style.display = '';
             return true;
         }
-
         const cells = row.cells;
         const shouldShow = !filters.some(filter => {
             if (!filter.value) return false;
             const cellText = cells[filter.index]?.innerText || '';
-            if (filter.regexp) {
-                return !filter.regexp.test(cellText);
-            }
+            if (filter.regexp) return !filter.regexp.test(cellText);
             return !cellText.toLowerCase().includes(filter.value);
         });
-
         row.style.display = shouldShow ? '' : 'none';
         return shouldShow;
     });
@@ -105,16 +98,10 @@ function applyFilters(table) {
         const sortOrder = sortBtn.getAttribute('data-sort-order');
         
         filteredRows.sort((a, b) => {
-            let aVal = a.cells[colIndex]?.innerText || '';
-            let bVal = b.cells[colIndex]?.innerText || '';
+            const aVal = a.cells[colIndex]?.innerText || '';
+            const bVal = b.cells[colIndex]?.innerText || '';
             
-            const aNum = parseFloat(aVal);
-            const bNum = parseFloat(bVal);
-            if (!isNaN(aNum) && !isNaN(bNum)) {
-                aVal = aNum;
-                bVal = bNum;
-            }
-            
+            // Simple text comparison
             if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
             if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
             return 0;
