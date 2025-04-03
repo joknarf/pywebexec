@@ -7,9 +7,6 @@ function initTableFilters() {
             input.className = 'column-filter';
             input.placeholder = 'Filter...';
             input.addEventListener('input', applyFilters);
-            if (index === 3) { // Status column
-                input.style.width = '70%'; // Make status filter smaller
-            }
             header.appendChild(input);
         }
     });
