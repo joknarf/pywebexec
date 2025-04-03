@@ -89,8 +89,9 @@ th {
 .column-filter::placeholder {
     font-family: 'Glyphicons Halflings';
     content: "\e003";
-    font-size: 16px;
+    font-size: 12px;
     text-align: right;
+    color: #888;
 }
 .outcol {
     width: 100%;

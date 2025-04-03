@@ -35,7 +35,7 @@ function initTableFilters(table) {
             const input = document.createElement('input');
             input.type = 'search';
             input.className = 'column-filter';
-            input.placeholder = '\u2315';
+            input.placeholder = ''; // Unicode for magnifying glass
             input.addEventListener('input', () => applyFilters(table));
             header.appendChild(input);
         }
