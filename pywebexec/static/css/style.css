@@ -299,7 +299,7 @@ code {
     font-size: 13px;
 }
 
-.show-command-list-button .arrow {
+.show-command-list-button .ar- {
     visibility: hidden; /* Hide arrow by default */
 }
 
@@ -520,6 +520,16 @@ body.dimmed * {
     border-radius: 17px;
     min-width: 17px;
     text-align: center;
+}
+.row-count {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: normal;
+    border: 1px solid #aaa;
+    border-radius: 17px;
+    /* min-width: 17px; */
+    text-align: center;
+    padding: 0px 4px;
 }
 
 .xterm-accessibility {

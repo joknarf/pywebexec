@@ -2,7 +2,6 @@ function initTableFilters(table) {
     const headers = table.querySelectorAll('thead th');
     headers.forEach((header, index) => {
         if (index !== 4 || table!==commandsTable) { // Skip Action column
-            // Create wrapper span while preserving existing content
             const contentSpan = document.createElement('span');
             contentSpan.className = 'th-content';
             
@@ -22,6 +21,17 @@ function initTableFilters(table) {
             // Add sort button at the beginning
             contentSpan.insertBefore(sortBtn, contentSpan.firstChild);
             
+            // Add row counter for last column
+            if (index === headers.length - 1) {
+                const rowCount = document.createElement('span');
+                rowCount.className = 'row-count';
+                rowCount.style.marginLeft = 'auto';
+                rowCount.style.fontSize = '11px';
+                rowCount.style.color = '#aaa';
+                rowCount.classList.add('system-font');
+                contentSpan.appendChild(rowCount);
+            }
+            
             header.appendChild(contentSpan);
             
             // Add filter input
@@ -33,6 +43,15 @@ function initTableFilters(table) {
             header.appendChild(input);
         }
     });
+    // Initialize row count
+    updateRowCount(table, table.querySelectorAll('tbody tr').length);
+}
+
+function updateRowCount(table, count) {
+    const rowCount = table.querySelector('.row-count');
+    if (rowCount) {
+        rowCount.textContent = `${count}`;
+    }
 }
 
 function toggleSort(table, colIndex, sortBtn) {
@@ -90,6 +109,9 @@ function applyFilters(table) {
         row.style.display = shouldShow ? '' : 'none';
         return shouldShow;
     });
+
+    // Update row count
+    updateRowCount(table, filteredRows.length);
 
     // Then apply sorting if active
     const sortBtn = table.querySelector('.sort-btn[data-sort-order]:not([data-sort-order=""])');
