@@ -1,7 +1,7 @@
 function initTableFilters(table) {
     const headers = table.querySelectorAll('thead th');
     headers.forEach((header, index) => {
-        if (index !== 4) { // Skip Action column
+        if (index !== 4 || table!==commandsTable) { // Skip Action column
             const input = document.createElement('input');
             input.type = 'search';
             input.className = 'column-filter';
