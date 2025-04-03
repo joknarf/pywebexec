@@ -3,9 +3,10 @@ function initTableFilters() {
     headers.forEach((header, index) => {
         if (index !== 4) { // Skip Action column
             const input = document.createElement('input');
-            input.type = 'text';
+            input.type = 'search';
             input.className = 'column-filter';
-            input.placeholder = 'Filter...';
+            input.placeholder = '\u2315';
+            // input.placeholder = ' ';
             input.addEventListener('input', applyFilters);
             header.appendChild(input);
         }

@@ -487,6 +487,10 @@ body.dimmed * {
     font-size: 10px;
 }
 
+#statusRunning > span {
+    vertical-align: text-top;
+}
+
 .column-filter {
     display: block;
     width: 90%;
@@ -498,13 +502,18 @@ body.dimmed * {
     border-radius: 15px;
     font-size: 12px;
     background: #a5a5a5;
-}
-
-.column-filter:focus {
+  }
+  
+  .column-filter:focus {
     outline: none;
     border-color: #666;
     background: #fff;
-}
-#statusRunning > span {
-    vertical-align: text-top;
-}
+  }
+  
+  .column-filter::placeholder {
+    font-family: 'Glyphicons Halflings';
+    content: "\e003";
+    font-size: 16px;
+    text-align: right;
+  }
+  

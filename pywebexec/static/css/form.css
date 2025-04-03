@@ -13,6 +13,18 @@
 .glyphicon-search:before {
   content: "\e003";
 }
+.glyphicon {
+  position: relative;
+  top: 1px;
+  display: inline-block;
+  font-family: 'Glyphicons Halflings';
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 
 #schemaForm, .schema-form {
   font-size: 14px;
@@ -20,18 +32,6 @@
 
   div {
     scrollbar-width: thin;
-  }
-
-  .glyphicon {
-    position: relative;
-    top: 1px;
-    display: inline-block;
-    font-family: 'Glyphicons Halflings';
-    font-style: normal;
-    font-weight: normal;
-    line-height: 1;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
 
   .btn {
@@ -321,3 +321,4 @@
   min-height: 130px;
   overflow-y: hidden;
 }
+
