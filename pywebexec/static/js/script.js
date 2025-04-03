@@ -193,7 +193,7 @@ async function fetchCommands(hide=false) {
             thStatus.setAttribute('title', "no command running");
         }
         // Apply filters after table update
-        applyFilters();
+        applyFilters(document.getElementById('commandsTable'));
         document.getElementById('dimmer').style.display = 'none';
     } catch (error) {
         console.log('Error fetching commands:', error);
@@ -232,6 +232,11 @@ async function fetchOutput(url) {
                     if (htmlContent) {
                         document.getElementById('output').innerHTML = htmlContent;
                         document.getElementById('output').classList.add('outputhtml');
+                        const table = document.getElementById('output').querySelector('table');
+                        console.log(table);
+                        if (table != undefined && table != null) {
+                            initTableFilters(table);
+                        }
                     } else {
                         if (slider.value == 1000)
                             terminal.write(data.output);
@@ -326,6 +331,11 @@ async function viewOutput(command_id) {
                 if (htmlContent) {
                     document.getElementById('output').innerHTML = htmlContent;
                     document.getElementById('output').classList.add('outputhtml');
+                    const table = document.getElementById('output').querySelector('table');
+                    console.log(table);
+                    if (table != undefined && table != null) {
+                        initTableFilters(table);
+                    }
                 } else {
                     terminal.write(output);
                 }

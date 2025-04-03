@@ -1,21 +1,20 @@
-function initTableFilters() {
-    const headers = document.querySelectorAll('#commandsTable thead th');
+function initTableFilters(table) {
+    const headers = table.querySelectorAll('thead th');
     headers.forEach((header, index) => {
         if (index !== 4) { // Skip Action column
             const input = document.createElement('input');
             input.type = 'search';
             input.className = 'column-filter';
             input.placeholder = '\u2315';
-            // input.placeholder = ' ';
-            input.addEventListener('input', applyFilters);
+            input.addEventListener('input', () => applyFilters(table));
             header.appendChild(input);
         }
     });
 }
 
-function applyFilters() {
-    const rows = document.querySelectorAll('#commands tr');
-    const filters = Array.from(document.querySelectorAll('.column-filter'))
+function applyFilters(table) {
+    const rows = table.querySelectorAll('tbody tr');
+    const filters = Array.from(table.querySelectorAll('.column-filter'))
         .map(filter => {
             let regexp = null;
             if (filter.value) {
@@ -51,4 +50,5 @@ function applyFilters() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', initTableFilters);
+let commandsTable = document.querySelector('#commandsTable');
+document.addEventListener('DOMContentLoaded', initTableFilters(commandsTable));

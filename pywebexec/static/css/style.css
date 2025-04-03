@@ -495,7 +495,7 @@ body.dimmed * {
     display: block;
     width: 90%;
     max-width: 300px;
-    margin: 5px 0px;
+    margin: 5px 0px 2px 0px;
     padding: 2px 5px;
     text-indent: 5px;
     border: 1px solid #ccc;
