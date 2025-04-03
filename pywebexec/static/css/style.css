@@ -47,7 +47,7 @@ th {
     top: 0;
     z-index: 1;
     vertical-align: top;
-    text-align: center;
+    /* text-align: center; */
 }
 .outcol {
     width: 100%;
@@ -490,7 +490,8 @@ body.dimmed * {
 .column-filter {
     display: block;
     width: 90%;
-    margin: 5px auto;
+    max-width: 300px;
+    margin: 5px 0px;
     padding: 2px 5px;
     text-indent: 5px;
     border: 1px solid #ccc;
