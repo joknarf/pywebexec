@@ -169,7 +169,7 @@ function exportToExcel(table) {
                                 `<tr>${
                                     Array.from(row.cells)
                                         .filter((_, i) => i !== 4 || table !== commandsTable)
-                                        .map(cell => `<td>${cell.textContent.trim()}</td>`)
+                                        .map(cell => `<td valign="top">${cell.innerHTML}</td>`)
                                         .join('')
                                 }</tr>`
                             ).join('')
