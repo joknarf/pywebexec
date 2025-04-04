@@ -151,19 +151,14 @@ function exportToExcel(table) {
         <html>
             <head>
                 <meta charset="UTF-8">
-                <style>
-                    table { border-collapse: collapse; }
-                    th, td { border: 1px solid black; padding: 5px; }
-                    th { background-color: #f2f2f2; }
-                </style>
             </head>
             <body>
-                <table>
+                <table border="1" bgcolor="#f0f0f0" bordercolor="#ffffff">
                     <thead>
                         <tr>${
                             Array.from(table.querySelectorAll('thead th'))
                                 .filter((_, i) => i !== 4 || table !== commandsTable)
-                                .map(th => `<th>${th.querySelector('.th-content')?.textContent.replace('⇕', '').replace(/⤓.*/, '').trim() || ''}</th>`)
+                                .map(th => `<th bgcolor="#b0c7ff">${th.querySelector('.th-content')?.textContent.replace('⇕', '').replace(/⤓.*/, '').trim() || ''}</th>`)
                                 .join('')
                         }</tr>
                     </thead>
