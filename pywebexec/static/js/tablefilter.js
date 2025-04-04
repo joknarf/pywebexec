@@ -7,8 +7,8 @@ function initTableFilters(table) {
             
             // Add sort button first
             const sortBtn = document.createElement('span');
-            sortBtn.className = 'sort-btn';
-            sortBtn.innerHTML = '⇕';
+            sortBtn.className = 'sort-btn glyph-font';
+            sortBtn.innerHTML = '';
             sortBtn.style.cursor = 'pointer';
             sortBtn.setAttribute('data-sort-order', '');
             sortBtn.onclick = () => toggleSort(table, index, sortBtn);
@@ -25,8 +25,7 @@ function initTableFilters(table) {
             if (index === headers.length - 1) {
                 // Add row counter
                 const rowCount = document.createElement('span');
-                rowCount.className = 'row-count';
-                rowCount.classList.add('system-font');
+                rowCount.className = 'row-count system-font';
                 rowCount.onclick = () => exportToExcel(table);
                 contentSpan.appendChild(rowCount);
             }
@@ -49,7 +48,7 @@ function initTableFilters(table) {
 function updateRowCount(table, count) {
     const rowCount = table.querySelector('.row-count');
     if (rowCount) {
-        rowCount.textContent = `⤓ ${count}`;
+        rowCount.innerHTML = `<span class="glyph-font"></span> ${count}`;
     }
 }
 
@@ -58,7 +57,7 @@ function toggleSort(table, colIndex, sortBtn) {
     table.querySelectorAll('.sort-btn').forEach(btn => {
         if (btn !== sortBtn) {
             btn.setAttribute('data-sort-order', '');
-            btn.innerHTML = '⇕';
+            btn.innerHTML = '';
         }
     });
 
@@ -67,12 +66,12 @@ function toggleSort(table, colIndex, sortBtn) {
     let newOrder = 'asc';
     if (currentOrder === 'asc') {
         newOrder = 'desc';
-        sortBtn.innerHTML = '⇓';
+        sortBtn.innerHTML = '';
     } else if (currentOrder === 'desc') {
         newOrder = '';
-        sortBtn.innerHTML = '⇕';
+        sortBtn.innerHTML = '';
     } else {
-        sortBtn.innerHTML = '⇑';
+        sortBtn.innerHTML = '';
     }
     sortBtn.setAttribute('data-sort-order', newOrder);
     sortBtn.setAttribute('data-col-index', colIndex); // Store column index on the button
