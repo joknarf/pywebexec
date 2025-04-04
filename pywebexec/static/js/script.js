@@ -233,7 +233,6 @@ async function fetchOutput(url) {
                         document.getElementById('output').innerHTML = htmlContent;
                         document.getElementById('output').classList.add('outputhtml');
                         const table = document.getElementById('output').querySelector('table');
-                        console.log(table);
                         if (table != undefined && table != null) {
                             initTableFilters(table);
                         }

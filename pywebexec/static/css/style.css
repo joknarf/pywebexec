@@ -88,12 +88,14 @@ th {
     background: #ddd;
     color: #222;
 }
+.column-filter:focus::placeholder {
+    color: transparent;
+}
 .column-filter::placeholder {
     font-family: 'Glyphicons Halflings';
-    content: "\e003";
+    /* content: "\e003"; */
     font-size: 12px;
-    text-align: right;
-    float: right;
+    /* text-align: right; */
     color: #888;
 }
 .outcol {
