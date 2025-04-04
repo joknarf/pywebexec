@@ -21,11 +21,13 @@ function initTableFilters(table) {
             // Add sort button at the beginning
             contentSpan.insertBefore(sortBtn, contentSpan.firstChild);
             
-            // Add row counter for last column
+            // Add export button and row counter for last column
             if (index === headers.length - 1) {
+                // Add row counter
                 const rowCount = document.createElement('span');
                 rowCount.className = 'row-count';
                 rowCount.classList.add('system-font');
+                rowCount.onclick = () => exportToExcel(table);
                 contentSpan.appendChild(rowCount);
             }
             
@@ -47,7 +49,7 @@ function initTableFilters(table) {
 function updateRowCount(table, count) {
     const rowCount = table.querySelector('.row-count');
     if (rowCount) {
-        rowCount.textContent = `${count}`;
+        rowCount.textContent = `⤓ ${count}`;
     }
 }
 
@@ -141,6 +143,56 @@ function applyFilters(table) {
         const tbody = table.querySelector('tbody');
         filteredRows.forEach(row => tbody.appendChild(row));
     }
+}
+
+function exportToExcel(table) {
+    // Create HTML content
+    const html = `
+        <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    table { border-collapse: collapse; }
+                    th, td { border: 1px solid black; padding: 5px; }
+                    th { background-color: #f2f2f2; }
+                </style>
+            </head>
+            <body>
+                <table>
+                    <thead>
+                        <tr>${
+                            Array.from(table.querySelectorAll('thead th'))
+                                .filter((_, i) => i !== 4 || table !== commandsTable)
+                                .map(th => `<th>${th.querySelector('.th-content')?.textContent.replace('⇕', '').replace(/⤓.*/, '').trim() || ''}</th>`)
+                                .join('')
+                        }</tr>
+                    </thead>
+                    <tbody>${
+                        Array.from(table.querySelectorAll('tbody tr'))
+                            .filter(row => row.style.display !== 'none')
+                            .map(row => 
+                                `<tr>${
+                                    Array.from(row.cells)
+                                        .filter((_, i) => i !== 4 || table !== commandsTable)
+                                        .map(cell => `<td>${cell.textContent.trim()}</td>`)
+                                        .join('')
+                                }</tr>`
+                            ).join('')
+                    }</tbody>
+                </table>
+            </body>
+        </html>`;
+
+    // Create and trigger download
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'export_' + new Date().toISOString().slice(0,10) + '.xls';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
 }
 
 let commandsTable = document.querySelector('#commandsTable');

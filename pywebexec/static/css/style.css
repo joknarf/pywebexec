@@ -538,6 +538,7 @@ body.dimmed * {
     text-align: center;
     padding: 0px 4px;
     margin-left: auto;
+    cursor: pointer
 }
 
 .xterm-accessibility {
