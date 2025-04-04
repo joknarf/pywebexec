@@ -185,11 +185,11 @@ async function fetchCommands(hide=false) {
         });
         if (runningCommands.length) {
             const thStatus = document.getElementById('statusRunning');
-            thStatus.innerHTML = `<span class="status-icon status-running"></span>Running <span class="system-font nbrunning">${runningCommands.length}</span>`;
+            thStatus.innerHTML = `Running  <span class="status-icon status-running"></span><span class="system-font nbrunning">${runningCommands.length}</span>`;
             thStatus.setAttribute('title', runningCommands.join("\n"));
         } else {
             const thStatus = document.getElementById('statusRunning');
-            thStatus.innerHTML = `<span class="status-icon status-norun"></span>Status`;
+            thStatus.innerHTML = `Status  <span class="status-icon status-norun"></span>`;
             thStatus.setAttribute('title', "no command running");
         }
         // Apply filters after table update

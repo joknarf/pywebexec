@@ -73,24 +73,27 @@ th {
     display: block;
     width: 90%;
     max-width: 300px;
-    margin: 5px 0px 2px 0px;
+    margin: 5px 0px 0px 0px;
     padding: 2px 5px;
     text-indent: 5px;
-    border: 1px solid #ccc;
+    border: 1px solid #666;
     border-radius: 15px;
     font-size: 12px;
-    background: #a5a5a5;
+    background: #444;
+    color: #eee
 }
 .column-filter:focus {
     outline: none;
     border-color: #666;
-    background: #fff;
+    background: #ddd;
+    color: #222;
 }
 .column-filter::placeholder {
     font-family: 'Glyphicons Halflings';
     content: "\e003";
     font-size: 12px;
     text-align: right;
+    float: right;
     color: #888;
 }
 .outcol {
@@ -179,6 +182,7 @@ form {
     width: 16px;
     height: 16px;
     min-width: 16px;
+    margin-left: 5px;
     margin-right: 5px;
     background-size: contain;
     background-repeat: no-repeat;
@@ -515,7 +519,7 @@ body.dimmed * {
 }
 .nbrunning {
     display: inline-block;
-    font-size: 13px;
+    font-size: 10px;
     font-weight: normal;
     border: 1px solid #aaa;
     border-radius: 17px;
