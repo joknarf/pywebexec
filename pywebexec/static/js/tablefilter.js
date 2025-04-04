@@ -117,10 +117,21 @@ function applyFilters(table) {
         const sortOrder = sortBtn.getAttribute('data-sort-order');
         
         filteredRows.sort((a, b) => {
-            const aVal = a.cells[colIndex]?.innerText || '';
-            const bVal = b.cells[colIndex]?.innerText || '';
+            const aVal = a.cells[colIndex]?.innerText.trim() || '';
+            const bVal = b.cells[colIndex]?.innerText.trim() || '';
             
-            // Simple text comparison
+            // Check if both values are numeric
+            const aNum = !isNaN(aVal) && !isNaN(parseFloat(aVal));
+            const bNum = !isNaN(bVal) && !isNaN(parseFloat(bVal));
+            
+            if (aNum && bNum) {
+                // Numeric comparison
+                return sortOrder === 'asc' 
+                    ? parseFloat(aVal) - parseFloat(bVal)
+                    : parseFloat(bVal) - parseFloat(aVal);
+            }
+            
+            // Fallback to string comparison
             if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
             if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
             return 0;
