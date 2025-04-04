@@ -528,7 +528,7 @@ body.dimmed * {
     min-width: 17px;
     text-align: center;
 }
-.row-count {
+.row-count, .export-btn {
     display: inline-block;
     font-size: 11px;
     font-weight: normal;
@@ -538,6 +538,7 @@ body.dimmed * {
     text-align: center;
     padding: 0px 4px;
     margin-left: auto;
+    cursor: pointer
 }
 
 .xterm-accessibility {
