@@ -157,7 +157,7 @@ function exportToExcel(table) {
                         <tr>${
                             Array.from(table.querySelectorAll('thead th'))
                                 .filter((_, i) => i !== 4 || table !== commandsTable)
-                                .map(th => `<th bgcolor="#b0c7ff">${th.querySelector('.th-content')?.textContent.replace('⇕', '').replace(/⤓.*/, '').trim() || ''}</th>`)
+                                .map(th => `<th bgcolor="#b0c7ff">${th.querySelector('.th-content')?.textContent.replace(/[]/, '').replace(/.*/, '').trim() || ''}</th>`)
                                 .join('')
                         }</tr>
                     </thead>
