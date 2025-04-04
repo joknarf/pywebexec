@@ -46,6 +46,57 @@ th {
     position: sticky;
     top: 0;
     z-index: 1;
+    vertical-align: top;
+}
+.th-content {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+.sort-btn {
+    color: #aaa;
+    font-size: 14px;
+    user-select: none;
+    display: inline-block;
+    width: 7px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.sort-btn[data-sort-order="asc"] {
+    color: #5a5;
+}
+.sort-btn[data-sort-order="desc"] {
+    color: #5a5;
+}
+.column-filter {
+    display: block;
+    width: 90%;
+    max-width: 300px;
+    margin: 5px 0px 0px 0px;
+    padding: 2px 5px;
+    text-indent: 5px;
+    border: 1px solid #666;
+    border-radius: 15px;
+    font-size: 12px;
+    background: #444;
+    color: #eee
+}
+.column-filter:focus {
+    outline: none;
+    border-color: #666;
+    background: #ddd;
+    color: #222;
+}
+.column-filter:focus::placeholder {
+    color: transparent;
+}
+.column-filter::placeholder {
+    font-family: 'Glyphicons Halflings';
+    /* content: "\e003"; */
+    font-size: 12px;
+    /* text-align: right; */
+    color: #888;
 }
 .outcol {
     width: 100%;
@@ -133,6 +184,7 @@ form {
     width: 16px;
     height: 16px;
     min-width: 16px;
+    margin-left: 5px;
     margin-right: 5px;
     background-size: contain;
     background-repeat: no-repeat;
@@ -254,7 +306,7 @@ code {
     font-size: 13px;
 }
 
-.show-command-list-button .arrow {
+.show-command-list-button .ar- {
     visibility: hidden; /* Hide arrow by default */
 }
 
@@ -469,12 +521,23 @@ body.dimmed * {
 }
 .nbrunning {
     display: inline-block;
-    font-size: 13px;
+    font-size: 10px;
     font-weight: normal;
     border: 1px solid #aaa;
     border-radius: 17px;
     min-width: 17px;
     text-align: center;
+}
+.row-count {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: normal;
+    border: 1px solid #aaa;
+    border-radius: 17px;
+    /* min-width: 17px; */
+    text-align: center;
+    padding: 0px 4px;
+    margin-left: auto;
 }
 
 .xterm-accessibility {
@@ -483,4 +546,8 @@ body.dimmed * {
 .swaggerlink {
     text-decoration: none;
     font-size: 10px;
+}
+
+#statusRunning > span {
+    vertical-align: text-top;
 }

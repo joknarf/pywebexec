@@ -4,6 +4,27 @@
   src: url('../fonts/glyphicons-halflings-regular.eot');
   src: url('../fonts/glyphicons-halflings-regular.eot?#iefix') format('embedded-opentype'), url('../fonts/glyphicons-halflings-regular.woff2') format('woff2'), url('../fonts/glyphicons-halflings-regular.woff') format('woff'), url('../fonts/glyphicons-halflings-regular.ttf') format('truetype'), url('../fonts/glyphicons-halflings-regular.svg#glyphicons_halflingsregular') format('svg');
 }
+.glyphicon-plus-sign:before {
+  content: "\e081";
+}
+.glyphicon-minus-sign:before {
+  content: "\e082";
+}
+.glyphicon-search:before {
+  content: "\e003";
+}
+.glyphicon {
+  position: relative;
+  top: 1px;
+  display: inline-block;
+  font-family: 'Glyphicons Halflings';
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 
 #schemaForm, .schema-form {
   font-size: 14px;
@@ -11,24 +32,6 @@
 
   div {
     scrollbar-width: thin;
-  }
-  .glyphicon-plus-sign:before {
-    content: "\e081";
-  }
-  .glyphicon-minus-sign:before {
-    content: "\e082";
-  }
-
-  .glyphicon {
-    position: relative;
-    top: 1px;
-    display: inline-block;
-    font-family: 'Glyphicons Halflings';
-    font-style: normal;
-    font-weight: normal;
-    line-height: 1;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
 
   .btn {
@@ -71,6 +74,7 @@
     display: block;
     margin-top: 5px;
     margin-bottom: 10px;
+    max-width: 300px;
   }
   .form-control {
     font-family: Arial, Helvetica, sans-serif;
@@ -318,3 +322,4 @@
   min-height: 130px;
   overflow-y: hidden;
 }
+
