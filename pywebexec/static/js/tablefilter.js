@@ -26,6 +26,7 @@ function initTableFilters(table) {
                 // Add row counter
                 const rowCount = document.createElement('span');
                 rowCount.className = 'row-count system-font';
+                rowCount.title = 'Export to Excel';
                 rowCount.onclick = () => exportToExcel(table);
                 contentSpan.appendChild(rowCount);
             }
@@ -144,49 +145,154 @@ function applyFilters(table) {
     }
 }
 
-function exportToExcel(table) {
-    // Create HTML content
-    const html = `
-        <html>
-            <head>
-                <meta charset="UTF-8">
-            </head>
-            <body>
-                <table border="1" bgcolor="#f0f0f0" bordercolor="#ffffff">
-                    <thead>
-                        <tr>${
-                            Array.from(table.querySelectorAll('thead th'))
-                                .filter((_, i) => i !== 4 || table !== commandsTable)
-                                .map(th => `<th bgcolor="#b0c7ff">${th.querySelector('.th-content')?.textContent.replace(/[]/, '').replace(/.*/, '').trim() || ''}</th>`)
-                                .join('')
-                        }</tr>
-                    </thead>
-                    <tbody>${
-                        Array.from(table.querySelectorAll('tbody tr'))
-                            .filter(row => row.style.display !== 'none')
-                            .map(row => 
-                                `<tr>${
-                                    Array.from(row.cells)
-                                        .filter((_, i) => i !== 4 || table !== commandsTable)
-                                        .map(cell => `<td valign="top">${cell.innerHTML}</td>`)
-                                        .join('')
-                                }</tr>`
-                            ).join('')
-                    }</tbody>
-                </table>
-            </body>
-        </html>`;
+function processHtmlContent(element) {
+    function processLi(li, level = 0) {
+        const indent = '    '.repeat(level);
+        const items = [];
+        
+        // Extraire le texte direct (avant sous-liste)
+        const textContent = Array.from(li.childNodes)
+            .filter(node => node.nodeType === Node.TEXT_NODE)
+            .map(node => node.textContent.trim())
+            .join(' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+            
+        if (textContent) {
+            items.push(indent + '• ' + textContent);
+        }
+        
+        // Traiter récursivement les sous-listes
+        const subLists = li.querySelectorAll(':scope > ul > li');
+        if (subLists.length) {
+            for (const subLi of subLists) {
+                items.push(...processLi(subLi, level + 1));
+            }
+        }
+        
+        return items;
+    }
 
-    // Create and trigger download
-    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'export_' + new Date().toISOString().slice(0,10) + '.xls';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    const list = element.querySelector('ul');
+    if (list) {
+        const items = Array.from(list.children)
+            .filter(el => el.tagName === 'LI')
+            .map(li => processLi(li))
+            .flat();
+        return items.join('\n');
+    }
+    const text = element.textContent.replace(/\s+/g, ' ').trim();
+    // Return object with type info if it's a number
+    if (/^\d+$/.test(text)) {
+        return { value: parseInt(text, 10), type: 'integer' };
+    }
+    return text;
+}
+
+function exportToExcel(table) {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Sheet1', {
+        views: [{ state: 'frozen', xSplit: 0, ySplit: 1 }]
+    });
+
+    // Get headers and data
+    const headers = Array.from(table.querySelectorAll('thead th'))
+        .filter((_, i) => i !== 4 || table !== commandsTable)
+        .map(th => th.querySelector('.th-content')?.textContent.replace(/[].*/, '').replace(/[^\w\s]/g, '').trim() || '');
+
+    // Get data rows with type information
+    const rows = Array.from(table.querySelectorAll('tbody tr'))
+        .filter(row => row.style.display !== 'none')
+        .map(row => 
+            Array.from(row.cells)
+                .filter((_, i) => i !== 4 || table !== commandsTable)
+                .map(cell => {
+                    const content = processHtmlContent(cell);
+                    if (content && typeof content === 'object' && content.type === 'integer') {
+                        return content.value; // Numbers will be handled as numbers by ExcelJS
+                    }
+                    return (typeof content === 'string' ? content : content.toString())
+                })
+        );
+
+    // Calculate optimal column widths based on content
+    const columnWidths = headers.map((header, colIndex) => {
+        // Start with header width
+        let maxWidth = header.length;
+
+        // Check width needed for each row's cell in this column
+        rows.forEach(row => {
+            const cellContent = row[colIndex];
+            if (cellContent === null || cellContent === undefined) return;
+
+            // Convert numbers to string for width calculation
+            const contentStr = cellContent.toString();
+            // Get the longest line in multiline content
+            const lines = contentStr.split('\n');
+            const longestLine = Math.max(...lines.map(line => line.length));
+            maxWidth = Math.max(maxWidth, longestLine);
+        });
+
+        // Add some padding and ensure minimum/maximum widths
+        return { width: Math.min(Math.max(maxWidth + 2, 10), 100) };
+    });
+
+    // Define columns with calculated widths
+    worksheet.columns = headers.map((header, index) => ({
+        header: header,
+        key: header,
+        width: columnWidths[index].width
+    }));
+
+    // Add data rows
+    rows.forEach(rowData => {
+        const row = worksheet.addRow(rowData);
+        row.alignment = { vertical: 'top', wrapText: true };
+        
+        // Set row height based on content, handling both strings and numbers
+        // const maxLines = Math.max(...rowData.map(cell => {
+        //     if (cell === null || cell === undefined) return 1;
+        //     const str = cell.toString();
+        //     return (str.match(/\n/g) || []).length + 1;
+        // }));
+        // row.height = Math.max(20, maxLines * 15);
+    });
+
+    // Style header row
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'left' };
+    // headerRow.height = 20;
+
+    // Add table after all rows are defined
+    worksheet.addTable({
+        name: 'DataTable',
+        ref: 'A1',
+        headerRow: true,
+        totalsRow: false,
+        style: {
+            theme: 'TableStyleMedium2',
+            showRowStripes: true,
+        },
+        columns: headers.map(h => ({
+            name: h,
+            filterButton: true
+        })),
+        rows: rows
+    });
+
+    // Save file
+    workbook.xlsx.writeBuffer().then(buffer => {
+        const blob = new Blob([buffer], { 
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'export_' + new Date().toISOString().slice(0,10) + '.xlsx';
+        a.click();
+        window.URL.revokeObjectURL(url);
+    });
 }
 
 let commandsTable = document.querySelector('#commandsTable');
