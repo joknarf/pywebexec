@@ -76,7 +76,6 @@ let isPaused = false;
 let cols = 0;
 let rows = 0;
 let fitWindow = localStorage.getItem('popupFitWindow') === 'false' ? false : true;
-console.log(localStorage.getItem('popupFitWindow'));
 const toggleButton = document.getElementById('toggleFetch');
 const pausedMessage = document.getElementById('pausedMessage');
 const toggleFitButton = document.getElementById('toggleFit');
@@ -272,7 +271,6 @@ function toggleFetchOutput() {
 }
 function setFitIcon()
 {
-    console.log(fitWindow);
     if (fitWindow) {
         toggleFitButton.classList.remove('fit-window');
         toggleFitButton.classList.add('fit-tty');

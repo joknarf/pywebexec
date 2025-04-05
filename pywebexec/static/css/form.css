@@ -259,6 +259,10 @@
       margin-right: 4px;
     }
   }
+  input::placeholder, textarea::placeholder {
+    color: #bbb;
+    opacity: 1; /* Firefox */
+  }
   .alert {
     padding: 5px 10px;
     margin-top: 10px;
