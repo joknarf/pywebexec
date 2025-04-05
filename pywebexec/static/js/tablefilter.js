@@ -281,27 +281,17 @@ function exportToExcel(table) {
         rows: rows
     });
 
-    // Save file and open Excel
+    // Save file
     workbook.xlsx.writeBuffer().then(buffer => {
         const blob = new Blob([buffer], { 
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
         });
-        
-        // Create a hidden form
-        const form = document.createElement('form');
-        form.method = 'post';
-        form.action = URL.createObjectURL(blob);
-        form.target = '_blank';  // Open in new window/tab
-        
-        // Submit the form
-        document.body.appendChild(form);
-        form.submit();
-        
-        // Cleanup
-        setTimeout(() => {
-            document.body.removeChild(form);
-            URL.revokeObjectURL(form.action);
-        }, 1000);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'export_' + new Date().toISOString().slice(0,10) + '.xlsx';
+        a.click();
+        window.URL.revokeObjectURL(url);
     });
 }
 
