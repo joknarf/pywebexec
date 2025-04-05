@@ -286,11 +286,21 @@ function exportToExcel(table) {
         const blob = new Blob([buffer], { 
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
         });
-        const url = window.URL.createObjectURL(blob);
-        window.location.href = url;
+        
+        // Create a hidden form
+        const form = document.createElement('form');
+        form.method = 'post';
+        form.action = URL.createObjectURL(blob);
+        form.target = '_blank';  // Open in new window/tab
+        
+        // Submit the form
+        document.body.appendChild(form);
+        form.submit();
+        
+        // Cleanup
         setTimeout(() => {
-            // Clean up the URL after a short delay
-            window.URL.revokeObjectURL(url);
+            document.body.removeChild(form);
+            URL.revokeObjectURL(form.action);
         }, 1000);
     });
 }
