@@ -715,7 +715,7 @@ def get_executable(cmd):
             with open(schema_file, 'r') as sf:
                 schema = yaml.safe_load(sf)
         return {"command": cmd, "help": help_text, "schema": schema}
-    return None
+    return {}
 
 def get_executables():
     executables_list = []
@@ -933,7 +933,7 @@ def run_dynamic_command(cmd):
                 if param == batch_param and len(values)>1:
                     batch_values = values
                     value="@1"
-                if isinstance(value, list):
+                if value and isinstance(value, list) and isinstance(value[0], str):
                     params += " ".join(value)
                 else:
                     params += str(value)

@@ -147,6 +147,7 @@
   }
   li {
     display: flex;
+    margin-bottom: 4px;
   }
   .controls input, select {
     min-width: unset;
@@ -182,6 +183,7 @@
     appearance: auto;
   }
   textarea {
+    height: 24px;
     min-height: 24px;
     max-height: 300px;
     overflow-y: auto;
@@ -239,6 +241,16 @@
   ul._jsonform-array-ul > li > div.form-group {
     width: 100%;
   }
+  li > fieldset.form-group {
+    /* width: 100%; */
+    display: flex;
+    gap: 5px;
+  }
+  li > div {
+    display: flex;
+    gap: 5px;
+  }
+
   i[title="Delete current"] {
     top: 5px;
   }
