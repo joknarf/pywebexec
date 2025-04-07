@@ -13,6 +13,9 @@
 .glyphicon-search:before {
   content: "\e003";
 }
+.glyphicon-list::before {
+  content: "\e235"; /* 056 119 */
+}
 .glyphicon {
   position: relative;
   top: 1px;
@@ -60,7 +63,7 @@
   }
   .btn-default {
     background-color: transparent;
-    padding: 3px 5px 2px 5px;
+    padding: 3px 0px 2px 3px;
     color: #333;
     /* border: 1px solid #ccc; */
     /* color: #eee; */
@@ -148,6 +151,7 @@
   li {
     display: flex;
     margin-bottom: 4px;
+    gap: 2px;
   }
   .controls input, select {
     min-width: unset;
@@ -234,6 +238,12 @@
   li > fieldset {
     width: 100%;
     margin-bottom: 3px;
+    display: flex;
+    gap: 5px;
+  }
+  .draggable {
+    font-size: 12px;
+    padding-top: 4px;
   }
   ._jsonform-array-buttons {
     text-align: right;
