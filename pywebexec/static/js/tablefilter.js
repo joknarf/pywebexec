@@ -260,8 +260,8 @@ function exportToExcel(table) {
 
     // Style header row
     const headerRow = worksheet.getRow(1);
-    headerRow.font = { bold: true };
-    headerRow.alignment = { vertical: 'middle', horizontal: 'left' };
+    // headerRow.font = { bold: true };
+    // headerRow.alignment = { vertical: 'middle', horizontal: 'left' };
     // headerRow.height = 20;
 
     // Add table after all rows are defined
