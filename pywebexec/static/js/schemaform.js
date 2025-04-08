@@ -359,6 +359,8 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   schemaForm.addEventListener('mouseup', (e) => {
     // save form values when clicking on array buttons
     setTimeout(() => validateSchemaForm(schemaForm, formDesc, schema, jsform.root.getFormValues(), schemaName), 1);
+    // resize input fields when dragging
+    setTimeout(() => formInputHandle(), 100);
   });
   divopt = schemaForm.querySelector("fieldset.expandable > div");
   formInputHandle();
