@@ -182,7 +182,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
     title: " ",
   };
   if (savedValues[schemaName]) {
-    schema.properties["savedValues"].enum = Object.keys(savedValues[schemaName]).sort();
+    schema.properties["savedValues"].enum = [null, ...Object.keys(savedValues[schemaName]).sort()];
   }
   if (schemaValues[schemaName]) {
     value = schemaValues[schemaName];
