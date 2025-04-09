@@ -155,7 +155,7 @@
   }
   .controls input, select {
     min-width: unset;
-    max-width: unset;
+    max-width: 300px;
     margin: 0;
   }
   .controls input[type="text"] {

@@ -260,6 +260,7 @@ paramsInput.addEventListener('focus', () => {
     const currentCmd = commandInput.value;
     paramsInput.name = currentCmd;
     if (gExecutables[currentCmd] && gExecutables[currentCmd].schema && gExecutables[currentCmd].schema.properties && paramsContainer.style.display == 'none') {
+        paramsContainer.style.display = 'none';
         const schema = gExecutables[currentCmd].schema;
         jsForm = createSchemaForm($('#schemaForm'), gExecutables[currentCmd].schema, async function (errors, values) {
             const commandName = commandInput.value;
@@ -301,10 +302,10 @@ paramsInput.addEventListener('focus', () => {
         if (input1) {
             input1.focus();
         }
-        schemaFormPW.addEventListener('submit', (event) => {
-            paramsContainer.style.display = 'none';
-            event.preventDefault();
-        });
+        // schemaFormPW.addEventListener('submit', (event) => {
+        //     paramsContainer.style.display = 'none';
+        //     event.preventDefault();
+        // });
     } else {
         paramsContainer.style.display = 'none';
     }

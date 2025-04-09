@@ -296,6 +296,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
             if (name in savedValues[schemaName]) {
               schemaValues[schemaName] = savedValues[schemaName][name];
               createSchemaForm($form, schema, onSubmit, schemaName);
+              expandFieldset('fieldsavedoptions');
             }
           }
         },
@@ -324,6 +325,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
             delete savedValues[schemaName][schemaValues[schemaName].savedValues];
             localStorage.setItem('savedValues', JSON.stringify(savedValues));
             createSchemaForm($form, schema, onSubmit, schemaName);
+            expandFieldset('fieldsavedoptions');
           },
         },
       ]
