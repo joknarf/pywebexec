@@ -260,9 +260,9 @@ paramsInput.addEventListener('focus', () => {
     const currentCmd = commandInput.value;
     paramsInput.name = currentCmd;
     if (gExecutables[currentCmd] && gExecutables[currentCmd].schema && gExecutables[currentCmd].schema.properties && paramsContainer.style.display == 'none') {
-        paramsContainer.style.display = 'none';
         const schema = gExecutables[currentCmd].schema;
         jsForm = createSchemaForm($('#schemaForm'), gExecutables[currentCmd].schema, async function (errors, values) {
+            paramsContainer.style.display = 'none';
             const commandName = commandInput.value;
             fitAddon.fit();
             terminal.clear();
