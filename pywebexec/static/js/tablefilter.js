@@ -234,7 +234,7 @@ function exportToExcel(table) {
         });
 
         // Add some padding and ensure minimum/maximum widths
-        return { width: Math.min(Math.max(maxWidth + 2, 10), 100) };
+        return { width: Math.min(Math.max(maxWidth + 5, 10), 100) };
     });
 
     // Define columns with calculated widths
