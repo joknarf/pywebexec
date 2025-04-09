@@ -143,6 +143,12 @@ function validateSchemaForm(form, formDesc, schema, values, schemaName) {
   return true;
 }
 
+function expandFieldset(fieldsetClass) {
+  schemaForm.querySelector(`fieldset.${fieldsetClass}`).classList.add('expanded');
+  schemaForm.querySelector(`fieldset.${fieldsetClass} > legend`).setAttribute('aria-expanded', 'true');
+  schemaForm.querySelector(`fieldset.${fieldsetClass} > div`).style.display = 'inline-flex';
+}
+
 function createSchemaForm($form, schema, onSubmit, schemaName) {
   schema_options = undefined;
   schema_params_options = undefined;
@@ -174,8 +180,10 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   schema.properties["savedValues"] = {
     type: "string",
     title: " ",
-    enum: ["new"].concat(Object.keys(savedValues[schemaName] || {}).sort()),
   };
+  if (savedValues[schemaName]) {
+    schema.properties["savedValues"].enum = Object.keys(savedValues[schemaName]).sort();
+  }
   if (schemaValues[schemaName]) {
     value = schemaValues[schemaName];
     // convert array for textarea formDesc type to string separated by newlines
@@ -203,7 +211,6 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   } else {
     value = {};
   }
-  console.log("createSchemaForm", schemaName, value);
   // recreate form to remove event listeners
   $form.off();
   $form.empty();
@@ -279,15 +286,17 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
         {
           key: 'savedValues',
           title: null,
+          placeholder: 'My Params',
           htmlClass: 'fieldsavedoptions',
           onChange: function (evt) {
             evt.preventDefault();
             evt.stopPropagation();
             evt.stopImmediatePropagation();
             const name = value = evt.target.value;
-            console.log("savedValues", name);
-            schemaValues[schemaName] = savedValues[schemaName][name];
-            createSchemaForm($form, schema, onSubmit, schemaName);
+            if (name in savedValues[schemaName]) {
+              schemaValues[schemaName] = savedValues[schemaName][name];
+              createSchemaForm($form, schema, onSubmit, schemaName);
+            }
           }
         },
         {
@@ -301,6 +310,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
             //const values = jsform.root.getFormValues();
             saveFormValues(schemaValues[schemaName], schemaName);
             createSchemaForm($form, schema, onSubmit, schemaName);
+            expandFieldset('fieldsavedoptions');
           },
         },
         {
@@ -465,18 +475,16 @@ async function getPostParametersSchema() {
 }
 
 function saveFormValues(formValues, schemaName) {
-  const name = prompt('Enter name to save these values as:');
+  const name = prompt('Enter name to save these values as:', formValues.savedValues);
   if (!name) return;
-  console.log(savedValues)
   if (!savedValues) {
     savedValues = {};
   }
   if (!savedValues[schemaName]) {
     savedValues[schemaName] = {};
   }
+  formValues.savedValues = name;
   savedValues[schemaName][name] = JSON.parse(JSON.stringify(formValues));
-  savedValues[schemaName][name].savedValues = name;
-  console.log(savedValues);
   localStorage.setItem('savedValues', JSON.stringify(savedValues));
 }
 
