@@ -143,6 +143,12 @@ function validateSchemaForm(form, formDesc, schema, values, schemaName) {
   return true;
 }
 
+function expandFieldset(fieldsetClass) {
+  schemaForm.querySelector(`fieldset.${fieldsetClass}`).classList.add('expanded');
+  schemaForm.querySelector(`fieldset.${fieldsetClass} > legend`).setAttribute('aria-expanded', 'true');
+  schemaForm.querySelector(`fieldset.${fieldsetClass} > div`).style.display = 'inline-flex';
+}
+
 function createSchemaForm($form, schema, onSubmit, schemaName) {
   schema_options = undefined;
   schema_params_options = undefined;
@@ -152,7 +158,6 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   if (schema && schema.properties && schema.properties.params && schema.properties.params.schema_options) {
     schema_params_options = schema.properties.params.schema_options;
   }
-
   formkeys = {};
   formoptions = {};
   if (schema_options) {
@@ -168,7 +173,17 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
       formoptions[`params.${key}`] = foptions[key];
     }
   }
+  if(schema.properties['savedValues']) {
+    delete schema.properties['savedValues'];
+  }
   formDesc = extractKeysAndPlaceholders(schema, formkeys, formoptions);
+  schema.properties["savedValues"] = {
+    type: "string",
+    title: " ",
+  };
+  if (savedValues[schemaName]) {
+    schema.properties["savedValues"].enum = [null, ...Object.keys(savedValues[schemaName]).sort()];
+  }
   if (schemaValues[schemaName]) {
     value = schemaValues[schemaName];
     // convert array for textarea formDesc type to string separated by newlines
@@ -263,6 +278,58 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
       });
     }
     formDesc.push({
+      type: 'fieldset',
+      title: 'Favorites',
+      htmlClass: 'fieldsavedoptions',
+      expandable: true,
+      items: [
+        {
+          key: 'savedValues',
+          title: null,
+          placeholder: 'My Params',
+          htmlClass: 'fieldsavedoptions',
+          onChange: function (evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            evt.stopImmediatePropagation();
+            const name = value = evt.target.value;
+            if (name in savedValues[schemaName]) {
+              schemaValues[schemaName] = savedValues[schemaName][name];
+              createSchemaForm($form, schema, onSubmit, schemaName);
+            }
+          }
+        },
+        {
+          type: 'button',
+          title: 'Save',
+          id: 'save-form',
+          onClick: function (evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            evt.stopImmediatePropagation();
+            //const values = jsform.root.getFormValues();
+            saveFormValues(schemaValues[schemaName], schemaName);
+            createSchemaForm($form, schema, onSubmit, schemaName);
+            expandFieldset('fieldsavedoptions');
+          },
+        },
+        {
+          type: 'button',
+          title: 'Del',
+          id: 'del-form',
+          onClick: function (evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            evt.stopImmediatePropagation();
+            delete savedValues[schemaName][schemaValues[schemaName].savedValues];
+            localStorage.setItem('savedValues', JSON.stringify(savedValues));
+            createSchemaForm($form, schema, onSubmit, schemaName);
+          },
+        },
+      ]
+    });
+
+    formDesc.push({
       type: 'actions',
       items: [
         {
@@ -329,6 +396,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
         event.stopImmediatePropagation();
         return false;
       }
+      delete values['savedValues'];
       onSubmit(errors, values);
     },
     form: formDesc,
@@ -366,6 +434,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   formInputHandle();
   return jsform;
 }
+
 function adjustTxtHeight(txt) {
   if (txt.value.includes('\n')) {
     delta = 2;
@@ -375,6 +444,7 @@ function adjustTxtHeight(txt) {
   txt.style.height = "0";
   txt.style.height = `${txt.scrollHeight+delta}px`;
 }
+
 async function getSwaggerSpec() {
   const response = await fetch('/swagger.yaml');
   if (!response.ok) {
@@ -404,6 +474,20 @@ async function getPostParametersSchema() {
   return result;
 }
 
+function saveFormValues(formValues, schemaName) {
+  const name = prompt('Enter name to save these values as:', formValues.savedValues);
+  if (!name) return;
+  if (!savedValues) {
+    savedValues = {};
+  }
+  if (!savedValues[schemaName]) {
+    savedValues[schemaName] = {};
+  }
+  formValues.savedValues = name;
+  savedValues[schemaName][name] = JSON.parse(JSON.stringify(formValues));
+  localStorage.setItem('savedValues', JSON.stringify(savedValues));
+}
+
 let schemaForm;
-// let inputHandlers = [];
 let schemaValues = JSON.parse(localStorage.getItem('schemaValues')) || {};
+let savedValues = JSON.parse(localStorage.getItem('savedValues')) || {};
