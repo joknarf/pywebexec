@@ -152,7 +152,6 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   if (schema && schema.properties && schema.properties.params && schema.properties.params.schema_options) {
     schema_params_options = schema.properties.params.schema_options;
   }
-
   formkeys = {};
   formoptions = {};
   if (schema_options) {
@@ -168,7 +167,15 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
       formoptions[`params.${key}`] = foptions[key];
     }
   }
+  if(schema.properties['savedValues']) {
+    delete schema.properties['savedValues'];
+  }
   formDesc = extractKeysAndPlaceholders(schema, formkeys, formoptions);
+  schema.properties["savedValues"] = {
+    type: "string",
+    title: " ",
+    enum: ["new"].concat(Object.keys(savedValues[schemaName] || {}).sort()),
+  };
   if (schemaValues[schemaName]) {
     value = schemaValues[schemaName];
     // convert array for textarea formDesc type to string separated by newlines
@@ -196,6 +203,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   } else {
     value = {};
   }
+  console.log("createSchemaForm", schemaName, value);
   // recreate form to remove event listeners
   $form.off();
   $form.empty();
@@ -263,6 +271,55 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
       });
     }
     formDesc.push({
+      type: 'fieldset',
+      title: 'Favorites',
+      htmlClass: 'fieldsavedoptions',
+      expandable: true,
+      items: [
+        {
+          key: 'savedValues',
+          title: null,
+          htmlClass: 'fieldsavedoptions',
+          onChange: function (evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            evt.stopImmediatePropagation();
+            const name = value = evt.target.value;
+            console.log("savedValues", name);
+            schemaValues[schemaName] = savedValues[schemaName][name];
+            createSchemaForm($form, schema, onSubmit, schemaName);
+          }
+        },
+        {
+          type: 'button',
+          title: 'Save',
+          id: 'save-form',
+          onClick: function (evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            evt.stopImmediatePropagation();
+            //const values = jsform.root.getFormValues();
+            saveFormValues(schemaValues[schemaName], schemaName);
+            createSchemaForm($form, schema, onSubmit, schemaName);
+          },
+        },
+        {
+          type: 'button',
+          title: 'Del',
+          id: 'del-form',
+          onClick: function (evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            evt.stopImmediatePropagation();
+            delete savedValues[schemaName][schemaValues[schemaName].savedValues];
+            localStorage.setItem('savedValues', JSON.stringify(savedValues));
+            createSchemaForm($form, schema, onSubmit, schemaName);
+          },
+        },
+      ]
+    });
+
+    formDesc.push({
       type: 'actions',
       items: [
         {
@@ -329,6 +386,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
         event.stopImmediatePropagation();
         return false;
       }
+      delete values['savedValues'];
       onSubmit(errors, values);
     },
     form: formDesc,
@@ -366,6 +424,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   formInputHandle();
   return jsform;
 }
+
 function adjustTxtHeight(txt) {
   if (txt.value.includes('\n')) {
     delta = 2;
@@ -375,6 +434,7 @@ function adjustTxtHeight(txt) {
   txt.style.height = "0";
   txt.style.height = `${txt.scrollHeight+delta}px`;
 }
+
 async function getSwaggerSpec() {
   const response = await fetch('/swagger.yaml');
   if (!response.ok) {
@@ -404,6 +464,22 @@ async function getPostParametersSchema() {
   return result;
 }
 
+function saveFormValues(formValues, schemaName) {
+  const name = prompt('Enter name to save these values as:');
+  if (!name) return;
+  console.log(savedValues)
+  if (!savedValues) {
+    savedValues = {};
+  }
+  if (!savedValues[schemaName]) {
+    savedValues[schemaName] = {};
+  }
+  savedValues[schemaName][name] = JSON.parse(JSON.stringify(formValues));
+  savedValues[schemaName][name].savedValues = name;
+  console.log(savedValues);
+  localStorage.setItem('savedValues', JSON.stringify(savedValues));
+}
+
 let schemaForm;
-// let inputHandlers = [];
 let schemaValues = JSON.parse(localStorage.getItem('schemaValues')) || {};
+let savedValues = JSON.parse(localStorage.getItem('savedValues')) || {};
