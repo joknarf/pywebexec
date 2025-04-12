@@ -221,7 +221,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   schemaForm = $form[0];
   if (onSubmit != null) {
     if (schema_options && schema_options.formext) {
-      formDesc = schema.schema_options.formext;
+      formDesc = [...schema.schema_options.formext];
     }  
     if (schema_options && schema_options.batch_param) {
       schema.properties[schema_options.batch_param].required = true;
@@ -390,6 +390,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
       });
     }
   }
+  console.log('formDesc', formDesc);
   // schemaForm.classList.add('form-inline');
   jsform = $form.jsonForm({
     schema: schema,
