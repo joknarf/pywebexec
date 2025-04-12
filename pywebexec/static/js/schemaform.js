@@ -150,6 +150,9 @@ function expandFieldset(fieldsetClass) {
 }
 
 function createSchemaForm($form, schema, onSubmit, schemaName) {
+  if (!schemaName in savedValues) {
+    savedValues[schemaName] = {};
+  }
   schema_options = undefined;
   schema_params_options = undefined;
   if (schema && schema.schema_options) {
