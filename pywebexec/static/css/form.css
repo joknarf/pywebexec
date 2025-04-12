@@ -366,6 +366,17 @@
     border-radius: 5px;
     resize: all;
   }
+
+  .tabbable {
+    display: flex;
+    gap: 5px;
+  }
+  .tab-content > .tab-pane {
+    display: none;
+  }
+  .tab-content > .active {
+    display: block;
+  }
 }
 
 .swagger-ui textarea {

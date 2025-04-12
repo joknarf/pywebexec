@@ -211,7 +211,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   } else {
     value = {};
   }
-  // recreate form to remove event listeners
+// recreate form to remove event listeners
   $form.off();
   $form.empty();
   $form.html('');
@@ -220,6 +220,9 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   $form = $newform;
   schemaForm = $form[0];
   if (onSubmit != null) {
+    if (schema_options && schema_options.formext) {
+      formDesc = schema.schema_options.formext;
+    }  
     if (schema_options && schema_options.batch_param) {
       schema.properties[schema_options.batch_param].required = true;
       if (!schema.properties.parallel) {
@@ -330,7 +333,6 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
         },
       ]
     });
-
     formDesc.push({
       type: 'actions',
       items: [
