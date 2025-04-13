@@ -35,7 +35,7 @@ function formInputHandle() {
   });
 }
 
-function extractKeysAndPlaceholders(obj, formkeys, formoptions, prefix = '') {
+function extractKeys(obj, formkeys, formoptions, prefix = '') {
     let result = [];
   
     for (let key in obj.properties) {
@@ -44,7 +44,7 @@ function extractKeysAndPlaceholders(obj, formkeys, formoptions, prefix = '') {
         continue;
       }
       if (obj.properties[key].type === 'object' && obj.properties[key].properties) {
-        result = result.concat(extractKeysAndPlaceholders(obj.properties[key], formkeys, formoptions, k));
+        result = result.concat(extractKeys(obj.properties[key], formkeys, formoptions, k));
       } else {
         if (formkeys[k]) {
           foptions = formkeys[k];
@@ -53,7 +53,6 @@ function extractKeysAndPlaceholders(obj, formkeys, formoptions, prefix = '') {
         }
         result.push({
           key: k,
-          placeholder: obj.properties[key].example || null,
           ... foptions
         });
       }
@@ -179,7 +178,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   if(schema.properties['savedValues']) {
     delete schema.properties['savedValues'];
   }
-  formDesc = extractKeysAndPlaceholders(schema, formkeys, formoptions);
+  formDesc = extractKeys(schema, formkeys, formoptions);
   schema.properties["savedValues"] = {
     type: "string",
     title: " ",
@@ -393,7 +392,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
       });
     }
   }
-  console.log('formDesc', formDesc);
+  //console.log('formDesc', formDesc);
   // schemaForm.classList.add('form-inline');
   jsform = $form.jsonForm({
     schema: schema,
