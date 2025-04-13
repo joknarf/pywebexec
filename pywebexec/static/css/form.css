@@ -76,7 +76,7 @@
     color: #808080;
     display: block;
     margin-top: 5px;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     max-width: 300px;
   }
   .form-control {
@@ -326,6 +326,7 @@
 
   legend {
     font-weight: bold;
+    color: #444;
   }
   .expandable > legend::before {
     content: '\25B8';
@@ -338,9 +339,12 @@
   fieldset {
     border: 1px solid #ccc;
     border-radius: 5px;
-    padding-top: 9px;
+    padding-top: 5px;
     height: fit-content;
+    display: flex;
+    gap: 5px;
     /* width: 100%; */
+    padding-bottom: 3px;
     label {
       padding-right: 5px;
     }
@@ -349,6 +353,10 @@
   fieldset > div {
     /* display: block ruby; */
     padding-bottom: 5px;
+  }
+   fieldset.expandable {
+    position: relative;
+    top: -1px;
   }
   fieldset.expandable > div {
     display: inline-flex;
@@ -376,6 +384,10 @@
   }
   .tab-content > .active {
     display: block;
+  }
+  .tab-container{
+    border: none;
+    padding: 0;
   }
 }
 
