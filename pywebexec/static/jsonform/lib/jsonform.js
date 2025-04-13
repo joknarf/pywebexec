@@ -267,7 +267,7 @@ var inputFieldTemplate = function (type) {
       '<%= (node.schemaElement && node.schemaElement.required && (node.schemaElement.type !== "boolean") ? " required=\'required\'" : "") %>' +
       '<%= (node.schemaElement && (node.schemaElement.type === "number") && !isNaN(node.schemaElement.maximum) ? " max=" + \'"\' + node.schemaElement.maximum + \'"\' : "")%>' +
       '<%= (node.schemaElement && (node.schemaElement.type === "number") && !isNaN(node.schemaElement.minimum) ? " min=" + \'"\' + node.schemaElement.minimum + \'"\' : "")%>' +
-      '<%= (node.placeholder? " placeholder=" + \'"\' + escape(node.placeholder) + \'"\' : "")%>' +
+      '<%= (node.placeholder ? " placeholder=" + \'"\' + escape(node.placeholder) + \'"\' : "")||(node.schemaElement && node.schemaElement.example ? " placeholder=" + \'"\' + escape(node.schemaElement.example) + \'"\' : "")%>' +
       ' />',
     'fieldtemplate': true,
     'inputfield': true
