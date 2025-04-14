@@ -148,6 +148,26 @@ function expandFieldset(fieldsetClass) {
   schemaForm.querySelector(`fieldset.${fieldsetClass} > div`).style.display = 'inline-flex';
 }
 
+function orderCheckboxes() {
+  schemaForm.querySelectorAll('.checkboxes > ul').forEach(checkboxes => {
+    const key = checkboxes.getAttribute('name');
+    const cboxes = checkboxes
+    const matchingElements = [];
+    for (let val = 0; val < value[key].length; val++) {
+      for (let i = 0; i < cboxes.children.length; i++) {
+      if (cboxes.children[i].querySelector('label').innerText === value.scope[val]) {
+        matchingElements.push(cboxes.children[i]);
+        break;
+      }
+      }
+    }
+    // Append matching elements to the top in the order of value.scope
+    matchingElements.reverse().forEach(element => {
+      cboxes.insertBefore(element, cboxes.firstChild);
+    });
+  });
+}
+
 function createSchemaForm($form, schema, onSubmit, schemaName) {
   if (!schemaName in savedValues) {
     savedValues[schemaName] = {};
@@ -418,6 +438,8 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   err.classList.add('alert');
   err.style.display = 'none';
   schemaForm.appendChild(err);
+  cboxes = schemaForm.querySelector('.checkboxes > ul');
+  orderCheckboxes();
   validateSchemaForm(schemaForm, formDesc, schema, jsform.root.getFormValues(), schemaName);
   schemaForm.querySelectorAll('textarea').forEach(txt => {
     txt.style.height = "0";  

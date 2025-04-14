@@ -835,7 +835,7 @@ jsonform.elementTypes = {
     }
   },
   'checkboxes': {
-    'template': '<div id="<%= id %>" class="checkboxes"><ul class="_jsonform-array-ul sortable"><%= choiceshtml %></ul></div>',
+    'template': '<div id="<%= id %>" class="checkboxes" ><ul name="<%= node.key %>" class="_jsonform-array-ul sortable"><%= choiceshtml %></ul></div>',
     'fieldtemplate': true,
     'inputfield': true,
     'onBeforeRender': function (data, node) {
