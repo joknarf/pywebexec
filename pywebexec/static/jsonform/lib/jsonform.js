@@ -835,7 +835,7 @@ jsonform.elementTypes = {
     }
   },
   'checkboxes': {
-    'template': '<div id="<%= id %>" class="checkboxes" ><ul name="<%= node.key %>" class="_jsonform-array-ul sortable"><%= choiceshtml %></ul></div>',
+    'template': '<div id="<%= id %>" class="checkboxes" ><ul name="<%= node.key %>"class="_jsonform-array-ul sortable"><%= choiceshtml %></ul></div>',
     'fieldtemplate': true,
     'inputfield': true,
     'onBeforeRender': function (data, node) {
@@ -2457,11 +2457,13 @@ formNode.prototype.computeInitialValues = function (values, ignoreDefaultValues)
     // be a complex structure that needs to be pushed down the subtree.
     // The easiest way is probably to generate a "values" object and
     // compute initial values from that object
-    /*
+    // fjo start: TODO convert this.key to be used in values
     else if (this.schemaElement['default']) {
+      values = {};
+      values[this.key] = this.schemaElement['default'];
       nbChildren = this.schemaElement['default'].length;
     }
-    */
+    // fjo end
     else if (nbChildren === 0) {
       // If form has already been submitted with no children, the array
       // needs to be rendered without children. If there are no previously
