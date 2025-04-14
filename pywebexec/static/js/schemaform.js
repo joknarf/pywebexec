@@ -153,6 +153,9 @@ function orderCheckboxes() {
     const key = checkboxes.getAttribute('name');
     const cboxes = checkboxes
     const matchingElements = [];
+    if (! value || ! value[key] || !value[key].length) {
+      return;
+    }
     for (let val = 0; val < value[key].length; val++) {
       for (let i = 0; i < cboxes.children.length; i++) {
       if (cboxes.children[i].querySelector('label').innerText === value.scope[val]) {
@@ -231,7 +234,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
     }
     convertObjectsToJsonStrings(value, schema);
   } else {
-    value = {};
+    value = undefined;
   }
 // recreate form to remove event listeners
   $form.off();
@@ -371,7 +374,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
             evt.preventDefault();
             evt.stopPropagation();
             evt.stopImmediatePropagation();
-            schemaValues[schemaName] = {};
+            delete schemaValues[schemaName];
             createSchemaForm($form, schema, onSubmit, schemaName);
           },
         },
