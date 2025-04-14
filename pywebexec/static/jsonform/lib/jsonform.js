@@ -834,23 +834,24 @@ jsonform.elementTypes = {
       $(node.el).find('input:checked').parent().addClass(activeClass)
     }
   },
-  'checkboxes':{
-    'template': '<div><%= choiceshtml %></div>',
+  'checkboxes': {
+    'template': '<div id="<%= id %>" class="checkboxes"><ul class="_jsonform-array-ul sortable"><%= choiceshtml %></ul></div>',
     'fieldtemplate': true,
     'inputfield': true,
     'onBeforeRender': function (data, node) {
-      // Build up choices from the enumeration list
       var choices = null;
       var choiceshtml = null;
-      var template = '<div class="checkbox"><label>' +
+      var template = '<li class="checkbox" data-idx="<%= idx %>">' +
+        '<span class="draggable line"><i class="glyphicon glyphicon-list" title="Move item"></i></span>' +
+        '<label>' +
         '<input type="checkbox" <% if (value) { %> checked="checked" <% } %> name="<%= name %>" value="1"' +
         '<%= (node.disabled? " disabled" : "")%>' +
-        '/><%= title %></label></div>';
+        '/><%= title %></label></li>';
+
       if (!node || !node.schemaElement) return;
 
       if (node.schemaElement.items) {
-        choices =
-          node.schemaElement.items["enum"] ||
+        choices = node.schemaElement.items["enum"] || 
           node.schemaElement.items[0]["enum"];
       } else {
         choices = node.schemaElement["enum"];
@@ -860,6 +861,7 @@ jsonform.elementTypes = {
       choiceshtml = '';
       _.each(choices, function (choice, idx) {
         choiceshtml += _.template(template, fieldTemplateSettings)({
+          idx: idx,
           name: node.key + '[' + idx + ']',
           value: _.include(node.value, choice),
           title: hasOwnProperty(node.formElement.titleMap, choice) ? node.formElement.titleMap[choice] : choice,
@@ -868,6 +870,15 @@ jsonform.elementTypes = {
       });
 
       data.choiceshtml = choiceshtml;
+    },
+    'onInsert': function(evt, node) {
+      var $list = $(node.el).find('ul._jsonform-array-ul');
+
+      if (!isSet(node.formElement.draggable) || node.formElement.draggable) {
+        if ($list.sortable) {
+          $list.sortable();
+        }
+      }
     }
   },
   'array': {

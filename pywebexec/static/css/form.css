@@ -162,11 +162,11 @@
     width: 110px;;
   }
 
-  .controls > div:not([id]) { /* for checkboxes */
+  .controls > div:not([id]), .checkboxes { /* for checkboxes */
     scrollbar-width: thin;
     scrollbar-gutter: stable;
     overflow-y: auto;
-    max-height: 100px;
+    max-height: 157px;
     border: solid 1px #ccc;
     border-radius: 5px;
     padding: 5px 2px;
@@ -388,6 +388,12 @@
   .tab-container{
     border: none;
     padding: 0;
+  }
+  li.checkbox .draggable {
+    padding-top: 1px;
+  }
+  li.checkbox label {
+    margin-left: 0px;
   }
 }
 
