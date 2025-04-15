@@ -442,7 +442,9 @@ jsonform.elementTypes = {
         editor.getSession().setNewLineMode('unix');
         editor.renderer.setShowPrintMargin(false);
         editor.setTheme("ace/theme/"+(formElement.aceTheme||"twilight"));
-
+        editor.setOptions({
+          placeholder: formElement.placeholder || '',
+        })
         if (formElement.aceMode) {
           editor.getSession().setMode("ace/mode/"+formElement.aceMode);
         }
