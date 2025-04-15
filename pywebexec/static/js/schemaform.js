@@ -158,7 +158,7 @@ function orderCheckboxes() {
     }
     for (let val = 0; val < value[key].length; val++) {
       for (let i = 0; i < cboxes.children.length; i++) {
-      if (cboxes.children[i].querySelector('label').innerText === value.[key][val]) {
+      if (cboxes.children[i].querySelector('label').innerText === value[key][val]) {
         matchingElements.push(cboxes.children[i]);
         break;
       }
