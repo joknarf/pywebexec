@@ -403,6 +403,11 @@
     resize: horizontal;
     overflow: hidden;
   }
+  .ace_placeholder {
+    opacity: 0.4;
+    font-family: "Monaco", "Menlo", "Ubuntu Mono", "Consolas", "Source Code Pro", "source-code-pro", monospace;
+    font-size: 12px;
+  }
 }
 
 .swagger-ui textarea {
