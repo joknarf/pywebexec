@@ -395,7 +395,7 @@
   li.checkbox label {
     margin-left: 0px;
   }
-  .tab-pane > div {
+  .tab-pane > div:not(.form-group) {
     display: flex;
     gap: 5px;
   }
