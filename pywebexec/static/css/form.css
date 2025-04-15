@@ -400,8 +400,8 @@
     gap: 5px;
   }
   .ace_editor {
-    resize: both;
-    overflow: auto;
+    resize: horizontal;
+    overflow: hidden;
   }
 }
 

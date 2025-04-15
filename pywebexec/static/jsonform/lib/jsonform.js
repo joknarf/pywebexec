@@ -444,6 +444,7 @@ jsonform.elementTypes = {
         editor.setTheme("ace/theme/"+(formElement.aceTheme||"twilight"));
         editor.setOptions({
           placeholder: formElement.placeholder || '',
+          maxLines: 30,
         })
         if (formElement.aceMode) {
           editor.getSession().setMode("ace/mode/"+formElement.aceMode);
