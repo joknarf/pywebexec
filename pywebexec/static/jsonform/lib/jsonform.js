@@ -372,7 +372,7 @@ jsonform.elementTypes = {
       '<%= (node.schemaElement && node.schemaElement.minLength ? " minlength=\'" + node.schemaElement.minLength + "\'" : "") %>' +
       '<%= (node.schemaElement && node.schemaElement.maxLength ? " maxlength=\'" + node.schemaElement.maxLength + "\'" : "") %>' +
       '<%= (node.schemaElement && node.schemaElement.required ? " required=\'required\'" : "") %>' +
-      '<%= (node.placeholder? " placeholder=" + \'"\' + escape(node.placeholder) + \'"\' : "")%>' +
+      '<%= (node.placeholder? " placeholder=" + \'"\' + escape(node.placeholder) + \'"\' : "")||(node.schemaElement && node.schemaElement.example ? " placeholder=" + \'"\' + escape(node.schemaElement.example) + \'"\' : "")%>' +
       '><%= value %></textarea>',
     'fieldtemplate': true,
     'inputfield': true
@@ -386,7 +386,7 @@ jsonform.elementTypes = {
       '<%= (node.schemaElement && node.schemaElement.minLength ? " minlength=\'" + node.schemaElement.minLength + "\'" : "") %>' +
       '<%= (node.schemaElement && node.schemaElement.maxLength ? " maxlength=\'" + node.schemaElement.maxLength + "\'" : "") %>' +
       '<%= (node.schemaElement && node.schemaElement.required ? " required=\'required\'" : "") %>' +
-      '<%= (node.placeholder? " placeholder=" + \'"\' + escape(node.placeholder) + \'"\' : "")%>' +
+      '<%= (node.placeholder? " placeholder=" + \'"\' + escape(node.placeholder) + \'"\' : "")||(node.schemaElement && node.schemaElement.example ? " placeholder=" + \'"\' + escape(node.schemaElement.example) + \'"\' : "")%>' +
       '><%= value %></textarea>',
     'fieldtemplate': true,
     'inputfield': true,
