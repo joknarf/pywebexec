@@ -2395,7 +2395,26 @@ formNode.prototype.computeInitialValues = function (values, ignoreDefaultValues)
       });
     }
   }
+  // fjo
+  function setNestedValue(obj, keyPath, value) {
+    // Split the keyPath into individual keys
+    const keys = keyPath.split('.');
+    // Store the reference to the current level of the object
+    let current = obj;
 
+    // Traverse the object until the second to last key
+    for (let i = 0; i < keys.length - 1; i++) {
+        // If the key doesn't exist, create a new object
+        if (current[keys[i]] === undefined) {
+            current[keys[i]] = {};
+        }
+        // Move to the next level
+        current = current[keys[i]];
+    }
+
+    // Assign the value to the final key
+    current[keys[keys.length - 1]] = value;
+  }
   if (this.view && this.view.inputfield && this.schemaElement) {
     // Case 1: simple input field
     if (values) {
@@ -2460,7 +2479,8 @@ formNode.prototype.computeInitialValues = function (values, ignoreDefaultValues)
     // fjo start: TODO convert this.key to be used in values
     else if (this.schemaElement['default']) {
       values = {};
-      values[this.key] = this.schemaElement['default'];
+      setNestedValue(values, this.key, this.schemaElement['default']);
+      // values[this.key] = this.schemaElement['default'];
       nbChildren = this.schemaElement['default'].length;
     }
     // fjo end
