@@ -395,6 +395,9 @@
   li.checkbox label {
     margin-left: 0px;
   }
+  .tab-pane > div {
+    display: flex;
+  }
 }
 
 .swagger-ui textarea {
