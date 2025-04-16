@@ -397,7 +397,10 @@
   }
   .tab-pane > div:not(.form-group) {
     display: flex;
-    gap: 5px;
+    gap: 10px;
+  }
+  .tab-content {
+    margin: 0px 5px;
   }
   .ace_editor {
     resize: horizontal;
