@@ -443,7 +443,7 @@ jsonform.elementTypes = {
         editor.renderer.setShowPrintMargin(false);
         editor.setTheme("ace/theme/"+(formElement.aceTheme||"twilight"));
         editor.setOptions({
-          placeholder: formElement.placeholder || '',
+          placeholder: formElement.placeholder || (node.schemaElement && node.schemaElement.example) || '',
           maxLines: 30,
         })
         if (formElement.aceMode) {
