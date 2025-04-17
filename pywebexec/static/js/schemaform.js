@@ -60,25 +60,28 @@ function extractKeys(obj, formkeys, formoptions, prefix = '') {
     return result;
 }
 
+// Helper function to get schema and check for properties
+function getSchemaForKey(schema, keyPath) {
+  const keys = keyPath.split('.');
+  let current = schema.properties;
+  for (const key of keys) {
+    if (current.properties) {
+      current = current.properties;
+    }
+    if (!current || !current[key]) return null;
+    current = current[key];
+  }
+  return current;
+}
 
 // Convert objects to JSON strings where schema type is object without properties
 function convertObjectsToJsonStrings(obj, schema, prefix = '') {
-  // Helper function to get schema type and check for properties
-  function getSchemaTypeForKey(schema, keyPath) {
-    const keys = keyPath.split('.');
-    let current = schema.properties;
-    for (const key of keys) {
-      if (!current || !current[key]) return null;
-      current = current[key];
-    }
-    return current;
-  }
 
   for (const key in obj) {
     const keyPath = prefix ? `${prefix}.${key}` : key;
-    const schemaType = getSchemaTypeForKey(schema, keyPath);
+    const schemaKey = getSchemaForKey(schema, keyPath);
     
-    if (schemaType && schemaType.type === 'object' && !schemaType.properties) {
+    if (schemaKey && schemaKey.type === 'object' && !schemaKey.properties) {
       if (typeof obj[key] === 'object' && obj[key] !== null) {
         obj[key] = JSON.stringify(obj[key], null, 2);
       }
@@ -148,11 +151,31 @@ function expandFieldset(fieldsetClass) {
   schemaForm.querySelector(`fieldset.${fieldsetClass} > div`).style.display = 'inline-flex';
 }
 
-function orderCheckboxes() {
+function setNestedValue(obj, keyPath, value) {
+  const keys = keyPath.split('.');
+  let current = obj;
+  for (let i = 0; i < keys.length - 1; i++) {
+      if (current[keys[i]] === undefined) {
+          current[keys[i]] = {};
+      }
+      current = current[keys[i]];
+  }
+  current[keys[keys.length - 1]] = value;
+}
+
+function orderCheckboxes(schema) {
+  let use_default = false;
+  if (! value) {
+    value = {};
+    use_default = true;
+  }
   schemaForm.querySelectorAll('.checkboxes > ul').forEach(checkboxes => {
     const key = checkboxes.getAttribute('name');
     const cboxes = checkboxes
     const matchingElements = [];
+    if (use_default) {
+      setNestedValue(value, key, getSchemaForKey(schema, key).default);
+    }
     if (! value || ! value[key] || !value[key].length) {
       return;
     }
@@ -441,8 +464,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   err.classList.add('alert');
   err.style.display = 'none';
   schemaForm.appendChild(err);
-  cboxes = schemaForm.querySelector('.checkboxes > ul');
-  orderCheckboxes();
+  orderCheckboxes(schema);
   validateSchemaForm(schemaForm, formDesc, schema, jsform.root.getFormValues(), schemaName);
   schemaForm.querySelectorAll('textarea').forEach(txt => {
     txt.style.height = "0";
