@@ -2479,7 +2479,7 @@ formNode.prototype.computeInitialValues = function (values, ignoreDefaultValues)
     // be a complex structure that needs to be pushed down the subtree.
     // The easiest way is probably to generate a "values" object and
     // compute initial values from that object
-    // fjo start: TODO convert this.key to be used in values
+    // fjo start: add default values
     else if (this.schemaElement['default']) {
       values = {};
       setNestedValue(values, this.key, this.schemaElement['default']);
