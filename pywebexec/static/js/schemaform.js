@@ -445,10 +445,11 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   orderCheckboxes();
   validateSchemaForm(schemaForm, formDesc, schema, jsform.root.getFormValues(), schemaName);
   schemaForm.querySelectorAll('textarea').forEach(txt => {
-    txt.style.height = "0";  
-    setTimeout(() => adjustTxtHeight(txt), 1);
+    txt.style.height = "0";
+    txt.style.width = "0";
+    setTimeout(() => adjustTxtSize(txt), 1);
     txt.setAttribute("spellcheck", "false");
-    txt.addEventListener("input", () => adjustTxtHeight(txt));
+    txt.addEventListener("input", () => adjustTxtSize(txt));
   });
   schemaForm.addEventListener('input', (e) => {
     validateSchemaForm(schemaForm, formDesc, schema, jsform.root.getFormValues(), schemaName);
@@ -467,7 +468,7 @@ function createSchemaForm($form, schema, onSubmit, schemaName) {
   return jsform;
 }
 
-function adjustTxtHeight(txt) {
+function adjustTxtSize(txt) {
   if (txt.value.includes('\n')) {
     delta = 2;
   } else {
@@ -475,6 +476,8 @@ function adjustTxtHeight(txt) {
   }
   txt.style.height = "0";
   txt.style.height = `${txt.scrollHeight+delta}px`;
+  txt.style.width = "0";
+  txt.style.width = `${txt.scrollWidth+10}px`;
 }
 
 async function getSwaggerSpec() {

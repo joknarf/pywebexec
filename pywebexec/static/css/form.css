@@ -190,7 +190,9 @@
     height: 24px;
     min-height: 24px;
     max-height: 300px;
-    overflow-y: auto;
+    min-width: 130px;
+    overflow: auto;
+    white-space: nowrap;
     resize: both;
     max-width: 700px;
     border-radius: 15px;
