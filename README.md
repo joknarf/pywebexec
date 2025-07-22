@@ -145,6 +145,7 @@ $ curl http://myhost:8080/commands/<command_id>/output -H "Accept: text/plain"
 
 For each exposed command, you can add a help message by creating a file named `<command>.help` in the same directory as the command. The help message must be written in markdown.  
 The help message is displayed:
+
 * in the web interface as tooltip when focused on param input field,
 * in the response when calling the API `/executables`
 * in the swagger-ui in the `/commands/<command>` route.
@@ -206,6 +207,7 @@ schema_options:
 ## Batch commands/parallel execution
 
 Integration of [run-para](https://github.com/joknarf/run-para) to enable batch execution of commands:
+
 * In `schema_options` adding `batch_param` will enable batch mode for the command, the command will be executed for each value in the `batch_param` list.  
 * The `batch_param` is the name of the parameter that will be used to pass the different values for the parameter.  
 * The `batch_param` type will be transformed to textarea to provide list to use as parameter for the command.  
